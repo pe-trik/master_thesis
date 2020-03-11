@@ -1,0 +1,200 @@
+
+\begin{tikzpicture}
+
+\begin{axis}[
+legend cell align={left},
+legend style={fill opacity=1, draw opacity=1, text opacity=1, draw=white!90.0!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.01960784313725!black},
+xlabel={Steps},
+xmin=5000, xmax=71000,
+xtick style={color=black},
+y grid style={white!69.01960784313725!black},
+ylabel={Word error rate (\%)},
+ymin=5.1, ymax=7,
+ytick style={color=black}
+]
+
+
+\addplot [thick,orange!100,mark=star]
+table {
+5000 008.643
+15000 007.163
+25000 008.359
+35000 006.415
+45000 008.030
+55000 007.660
+65000 006.242
+};
+\addlegendentry{character}
+\addplot [thick,red!60,dashed,mark=square*]
+table {
+5000 005.815
+15000 005.416
+25000 005.410
+35000 005.296
+45000 005.271
+55000 005.328
+65000 005.338
+};
+\addlegendentry{corrupt8k}
+\addplot [thick,red!100,dotted,mark=diamond*]
+table {
+5000 005.688
+15000 005.511
+25000 005.407
+35000 005.433
+45000 005.463
+55000 005.413
+65000 005.492
+};
+\addlegendentry{clean8k}
+\addplot [thick,red!30,solid,mark=*]
+table {
+5000 005.835
+15000 005.450
+25000 005.465
+35000 005.416
+45000 005.358
+55000 005.530
+65000 005.430
+};
+\addlegendentry{mixed8k}
+\addplot [thick,blue!60,dashed,mark=square*]
+table {
+5000 005.489
+15000 005.410
+25000 005.309
+35000 005.334
+45000 005.289
+55000 005.336
+65000 005.278
+};
+\addlegendentry{corrupt2k}
+\addplot [thick,blue!100,dotted,mark=diamond*]
+table {
+5000 006.132
+15000 005.427
+25000 005.396
+35000 005.399
+45000 005.469
+55000 005.317
+65000 005.446
+};
+\addlegendentry{clean2k}
+\addplot [thick,blue!30,solid,mark=*]
+table {
+5000 005.638
+15000 005.406
+25000 005.412
+35000 005.372
+45000 005.415
+55000 005.352
+65000 005.416
+};
+\addlegendentry{mixed2k}
+\addplot [thick,black!60,dashed,mark=square*]
+table {
+5000 005.726
+15000 005.308
+25000 005.222
+35000 005.247
+45000 005.240
+55000 005.275
+65000 005.238
+};
+\addlegendentry{corrupt32k}
+\addplot [thick,black!100,dotted,mark=diamond*]
+table {
+5000 005.548
+15000 005.277
+25000 005.345
+35000 005.137
+45000 005.140
+55000 005.193
+65000 005.132
+};
+\addlegendentry{clean32k}
+\addplot [thick,black!30,solid,mark=*]
+table {
+5000 005.888
+15000 005.234
+25000 005.300
+35000 005.248
+45000 005.214
+55000 005.276
+65000 005.266
+};
+\addlegendentry{mixed32k}
+\addplot [thick,brown!60,dashed,mark=square*]
+table {
+5000 006.034
+15000 006.165
+25000 007.277
+35000 005.605
+45000 005.996
+55000 005.752
+65000 005.700
+};
+\addlegendentry{corrupt128}
+\addplot [thick,brown!100,dotted,mark=diamond*]
+table {
+5000 006.280
+15000 009.485
+25000 005.878
+35000 005.566
+45000 005.581
+55000 006.788
+65000 005.775
+};
+\addlegendentry{clean128}
+\addplot [thick,brown!30,solid,mark=*]
+table {
+5000 005.937
+15000 005.660
+25000 005.643
+35000 005.608
+45000 005.642
+55000 005.594
+65000 005.856
+};
+\addlegendentry{mixed128}
+\addplot [thick,green!60,dashed,mark=square*]
+table {
+5000 006.001
+15000 005.624
+25000 005.464
+35000 005.462
+45000 005.424
+55000 005.359
+65000 005.457
+};
+\addlegendentry{corrupt512}
+\addplot [thick,green!100,dotted,mark=diamond*]
+table {
+5000 005.855
+15000 005.466
+25000 005.453
+35000 005.568
+45000 005.515
+55000 005.527
+65000 005.593
+};
+\addlegendentry{clean512}
+\addplot [thick,green!30,solid,mark=*]
+table {
+5000 006.521
+15000 006.201
+25000 005.500
+35000 005.519
+45000 005.604
+55000 005.410
+65000 005.599
+};
+\addlegendentry{mixed512}
+\addplot[mark options={scale=3},orange!100,mark=star, mark=diamond*, only marks] coordinates {(65000,006.242)}; \addplot[mark options={scale=3},red!60,dashed,mark=square*, mark=diamond*, only marks] coordinates {(40000,005.259)}; \addplot[mark options={scale=3},red!100,dotted,mark=diamond*, mark=diamond*, only marks] coordinates {(40000,005.353)}; \addplot[mark options={scale=3},red!30,solid,mark=*, mark=diamond*, only marks] coordinates {(40000,005.314)}; \addplot[mark options={scale=3},blue!60,dashed,mark=square*, mark=diamond*, only marks] coordinates {(45000,005.289)}; \addplot[mark options={scale=3},blue!100,dotted,mark=diamond*, mark=diamond*, only marks] coordinates {(45000,005.469)}; \addplot[mark options={scale=3},blue!30,solid,mark=*, mark=diamond*, only marks] coordinates {(45000,005.415)}; \addplot[mark options={scale=3},black!60,dashed,mark=square*, mark=diamond*, only marks] coordinates {(40000,005.154)}; \addplot[mark options={scale=3},black!100,dotted,mark=diamond*, mark=diamond*, only marks] coordinates {(40000,005.206)}; \addplot[mark options={scale=3},black!30,solid,mark=*, mark=diamond*, only marks] coordinates {(40000,005.226)}; \addplot[mark options={scale=3},brown!60,dashed,mark=square*, mark=diamond*, only marks] coordinates {(65000,005.700)}; \addplot[mark options={scale=3},brown!100,dotted,mark=diamond*, mark=diamond*, only marks] coordinates {(65000,005.775)}; \addplot[mark options={scale=3},brown!30,solid,mark=*, mark=diamond*, only marks] coordinates {(65000,005.856)}; \addplot[mark options={scale=3},green!60,dashed,mark=square*, mark=diamond*, only marks] coordinates {(55000,005.359)}; \addplot[mark options={scale=3},green!100,dotted,mark=diamond*, mark=diamond*, only marks] coordinates {(55000,005.527)}; \addplot[mark options={scale=3},green!30,solid,mark=*, mark=diamond*, only marks] coordinates {(55000,005.410)};
+
+\end{axis}
+
+\end{tikzpicture}

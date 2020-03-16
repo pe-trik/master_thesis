@@ -66,6 +66,7 @@
 \usepackage{microtype}
 \usepackage{rotating}
 \usepackage{pdflscape}
+\usepackage{multirow}
 
 
 %%% Basic information on the thesis
@@ -257,8 +258,6 @@ Keywords:
 %%% Each chapter is kept in a separate file
 \include{chapters}
 
-\include{epilog}
-
 %%% Bibliography
 %%% Bibliography (literature used as a source)
 %%%
@@ -308,10 +307,14 @@ Keywords:
 %%% In mathematical theses, it could be better to move the list of abbreviations to the beginning of the thesis.
 \chapwithtoc{List of Abbreviations}
     \begin{tabular}{ll}
+    	ANN & Artificial Neural Network \\
         ASR & Automatic Speech Recognition \\
         AVG & average, mean\\
         BLEU & \\
         BPE & \\
+        E2E & end-to-end \\
+        GMM & Gaussian Mixture Model \\
+        HMM & Hidden Markov Model \\
         K & kilo, thousand \\
         M & mega, million \\
         NMT & \\

@@ -1,0 +1,307 @@
+\chapter{Speech recognition}
+\label{chapter:asr}
+
+
+\section{Introduction}
+%\XXX{Poznamka ke spojovnikum: viceslovna pridavna jmena potrebuji uvnitr misto mezer spojovniky: state-of-the-art je jako dark-haired. To deep-learning systems neni tak zavedene, ale myslim, ze myslite pridavne jmeno. PP: beriem na vedomie}
+
+
+%\XXX{Ten \perscite{kunze2017transfer} je neprijemne podobny, ale melo by se jit vykroutit. Co udelat poradi radku v tabulce 1 jine: napred baseline, pak en2cs (uz to zacnu psat spravne, cz je zkratka zeme, cs je zkratka jazyka), jako ze obdobny tomu kunzovi i kdyz ne stejne zamrzani (tohle by bohuzel chtelo udelat stejny pokus jako Kunze, tj. zamrzat podle jeho nejlepsiho doporuceni), a pak ukazku, ze v cestine pomuze hodne ten prechod pres nediakritiku? PP: bohuzial, toto som si vsimol az vcera, neda sa to stihnut podla neho
+%OB: Nevadi, zkuste to spustit, uvidite. Kdyztak je jeste ACL Student Research Workshop, clanky se studentem jako prvnim autorem tam patri, termin ma pozdeji.
+%Hlavne mne ale zajima, jestli ten Kunze jde taky rovnou do grafemu nebo ne.
+%PP: v tychto experimentoch nepouzivam fonemy vobec
+%Ano. A Kunze? Ten myslim take ne, take jde primo do grafemu. Ctete to tam stejne?
+%Ano.
+%Tak tu hlavni pohadku udelame presne jako vylepseni transferu stejneho jako ma Kuzne tim Vasim trikem, ze se napred prizpusobi abeceda.
+%Tak som to chcel uhrat, skuste si prosim pozriet vysledky (ak ste ich este nevideli), zatial mi podstatne lepsie vychadza cestina bez diakritiky bez transferu z anglictiny.
+%Inak, ak som spravne cital, tak to mozeme poslat aj sem aj na studentsky ACL?
+%OB: to nevim, pravidla jsem necetl.
+%}
+
+Contemporary end-to-end, deep-learning automatic speech recognition systems achieved state-of-the-art results on many public speech corpora, see e.g. \perscite{han2019state}
+on test-clean set from LibriSpeech \parcite{panayotov2015librispeech}.
+
+In order to outperform traditional hybrid models, e.g. Kaldi \parcite{Kaldi}, deep-learning ASR systems however must be trained on very large amounts of training data, on the order of a thousand of hours. Currently, there is only a limited number of public datasets that meet this quantity criteria and the variety of covered languages is extremely small. In fact, most of these large datasets contain only English. Although new speech datasets are constantly emerging, producing them is a tedious and expensive task.
+
+Another downside of recent end-to-end speech recognition systems is their requirement of an extensive computation on many GPUs, taking several days to converge, see e.g. \perscite{karita2019comparative}. 
+
+These obstacles 
+are often mitigated with the technique of transfer learning \parcite{tan2018survey}, when a trained model or a model part is reused in a more or less related task.
+%make the research and use of a contemporary end-to-end, neural networks inaccessible for many practitioners.
+Furthermore, it became customary to publish checkpoints alongside with the neural network implementations and 
+there emerge repositories with pre-trained neural networks such as \textit{TensorFlow Hub}\footurl{https://tfhub.dev/} or \textit{PyTorch
+Hub}.\footurl{https://pytorch.org/hub/} This gives us an opportunity to use pre-trained models, but similarly, most of the published checkpoints are trained for English speech.
+
+In our experiments with transfer learning, 
+%We experiment with transfer learning \parcite{tan2018-survey}, i.e. the reuse of pre-trained models for other tasks. Specifally,
+we reuse the available English ASR checkpoint of QuartzNet \parcite{kriman2019quartznet} and train it to recognize Czech speech instead.
+
+
+Our paper is organized as follows. In \cref{sec:related_work}, we give an overview of related work. We follow with a brief description of the neural architecture used in our experiments in \cref{sec:arch_overview}.
+Our proposed method is described in \cref{sec:experiments} and the results are presented and discussed in \cref{sec:results}.
+Finally, in \cref{sec:conclusion} we summarize the work and we give a brief outlook of our future plans.
+
+
+\section{Related Work}
+\label{sec:related_work}
+
+Transfer learning \parcite{tan2018survey} is an established method in machine learning because many tasks do not have enough training data available or they are too computationally demanding. In transfer learning, the model of interest is trained with the help of a more or less related ``parent'' task, reusing its data, fully or partially trained model or its parts.
+
+Transfer learning is step by step becoming popular in various areas of NLP. 
+For example transferring some of the parameters from parent models of a high-resource languages to low-resource ones seems very helpful in machine translation \parcite{zoph-etal-2016-transfer,kocmi-bojar-2018-trivial}.
+
+Transfer learning in end-to-end ASR is studied by  \perscite{kunze-etal-2017-transfer}. They show that (partial) cross-lingual model adaptation is sufficient for obtaining good results. They take an English model, freeze weights in the upper part of the network (closer to the input) and adapt the lower part for German speech recognition yielding very good results while reducing training time and the amount of needed transcribed German speech data.
+
+\XXX{mohli by sme este pridat nakoniec, ze po akceptovani zverejnime checkpointy}
+\XXX{Other works concerning end-to-end ASR are \perscite{TONG201839} and \perscite{kim}. The former proposes unificated IPA-based phoneme vocabulary while latter proposes universal character set. The first demonstrates that model with such alphabet is robust to multilingual setup and transfer to other language is possible. The latter proposes language-specific gating enabling languege switching that can increase network's power.}
+
+%Our work differs from \perscite{kunze-etal-2017-transfer} as we adapt the whole network, we use unrelated languages, and that we improve the effectiveness of the method with a coarse-to-fine intermediate step.
+\XXX{Our work differs from abovementioned twofold: first, we reuse existing models and chechpoints to improve speed and accuracy of unrelated languages. Second, we simplify, rather then unify, Czech character set in order to improve cross-lingual transfer, but also to significantly enhance monolingual training.}
+
+Multilingual transfer learning in ASR is studied by \perscite{cho2018multilingual}. First, they jointly train one model (encoder and decoder) on 10 languages (approximately 600 hours in total). Second, they adapt the model %, encoder and decoder,
+for a particular target language (4 languages, not included in the previous 10, with 40 to 60 hours of training data). They show that adapting both, encoder and decoder, boosts performance in terms of character error rate.
+
+Coarse-to-fine processing \parcite{raphael:coarse-to-fine:2001} has a long history in NLP. It is best known in the parsing domain, originally applied for the surface syntax \parcite{charniak:etal:2006} and recently for neural-based semantic parsing \parcite{dong-lapata-2018-coarse}. The idea is to first train a system on a simpler version of the task and then gradually refine the task up to the desired complexity. With neural networks, coarse-to-fine training can lead to better internal representation, as e.g. \perscite{coarse-to-fine-nmt:word-repr:2018} observe for neural machine translation.
+
+The term coarse-to-fine is also used in the context of hyperparameter optimization, see e.g. \perscite{coarse-to-fine-hyperparam:2017} or the corresponding DataCamp class,\footnote{\url{https://campus.datacamp.com/courses/hyperparameter-tuning-in-python/informed-search?ex=1}} to cut down the space of possible hyperparameter settings quickly.
+
+
+%\section{Experiment setup overview}
+
+%\XXX{Navrhuji jine usporadani sekci: 3 QuartzNet ASR Model (for the purposes of self-containedness), 4. Proposed Method (nejdriv ten transfer, pak to zjednodusovani slovniku, 5. Experiments (popis stazeneho modelu na 2 radky, popis korpusu cestiny, popis variant pokusu, obrazek 1)), 6. Results and Discussion (tabulka s vysledky a diskuse) PP: pokojne, necham to na vas.
+%OB: ja uz asi brzo usnu, kdybyste neusnul, tak to tak poprehazujte klidne i Vy.}
+
+%Hlavne si lamu hlavu, jeslti to prodavat vic jako ten transfer, nebo vic jako ten coarse-to-fine; no a nebo nejradsi jako oboji: Cross-Lingual Transfer with Coarse-to-Fine Intermediate Step?
+%PP: ja som to chcel ako oboje, len som tomu nenasie taky paradny nazov, ako vy :-) 
+%:-) Tak zkusime tyhle dve varianty nazvu nechat zatim otevrene, uvidime, co se nam bude vic libit zitra.
+%}
+
+%In this section we give an overview of neural network architecture and experiment setup.
+
+
+\begin{figure*}[t]
+    \centering
+    
+    \begin{tikzpicture}[thick, node distance=4cm, 
+          >=stealth,
+          bend angle=45,
+          auto]
+          \def\y{0.28284271247461900976033774484193961571393437507539};
+        \draw
+        	node at (0,0)[block, name=en]{\shortstack{\Large EN\\ \small{checkpoint}}}
+        	node [block, below right =\y cm of en] (scz) {\shortstack{simplified\\ \Large CS}}
+        	node [block, right of=scz] (cz1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
+        	node [block, right of=cz1] (cz) {\Large CS}
+        	
+        	node [block, above =0.2cm of cz1] (cz_e1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
+        	node [block, above =0.2cm of cz] (cz_e) {\Large CS}
+        	
+        	node [block, below =0.2cm of cz1] (ccz1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
+        	node [block, left of=ccz1] (cscz) {\shortstack{simplified\\ \Large CS}}
+        	node [block, below =0.2cm of cz] (ccz) {\Large CS};
+        	
+        	\draw[->](en) |- node[below] {\small\shortstack{encoder\\decoder}} (scz);
+        	\draw[->](scz) -> node {\small encoder} (cz1);
+        	\draw[->](cz1) -> node {\small\shortstack{encoder\\decoder}} (cz);
+        	
+        	\draw[->](en)  -> node {\small encoder} (cz_e1);
+        	\draw[->](cz_e1) -> node {\small\shortstack{encoder\\decoder}} (cz_e);
+        	
+        	\draw[->](cscz) -> node {\small encoder} (ccz1);
+        	\draw[->](ccz1) -> node {\small\shortstack{encoder\\decoder}} (ccz);
+    \end{tikzpicture}
+    
+    \caption{Examined setups of transfer learning. The labels on the arrows indicate which model parts are transferred, i.e. used to initialize the subsequent model. No parameter freezing is involved except for the encoder weights in the ``CS decoder adaptation'' phase.}
+    \label{fig:transfers}
+\end{figure*}
+
+\section{Experiments}
+\label{sec:experiments}
+
+%This section presents our resources and proposed methods.% the proposed methods of direct transfer and transfer with intermediate simplification.
+
+\subsection{Data and Models Used}
+
+%We build upon the following components:
+
+\paragraph{Pre-Trained English ASR.}
+
+We use the \repl{}{NeMo} checkpoint available at the \textit{NVIDIA GPU Cloud}.\footurl{https://ngc.nvidia.com/catalog/models/nvidia:quartznet15x5} It is trained for 100 epochs with batch size 512 on 8 NVIDIA V100 GPUs and achieves 3.98\,\% WER on LibriSpeech \parcite{panayotov2015librispeech} test-clean.
+
+During the experiments, the model configuration provided by the NeMo authors is used with minor changes (we used 1000 warm-up steps and for decoder adaptation learning rate $10^{-3}$). We note, that we use $O1$ optimization setting, that is, mixed precision training (weights are stored in single precision, gradient updates are computed in double precision). We perform training on 10 NVIDIA GeForce GTX 1080 Ti GPUs with 11 GB VRAM.
+
+
+\paragraph{Czech Speech Data.}
+In our experiments, we use Large Corpus of Czech Parliament Plenary Hearings \parcite{dataset}. At the time of writing, it is probably the largest available speech corpus for Czech language, consisting of approximately 400 hours.
+
+The corpus includes two held out sets: the development set extracted from the training data and reflecting the distribution of speakers and topics, and the test set which comes from a different period of hearings. We choose the latter for our experiments because we prefer the more realistic setting with a lower chance of speaker and topic overlap.
+
+A baseline, end-to-end Jasper model trained on this corpus for 70 epochs has the accuracy of 14.24\,\% WER on the test set.
+
+\subsection{Examined Configurations}
+
+\cref{fig:transfers} presents the examined setups. In all cases, we aim at Czech ASR. The baseline (not in the diagram) is to train the network from scratch on the whole Czech dataset, converting the speech signal directly to Czech graphemes, i.e. words in fully correct orthography, except punctuation and casing which are missing in both the training and evaluation data.
+
+%The goal of all our experiments is to train Czech speech recognition. \XXX{Moze byt takto?:} During our experiments, we constantly check progress evaluating corpus' test set. We have chosen test set particularly because it has none (or very little) speaker overlap with the training set. 
+
+\subsection{Basic Transfer Learning}
+\label{basic_transfer}
+
+The first method is very similar \perscite{kunze-etal-2017-transfer}. We use the English checkpoint with the (English) WER of 3.98\,\% on LibriSpeech test-clean and continue the training on Czech data.
+
+Czech language uses an extended Latin alphabet, with diacritic marks (acute, caron and ring) added to some letters. This extended alphabet has 42 letters including the digraph ``ch''. Ignoring this digraph (it is always written using the letters ``c'' and ``h''), we arrive at 41 letters. Only 26 of them are known to the initial English decoder.
+
+To handle this difference, we use a very quick decoder adaptation. For the first 1500 steps, we keep the encoder frozen and train the decoder only (randomly initialized; Glorot uniform).
+
+%As in the previous experiment (see \cref{sub_sec:simplification}) we first extend the target vocabulary to full Czech alphabet and we do a brief adaptation for 1500 steps.
+
+Subsequently, we unfreeze the encoder and train the whole network on the Czech dataset.
+
+\begin{landscape}
+\begin{figure}[t]
+\includegraphics[width=\linewidth,height=13cm]{img/figure}
+\caption{Evaluation on test set during training. % (every 500 steps).
+Note, that WER curves for experiments with simplified vocabulary (thin lines) are not directly comparable with other curves until step 40,000 as the test set is on different (simplified) vocabulary. 10,000 steps takes approximately 5 hours of time.}
+\label{fig:training}
+\end{figure}
+\end{landscape}
+
+\subsection{Transfer Learning with Vocabulary Simplification}
+
+In this experiment, we try to make the adaptation easier by first keeping the original English alphabet and extending it to the full Czech alphabet only once it is trained.
+
+To coerce Czech into the English alphabet, it is sufficient to strip diacritics (e.g. convert ``\v{c}\'arka'' to ``carka''). This simplification is quite common in Internet communication but it always conflates two sounds (\textipa{[ts]} written as ``c'' and \textipa{[tS]} written as ``\v{c}'')  or their duration (\textipa{[a:]} for ``\'a'' and \textipa{[a]} for ``a'').
+
+In this experiment, we first initialize both encoder and decoder weights from the English checkpoint (English and simplified Czech vocabularies are identical so the decoder dimensions match) and we train the network on the simplified Czech dataset for 40 thousand steps.
+
+The rest (adaptation and training on the full Czech alphabet)
+is the same as in \cref{basic_transfer}.
+%
+Overall, this can be seen as a simple version of coarse-to-fine training where a single intermediate model is constructed with a reduced output alphabet.
+
+\subsection{Vocabulary Simplification Only}
+\label{sub_sec:simplification}
+
+% In this experiment we first simplify target vocabulary: we use standard Latin alphabet with 26 letters plus space and apostrophe (to preserve compatibility with English). Czech transcripts are then encoded using this simplified alphabet (e.g. ``\v{c}\'arka'' as ``carka'').
+
+%With transcripts encoded in this manner we train a randomly (Glorot uniform) initialized QuartzNet network for 40 thousand steps. 
+
+%From our previous experience with vocabulary adaptation, we do a brief adaptation of the model for a different alphabet. We initialize encoder with weights obtained in the previous step and modify the target vocabulary to all Czech letters (41 plus space and apostrophe). The decoder is initialized with random weights. We freeze the encoder and train this network shortly for 1500 steps.
+
+%After this brief adaptation step, we unfreeze the encoder and train the whole network for 40 thousand steps.
+
+In the last experiment, we disregard the English pre-trained model and use only our vocabulary simplification trick. We first train the randomly initialized model on Czech without diacritics (26 letters) for 38 thousand steps and then switch to full Czech  (41 letters), again via the short decoder adaptation. Note that the original decoder for simplified Czech is discarded and trained from random initialization in this adaptation phase.
+
+
+
+\begin{table}[t]
+\small\centering
+\begin{tabular}{lc|cc}
+%\hline 
+%\thead{Experiment} & \thead{Czech \\ simpl.} & \thead{Czech \\ adapt.} & \thead{Czech \\ full} \\
+\bf Experiment & \bf Simpl. & \bf Adapt. & \bf Full \\
+\hline
+ Baseline CS & - &  - &  20.19 \\
+%\hline
+ EN $\rightarrow$ CS & -  & 97.35 &  19.06  \\
+%\hline
+ EN $\rightarrow$ sim. CS $\rightarrow$ CS & 17.11  & 22.01 &  16.88 \\
+%\hline
+ sim. CS $\rightarrow$ CS & 20.56  &  24.59 &  16.57  \\
+%\hline
+\end{tabular}
+\caption{Results in \% of word error rate on the Czech test set. ``Simpl.'' reflects WER on Czech without accents (both hypothesis and reference stripped). ``Adapt.'' and ``Full'' already use the original test set.}
+\label{tab:results}
+\end{table}
+
+
+
+\section{Results and Discussion}
+\label{sec:results}
+
+%In this section, we present and discuss the results obtained in previously described experiments. Results summary can be seen in \cref{tab:results} and evaluations during training are in \cref{fig:training}.
+
+\cref{tab:results} presents our final WER scores and \cref{fig:training} shows their development through the training. For simplicity, we use greedy decoding and no language model. We do not use a separate development,
+we simply take the model from the last reached training iteration.\footnote{Little signs of overfitting are apparent for the ``Simplified CS $\rightarrow$ CS'' setup, so an earlier iteration might have worked better but we do not have another test set with unseen speakers to validate it.}
+
+\subsection{Transfer across Unrelated Languages}
+
+We observe that initialization %of network weights
+with an unrelated language helps to speed-up training. This is best apparent in ``English $\rightarrow$ Czech simplified'' where the unchanged vocabulary allows to reuse all the weights. WER drops under 30\,\%  after only 2000 steps (1 hour).\footnote{This can be particularly useful if the final task does not require the lowest possible WER, such as sound segmentation.}
+
+%\XXX{This is particularly important in task, where the WER is not that important. We have applied model with approximately 30 \% WER on segmentation achieving very good results. This can thus enable easier creation of new datasets.}
+
+If the target alphabet is altered (``English $\rightarrow$ Czech''), we observe a speed-up at the beginning of the training. Our setting with QuartzNet and as well as these results are similar to \perscite{kunze-etal-2017-transfer} with a high $k = 18$. % abstracted to QuartzNet's convolutional layers $C_1$ to $C_4$ and blocks $B_i$ with high $k = 18$.} 
+However, this advantage diminishes with longer training, gaining only
+%becomes weaker as the training progresses. Towards the end, the advantage is roughly
+1 to 2\,\% points of WER over the baseline in the end.
+
+% Nasledujici odstavec jsem v grafu nedokazal najit presne, tak ho pro jednoduchost zatajuji.
+%It seems though, that in the experiments with different vocabularies, after change to the full Czech vocabulary, the results are better for randomly initialized network, rather than the one with transfer from English.
+
+\subsection{Transfer across Target Vocabularies}
+
+In the course of two experiments, we altered the target vocabulary: the training starts with simplified Czech and after about 40,000 steps, we switch to the full target vocabulary. This sudden change can be seen as spikes in \cref{fig:training}.\footnote{Note that WER curves prior to the spike use the simplified Czech reference, so they are not directly comparable to the rest.}
+
+The intermediate simplified vocabulary brings always a considerable improvement: the final WER is lower by 2.18 (16.88 vs 19.06 in \cref{tab:results}) for the models transferred from English and by 3.62 (16.57 vs 20.19) for Czech-only runs.
+One possible reason for this improvement is the ``easier'' intermediate task of simpler Czech (although the exact difficulty is hard to compare; the target alphabet is smaller but more spelling ambiguities may arise) which helps the network to find a better-generalizing region in the parameter space. Another possible reason that this sudden change and reset of the last few layers allows the model to reassess and escape a local optimum in which the ``English $\rightarrow$ Czech'' setup could be trapped.
+
+%We see, that the word error rate is after the change to full Czech vocabulary considerably lower in the case of both experiments that start with simplified vocabulary. Better result yield random initialization (about 6 \% points compared with baseline after only 50K steps). We hypothesise, that the network \XXX{Nema na toto nahodou Tom Kocmi nejaku citaciu} is ``stucked'' at local optimum that might be better for English rather than Czech.
+
+%We assume that following is the cause of the substantial boost in WER for the training with intermediate vocabulary and random initialization compared to other experiments with full Czech vocabulary: 
+%First, the training on reduced vocabulary may be ``easier'' for the network, as there is less output labels and these are more diverse.
+%Second, change of vocabulary serves as regularization of the training. Sudden change of output labels changes also gradients and this may help the network to find better optima.
+
+
+
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+We presented our experiments with transfer learning for automated speech recognition between unrelated languages.
+In all our experiments, we outperformed the baseline in terms of speed of convergence and accuracy.
+
+We gain a substantial speed-up when training Czech ASR while reusing weights from a pre-trained English ASR model. The final word error rate is better only marginally in the basic transfer learning setup.
+%
+We are able to achieve a substantial improvement in WER by introducing an intermediate step in the style of coarse-to-fine training, first training the models to produce Czech without accents and then refining the model to the full Czech.
+Or final model for Czech is better by over 3.5 WER absolute over the baseline, reaching WER of 16.57\%. Further gains are expected from beam-search or better iteration choice to avoid overfitting.
+
+%As we documented in the \cref{sec:results}, transfer learning leads to substantial reduction of training time. We achieved speed-up even on unrelated languages. We also demonstrated that coarse-to-fine approach leads not only to training time reduction, but also yields better accuracy.
+
+We see further potential in the coarse-to-fine training and we would like to explore this area more thoroughly, e.g. by introducing multiple simplification stages or testing the technique on more languages.
+
+\section{Cross-Lingual ASR Transfer with Coarse-to-Fine Intermediate Step}
+\XXX{Dat odkaz na clanok}
+
+
+\section{ASR Transfer from graphemes to phonemes}
+\url{https://ieeexplore.ieee.org/abstract/document/21701}
+We describe ASR transfer from graphemes to phonemes. We start with pretrained Jasper ASR model available online\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:multidata set_jasper10x5dr}}.
+
+
+
+\subsection{English phonemes}
+\paragraph{Training}
+
+\begin{table}[t]
+	\small\centering
+	\begin{tabular}{lcc|cc}
+		%\hline 
+		%\thead{Experiment} & \thead{Czech \\ simpl.} & \thead{Czech \\ adapt.} & \thead{Czech \\ full} \\
+		\bf Type & \bf Decoding & \bf Corpus & \bf Adapt. & \bf Full \\
+		\hline
+		\multirow{2}{*}{dev} & \multirow{2}{*}{greedy} & Libri Speech Clean & 46.07 &   3.84 \\
+
+		&& Common Voice & 54.69 &  11.86 \\
+		
+		\hline
+
+		\multirow{3}{*}{test} & \multirow{3}{*}{beam} & Libri Speech Clean & - &  4.19  \\
+		
+		 && Libri Speech Other & - &  11.48  \\
+
+		&& Common Voice & - &  12.56  \\
+		%\hline
+	\end{tabular}
+	\caption{Results in \% of word error rate on the Czech test set. ``Simpl.'' reflects WER on Czech without accents (both hypothesis and reference stripped). ``Adapt.'' and ``Full'' already use the original test set.}
+	\label{tab:en_phon_results}
+\end{table}

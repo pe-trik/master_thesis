@@ -1,6 +1,7 @@
 export TEXINPUTS=../tex//:
 
 all: main.pdf abstract.pdf
+	cp main.pdf main.PREVIEW.pdf
 
 # LaTeX must be run multiple times to get references right
 main.pdf: main.tex $(wildcard *.tex) bibliography.bib main.xmpdata

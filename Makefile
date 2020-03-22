@@ -4,11 +4,19 @@ all: main.pdf abstract.pdf
 	cp main.pdf main.PREVIEW.pdf
 
 # LaTeX must be run multiple times to get references right
-main.pdf: main.tex $(wildcard *.tex) bibliography.bib main.xmpdata
-	pdflatex $<
-	bibtex main
-	pdflatex $<
-	pdflatex $<
+main.pdf: $(wildcard *.tex) bibliography.bib main.xmpdata
+
+LATEX=pdflatex
+%.pdf: %.tex
+	$(LATEX) $<
+	bibtex $* || ( echo "Bibtex failed" && exit 1 )
+	# change the exit 1 to exit 0 in the line above if you want to ignore it
+	lim=4; \
+	  while [ $$lim -ge 0 ] \
+	      && grep 'Rerun to get\|Citation.*undefined' $*.log >/dev/null 2>/dev/null; do \
+	    $(LATEX) $< ; \
+	    lim=$$(($$lim - 1)) ; \
+	  done
 
 abstract.pdf: abstract.tex abstract.xmpdata
 	pdflatex $<

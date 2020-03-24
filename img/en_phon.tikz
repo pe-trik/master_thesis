@@ -1,0 +1,89 @@
+\begin{tikzpicture}
+\small
+
+\begin{axis}[
+legend cell align={left},
+legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.01960784313725!black},
+xlabel={Steps},
+xmin=1000, xmax=61000,
+xtick style={color=black},
+y grid style={white!69.01960784313725!black},
+ylabel={Phoneme Word Error Rate (\%)},
+ymin=3, ymax=20,
+ytick style={color=black}
+]
+\addplot 
+table {
+0 100.00
+2000 46.07
+4000 12.84
+6000 6.20
+8000 5.18
+10000 4.83
+12000 4.58
+14000 4.45
+16000 4.35
+18000 4.20
+20000 4.21
+22000 4.17
+24000 4.18
+26000 4.05
+28000 3.93
+30000 3.93
+32000 3.92
+34000 3.91
+36000 3.87
+38000 3.87
+40000 3.83
+42000 3.85
+44000 3.81
+46000 3.84
+48000 3.79
+50000 3.83
+52000 3.80
+54000 3.78
+56000 3.81
+58000 3.79
+60000 3.84
+};
+\addlegendentry{Libri Speech dev clean}
+\addplot 
+table {
+0 100.00
+2000 54.69
+4000 23.62
+6000 16.11
+8000 14.56
+10000 13.94
+12000 13.52
+14000 13.33
+16000 13.05
+18000 12.82
+20000 12.85
+22000 12.62
+24000 12.67
+26000 12.50
+28000 12.31
+30000 12.39
+32000 12.20
+34000 12.20
+36000 12.14
+38000 12.09
+40000 12.07
+42000 11.94
+44000 11.93
+46000 11.94
+48000 11.86
+50000 11.85
+52000 11.83
+54000 11.84
+56000 11.84
+58000 11.83
+60000 11.86
+};
+\addlegendentry{Common Voice dev}
+\end{axis}
+\end{tikzpicture}

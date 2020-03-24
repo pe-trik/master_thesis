@@ -21,7 +21,7 @@ In the last few years, deep neural networks gained much popularity. In many task
 In this section, we introduce contemporary models utilized for ASR. There are two such approaches: (1) HMM-based models, (2) End-to-End neural models.
 
 \subsubsection{HMM-based models}
-HMMs (Hidden Markov Models) are probably the most used technique in ASR \parcite{padmanabhan2015machine}. HMMs are in the ASR context used with either GMMs (Gaussian Mixture Models)  or ANNs (Artificial Neural Networks).  Practitioners often refer to the HMM-based models as a hybrid.
+HMMs (Hidden Markov Models) are probably the most used technique in ASR \parcite{padmanabhan2015machine,yu2016automatic}. Hidden Markov Models capture the the speech information sequence. HMMs utilize in the ASR context either GMMs (Gaussian Mixture Models) or ANNs (Artificial Neural Networks) in order to model frame-based speech features (features with no temporal information). Practitioners often refer to the HMM-based models combined with neural networks as hybrid models.
 
 A typical pipeline of an HMM-based model works as follows: the input is first pre-processed and converted to features, typically the MFCCs (see \cref{mfcc}). These featured are further passed to the estimator. Common, estimated units in HMM-based pipelines are phones. The decoder employs \emph{acoustic model}, \emph{dictionary} and \emph{language model} to decode the speech. The acoustic model estimates the probability of the acoustic sequence given word sequence. ANNs or GMMs represents the acoustic model. Dictionary maps phone sequences to words. Finally, the language model estimates the apriori probability of word sequence, independent of observed sound. Usual are $n$-gram language models. 
 
@@ -30,11 +30,13 @@ Opposed to the HMM-based models are End-to-End ASR pipelines. The common trait f
 
 The input of the model are MFCC features extracted from speech data. E2E model then outputs probabilities of graphemes at each time step employing CTC loss. Applications extend conventional beam search with language model (again, $n$-gram LM is used) that re-scores the beams during the decoding. The use of LM in the beam search further enhances the transcription quality.
 
+\pagebreak
 \section{\XXX{Spoken Language Translation or Speech translation}}
 Spoken Language Translation is another NLP task dealing with the translation of the speech. \XXX{In literature, the SLT task describes translation into a target language text. Commonly, SLT can also be a speech-to-speech translation.} Traditional layout of speech translation, before the emergence of end-to-end systems, consisting of a speech recognition unit followed by machine translation. With the upraise of deep learning, E2E frameworks that do not need intermediate transcription step are gaining popularity \parcite{berard2016listen,berard2018end,jia2019leveraging}.
 
 Direct comparison of both methods seems inconclusive \parcite{sperber2019attention}. Also, the actual tasks of E2E and cascaded SLT differ: E2E SLT must be trained on E2E corpora, while the cascading can be trained on independent corpora for ASR and MT. This makes the latter suitable in cases where is no corpus for given language pair available (which is mostly the case). On the other hand, cascading speech recognition and machine translation for SLT could introduce errors in source language transcription that might be further propagated to final translation.
 
+\pagebreak
 \section{Models/architectures}
 In this section, we introduce neural network models/architectures we engage in our work. The first two models, Jasper and QuartzNet, are used as acoustic models. Finally, we present the Transformer, which serves as a translation and correction model.
 
@@ -108,6 +110,11 @@ We employ this model in our enhanced ASR pipeline as a correction and language m
 	\label{fig:transformer}
 \end{figure}
 
+
+
+
+
+\pagebreak
 \section{Data representation}
 This section introduces to the reader the data representations. The way how we encode and feed the neural network can significantly influence performance. In this work, we transcribe recordings, i.e., we work with voice and text data. First, we introduce MFCC --- the voice presentation, and then we discuss text encoding.
 
@@ -177,6 +184,7 @@ In our work, we use BPE implementation YouTokenToMe\footnote{\url{https://github
 \subsubsection{Byte Pair Encoding}
 We would like to point out inconsistency of reporting BPE size in literature. Some authors use terms ``\textit{BPE size}'' and ``\textit{number of merge operations}'' as synonyms, although the actual \textit{BPE size} equals \textit{number of merge operations} plus \textit{characters}. In this work, we use term ``\textit{BPE size}'' as absolute vocabulary size --- including characters. 
 
+\pagebreak
 \section{Data sets}
 We dedicate this section to data sets used for the training of models in our work. First, we introduce speech corpora LibriSpeech and Common Voice, and then we introduce translation corpus CzEng.
 
@@ -214,6 +222,9 @@ We intend to filter out sentences as for example \\
 
 Such utterances do not have straightforward pronunciation, could break \texttt{phone\-mi\-zer}, and could degrade the transcript and translation quality.
 
+
+
+\pagebreak
 \section{Error Metrics}
 In this work, we use two error metrics, one for measuring the quality of speech recognition systems --- word error rate (WER) --- and a metric for evaluation of spoken language translation --- BLEU.
 

@@ -79,14 +79,14 @@ A further reduction of weights can be achieved by using grouped pointwise convol
 
 As the first described weights reduction is sufficient for our purposes, we work with QuertzNet without the grouped pointwise convolution.
 
-\begin{figure}[h]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=\linewidth]{img/QuartzNet_v2.png}
 	\caption{QuartzNet BxR architecture. Taken from \perscite{kriman2019quartznet}.}
 	\label{fig:quartz_arch}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=0.8\linewidth]{img/QuartzNet_Grouped_v2.png}
 	\caption{(a) Time-channel separable 1D convolutional module (b) Time-channel separable 1D convolutional module with groups and shuffle. Taken from \perscite{kriman2019quartznet}.}
@@ -103,7 +103,7 @@ The advantage of self-attention is that it can access arbitrary position in a co
 
 We employ this model in our enhanced ASR pipeline as a correction and language model and as a translation model in our SLT pipeline. 
 
-\begin{figure}[h]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=0.8\linewidth]{img/ModalNet-21.png}
 	\caption{Transformer model architecture with detailed encoder (left) and decoder (right). Taken from \perscite{vaswani2017attention}}
@@ -156,7 +156,7 @@ MFCC pipeline as described in \perscite{muda2010voice} and \perscite{kamath2019d
 
 An example of a mel-spectrogram is in the \cref{fig:mel}.
 
-\begin{figure}[h]
+\begin{figure}[t]
 	\centering
 	\includegraphics[width=0.8\linewidth]{img/mel.png}
 	\caption{Mel spectogram of ``Hello World!''.}
@@ -164,6 +164,7 @@ An example of a mel-spectrogram is in the \cref{fig:mel}.
 \end{figure}
 
 \subsection{Text representation in NMT}
+\label{intro:text_repre}
 
 There are many approaches to text representation in NMT. Each of these representations has its advantages and drawbacks. We differentiate the following representations:
 

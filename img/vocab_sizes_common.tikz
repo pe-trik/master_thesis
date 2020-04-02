@@ -3,13 +3,14 @@
 \small
 
 \begin{axis}[
-legend cell align={left},
+legend pos=outer north east,
+legend cell align={right},
 legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
 tick align=outside,
 tick pos=left,
 x grid style={white!69.01960784313725!black},
 xlabel={Steps},
-xmin=8000, xmax=71000,
+xmin=5000, xmax=66000,
 xtick style={color=black},
 y grid style={white!69.01960784313725!black},
 ylabel={Word error rate (\%)},
@@ -200,3 +201,4 @@ table {
 \end{axis}
 
 \end{tikzpicture}
+

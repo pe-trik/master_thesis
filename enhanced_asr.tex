@@ -3,219 +3,101 @@
 
 \begin{figure}[h]
 	\centering
-	\begin{tikzpicture}[thick, node distance=4cm, 
+	\resizebox{.9\textwidth}{!}{
+	\begin{tikzpicture}[thick, node distance=4.5cm, 
 	>=stealth,
 	bend angle=45,
 	auto]
 	\draw
 	node at (0,0)[draw,trapezium,trapezium left angle=70,trapezium right angle=-70] (sound) {sound}
-	node [block, right=1cm of sound] (acm) {\shortstack{Acoustic model\\ \tiny{Jasper}}}
-	node [block, below= 1cm of acm] (cor) {\shortstack{Translation model\\ \tiny{Transformer}}}
-	node [draw,trapezium,trapezium left angle=70,trapezium right angle=-70, right =1cm of cor] (trans) {\shortstack{transcript\\ \tiny{graphemes}}};
+	node [block, right=1.5cm of sound] (acm) {\shortstack{Acoustic model\\ \tiny{Jasper}}}
+	node [block, below= 1.5cm of acm] (cor) {\shortstack{Translation model\\ \tiny{Transformer}}}
+	node [draw,trapezium,trapezium left angle=70,trapezium right angle=-70, right =1.5cm of cor] (trans) {\shortstack{transcript\\ \tiny{graphemes}}};
 	
 	\draw[->](sound) -> node {}  (acm);
 	\draw[->](acm) -> node  {phonemes} (cor);
 	\draw[<-](trans) -> node {}  (cor);
 	
-	\end{tikzpicture}
-	\caption{Enhanced ASR pipeline.}
+	\end{tikzpicture}}
+	\caption{Enhanced ASR pipeline. The input sound is first transcribed to phonemes using Jasper/QuartzNet ``acoustic'' model. Phonemes are fed to the ``translation'' model. Translation model not only translates, but also fix some errors in the ASR output and produces orthographic transcriptions.}
 	\label{fig:asr_enhanced_pipeline}
 \end{figure} 
 
-In this chapter we describe and build enhanced ASR. We propose to split a conventional end-to-end ASR into to two successive models: (1) an acoustic model that outputs phonemes instead of graphemes and (2) ``translation'' model that consumes previously outputted phonemes and translates them into the graphemes. Illustation of proposed enhanced ASR pipeline is in \cref{fig:asr_enhanced_pipeline}.
 
-The main idea is, that the translation model that comes right after acoustic model in our setup (see \cref{fig:asr_enhanced_pipeline}) not only ``blindly'' translates phonemes into graphemes, but also corrects errors. Errors can occur for example due to bad conditions during voice recording (e.g. background noise), speaker's dialect or pronunciation errors. Some of these errors may be obscure for a person, as we are naturally able to communicate in noisy environment. The motivation for introduction of such translation step into our pipeline is that such model better understands language and can take longer context into account when compared with plain end-to-end Jasper model. Furthermore, we can utilize other non-speech corpora, e.g. easy obtainable monolingual data, to train and/or finetune part of our pipeline.
+In this chapter we describe and build enhanced ASR. We propose to split a conventional end-to-end ASR into to two successive models: 
+
+\begin{enumerate}
+	\item an acoustic model that outputs phonemes instead of graphemes,
+	\item ``translation'' model that consumes previously outputted phonemes and translates them into the graphemes.
+\end{enumerate}
+
+Illustration of proposed enhanced ASR pipeline is in \cref{fig:asr_enhanced_pipeline}.
+
+The main idea is, that the translation model that comes right after acoustic model in our setup not only ``blindly'' translates phonemes into graphemes, but also corrects errors. Errors can occur for example due to bad conditions during voice recording (e.g. background noise), speaker's dialect or pronunciation errors. Some of these errors may be obscure for a person, as we are naturally able to communicate in noisy environment. The motivation for introduction of such translation step into our pipeline is that such model better understands language and can take longer context into account when compared with plain end-to-end Jasper model. Furthermore, we can utilize other non-speech corpora, e.g. easy obtainable monolingual data, to train and/or finetune part of our pipeline.
 
 We decided to use phonemes as intermediate representation. We believe that conventional grapheme representation is too complicated and constrained for some languages with complicated rules of mapping speech to transcript. This issue becomes more immense when dealing with dialects and non-native speakers.
 
-In order to build this part of the pipeline as robust as possible, we train the translation model to be capable of correcting some errors that are created by ASR. Therefore, in \cref{sec:asr_corrupted} we describe procedure of obtaining suitable ``corrupted'' training data which we use later on for making the translation model prone to the ASR-sourced errors.
-
-\section{Related work}
-
-\section{Obtaining ``ASR corrupted'' training data}
-\label{sec:asr_corrupted}
-
-\begin{figure}[h]
-	\centering
-	\begin{tikzpicture}[thick, node distance=2.5cm, 
-	>=stealth,
-	bend angle=45,
-	auto,regentonne/.style={cylinder,aspect=0.3,draw,shape border rotate=90}]
-	\draw
-	node at (0,0)[block,regentonne] (libri) {\shortstack{LibriSpeech\\ \small{training data}}}
-	node [block, below right=0.4cm of libri] (ensemble1) {\shortstack{$40 \times$ QuartzNet\\ \small{small models}}}
-	node [block,regentonne, below =1.5cm of libri] (common) {\shortstack{Common Voice\\ \small{training data}}}
-	
-	node at (0,-6) [block,regentonne] (libri_dev) {\shortstack{LibriSpeech\\ \small{dev}}}
-	node [block,regentonne, below =0.3cm of libri_dev] (common_dev) {\shortstack{Common Voice\\ \small{dev}}}
-	
-	node at (5,-7) [block] (jasper) {\shortstack{Jasper\\ \small{big model} \\ \small{from final pipeline}}}
-	
-	node [block, right=1cm of ensemble1] (filter) {\shortstack{filter\\ \small unique source\\ $<$50\% WER}}
-	
-	node [block,regentonne,right=1cm of filter] (training) {\shortstack{``corrupted''\\ training data}}
-	
-	node at (10,-6) [block,regentonne] (libri_dev2) {\shortstack{``corrupted''\\LibriSpeech\\ \small{dev}}}
-	node [block,regentonne, below =0.3cm of libri_dev2] (common_dev2) {\shortstack{``corrupted''\\Common Voice\\ \small{dev}}};
-	
-	\draw[->](libri) -> node {}  (ensemble1);
-	\draw[->](common) -> node  {} (ensemble1);
-	\draw[->](ensemble1) -> node {}  (filter);
-	\draw[->](filter) -> node {}  (training);
-	\draw[->](libri_dev) -> node {}  (jasper);
-	\draw[->](common_dev) -> node {}  (jasper);
-	\draw[->](jasper) -> node {}  (libri_dev2);
-	\draw[->](jasper) -> node {}  (common_dev2);
-	
-	\end{tikzpicture}
-	\caption{After training of 10 ``smaller'' QuartzNet models with 4 chechpoints made along the way (hence $40 \times$), training data are transcribed and filtered. Similarly, Development sets are transcribed using ``bigger'' Jasper model that will be in the final ASR pipeline (see \cref{fig:asr_enhanced_pipeline}).}
-	\label{fig:asr_folds}
-\end{figure} 
-
-In this section we describe process in which we gather ``corrupted'' data from speech recognition model. We will use these data later to improve robustness of translation model.
-
-We design the setup similarly to that of \perscite{hrinchuk2019correction}. First, ten ASR models are trained. Additionally, we store checkpoints during training and keep last 4 of them, yielding 40 models. Second, we transcribe all available training data using the set of models obtained in previous step. Subsequently, we pair the ``corrupted'' transcriptions obtained with true transcriptions. We obtain parallel corpus of ``corrupted'' and ``clean'' sentences. These data will be then used in further training as source of ``natural'' noise that occurs in speech recognition.
-
-In the later stage, we will train translation model, the second part of the proposed pipeline (see \cref{fig:asr_enhanced_pipeline}). One of the requested properties is the ability to correct errors introduced by acoustic model. To be able to test this property during and after training, we prepare a special development sets. We will build on existing dev sets from LibriSpeech and Common Voice and ``corrupt'' them in the same manner as training data with a distinction: the final big Jasper model (that will be in the final ASR pipeline) is used instead of the ten smaller models. 
-
-Overview of the setup is pictured in \cref{fig:asr_folds}.
-
-\subsection{Data preparation}
-Speech corpora LibriSpeech and Common Voice are used. We concatenate these two and divide them into ten folds of same size. We intentionally do not shuffle the concatenated data set prior to splitting it into folds, so that the difference among the trained models is as much as possible (proportion of training data from LibriSpeech and from Common Voice will vary more). The models are trained on these folds in cross-validation manner: $i$-th model skips $i$-th fold during training.
-
-\subsection{Training}
-Similarly to \perscite{hrinchuk2019correction} we train ten models and also store checkpoints every 5000 steps. Instead of bigger Jasper we choose QuartzNet. Jasper and QuertzNet are two distinct architectures, nevertheless, they are similar enough and we assume they behave likewise. The main reason of our choise are reduced hardware requirements and hence faster convergence. In contrast with bigger ASR Jasper model that we train on 10 GPUs, each QuertzNet model for data collection is trained only on 1 GPU. After less than a day of training, the models perform almost as good as the bigger model.
-
-Transfer learning technique is again employed to reduce training time and improve model's performance. For English, the QuartzNet encoders are initialized with checkpoint available at NVIDIA NGC\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:quartznet15x5}} which is trained on LibriSpeech and Common Voice. As the target vocabulary differs for our setup (phonemes instead of graphemes), we apply the method from chapter \ref{chapter:asr} and so the training is divided into phases: (1) Decoder adaptation phase: encoder is initialized with pretrained weights and is freezed while decoder is randomly initialized. Only decoder is then trained, (2) Full training: encoder is unfreezed and trained together with decoder. Adaptation phase is set to take 2000 steps and full training then continues for another 30000 steps.
-
-\subsection{Results}
- On average, after the first adaptation phase the word error rate of most models on LibriSpeech \texttt{dev clean} dropped under 16 \% after less than 5 hours. One model had WER two times worse than others (33.05 \%) and one did not converge at all. After full training which took about 15 hours, average WER is 5.3 \% with very small variance. Compared with big Jasper it is only about 1.5 percent points more. Evaluations during training can be seen in \cref{fig:ensemble_training} and final results are shown in \cref{tab:eng_folds}.
-
-\begin{figure*}[t]
-		\includegraphics[width=\linewidth,height=8cm]{img/ensemble}
-		\caption{Evaluation on dev set during training of 10 models (using greedy decoding). One epoch takes approximately 24400 steps.}
-		\label{fig:ensemble_training}
-\end{figure*}
-
-\begin{table}[t]
-		\centering
-		\resizebox{\columnwidth}{!}{
-		\begin{tabular}{l|cccccccccc}
-			\bf Model & \bf 1 & \bf 2 & \bf 3 & 4 & \bf 5 & \bf 6 & \bf 7 & \bf 8 & \bf 9 & \bf 10  \\
-			\hline 
-			
-			Adapt. phase & 15.17  & 
-            15.02  & 
-            16.66  & 
-            22.15  & 
-            15.07  & 
-            15.39  & 
-            15.24  & 
-            17.44  & 
-            15.38  & 
-            33.05 \\
-            Full training &
-            5.07  & 
-            5.21  & 
-            5.16  & 
-            4.99  & 
-            5.22  & 
-            5.34  & 
-            5.45  & 
-            5.31  & 
-            5.30  & 
-            5.98
-			
-		\end{tabular}
-		}
-		\caption{Results in \% of word error rate (using greedy decoding) on LibriSpeech \texttt{dev clean} for all trained models.}
-		\label{tab:eng_folds}
-\end{table}
-	
-\subsection{``Corrupted'' data collection}
-Unlike \perscite{hrinchuk2019correction}, in our experiment we do not employ cutout and dropout during data collection. In order to generate more data, we make checkpoints during training every 5000 steps and keep last 4 for every model. This give us 40 unique models.
-
-Concatenated LibriSpeech and Common Voice training data are used for inference on all 40 models yielding 36M sentence pairs. We filter pairs with unique source sentence and keep pairs where word error rate is under 50 \%. From the 36 millions sentence pairs we get 7M filtered sentence pairs, particulary 3.7M from LibriSpeech and 3.3M from Common Voice.
-
-\begin{table}[t]
-		\centering
-		\small
-		\begin{tabular}{l|ccc}
-			\bf Set & \bf AVG WER & \bf Median WER & \bf STD   \\
-			\hline 
-			Training &  10.24 \% & 2.70 \% & 16.64 \% \\
-			LibriSpeech \texttt{dev clean} &  4.33 \% & 0.0 \% & 8.37 \% \\
-			Common Voice \texttt{dev} &  11.98 \% & 0.0 \% & 17.71 \% \\
-		\end{tabular}
-		\caption{Results in \% of word error rate on LibriSpeech \texttt{dev clean} for all trained models.}
-		\label{tab:eng_corrupted_table}
-\end{table}
-
-\begin{figure*}[t]
-		\includegraphics[width=\linewidth,height=8cm]{img/histogram}
-		\caption{Evaluation on test set during training of 10 models.}
-		\label{fig:histogram}
-\end{figure*}
-
-Distribution of WER in training and dev sets is visible in histogram~\ref{fig:histogram}. Following \perscite{hrinchuk2019correction} we filter out all pairs with WER greater than 50~\%. As we can see in the histogram~\ref{fig:histogram}, only 4~\% of training data are left out. We can observe that the distribution of WER for training data almost copy the distribution of Common Voice dev with training data having slightly more pairs with smaller WER. On the other hand, LibriSpeech dev clean has significantly more examples with small WER.
-
-
-\subsection{Error analysis}
-\XXX{description of errors in corrupted data}
-
-\section{Czech ASR corrupted data}
-In this section we reproduce previously described task for Czech language. Most challenging is to overcome scarcity of speech data --- Czech corpus has approximately 400h and we have two English corpora that yield together almost 2000h.
-
-\subsection{Task setup}
-Similarly to the setup described in \cref{sec:asr_corrupted}: we split the available data into ``folds''. Each fold then serves as a training corpus for one model. Next, we take all training data (the Parliament corpus) and put it through the previously obtained models. The output are pairs of ground-truth and ``corrupted'' data. Finally, we keep pairs with unique corrupted side and with word error rate under 50 \%.
-
-\subsection{Training}
-Following the receipt from English, we employ QuartzNet architecture, train all models on one GPU and follow the same transfer learning technique. We train-off from our best performing, fully trained, Czech ASR model (see \cref{chapter:asr}). Because of the Czech training data scarcity, we train only 5 folds. For more details regarding the training see \cref{sec:asr_corrupted}.
-
-\subsection{Training results}
-\cref{tab:cs_folds,fig:ensemble_training_cs} offer detailed training results for all models. We observe a dramatic WER decline at the beginning (until step 12k), followed by no change until the end. There are probably two reasons for this behavior: (1) data scarcity; (2) contrast in orthography of English and Czech --- Czech language has high grapheme-to-phoneme correspondence. We assume the latter to have a greater impact, as the model converged after 7 thousand steps, which is roughly right after seeing all examples once (2000 steps adaptation phase + one epoch of 4775 steps of the full training).
-
-\subsection{Czech corrupted data collection}
-
-
-\begin{figure*}[h]
-		\includegraphics[width=\linewidth,height=8cm]{img/ensemble_cs}
-		\caption{Evaluation on dev set during training of 5 models (using greedy decoding). One epoch is approximately 4750 steps.}
-		\label{fig:ensemble_training_cs}
-\end{figure*}
-
-\begin{table}[h]
-		\centering
-		\begin{tabular}{l|cccccccccc}
-			\bf Model & \bf 1 & \bf 2 & \bf 3 & 4 & \bf 5  \\
-			\hline 
-			
-			Adapt. phase &
-            97.91 &
-            17.63 &
-            13.53 &
-            14.09 &
-            13.37 \\
-            Full training &
-            7.17 &
-            7.03 &
-            7.14 &
-            7.25 &
-            7.13 
-			
-		\end{tabular}
-		\caption{Results in \% of word error rate (greedy decoding) on LibriSpeech \texttt{dev clean} for all trained models.}
-		\label{tab:cs_folds}
-\end{table}
-
-\section{Transformer model}
 We step by step describe selection of hyperparameters and training of translation model for the enhanced ASR pipeline. First, we discuss and experiment with source encoding and afterwards we train the model.
 
-Throughout this experiment we use Byte Pair Encoding for tokenization of source and target sentences. We rule out word representation as it creates models with worse performance (in terms of speed and quality) \parcite{denkowski2017stronger} and obviously it cannot deal with out-of-vocabulary items.
+The chapter is organized as follows: we first review related work in \cref{easr:related}. In \cref{easr:tokenizer} we experiment with various approaches to text encoding. In \cref{easr:english,easr:czech} we present the main objective of this chapter --- translation model for ASR.
 
-As the source and target are in different alphabets --- phonemes and graphemes --- that share very few characters, BPE vocabularies and embeddings will not be shared. For target tokenization we select vocabulary size of 8K, following NeMo authors' recommendation\footnote{\url{https://nvidia.github.io/NeMo/nlp/neural_machine_translation.html}}, as this should increase batch size, leading to faster convergence while preserving same level of performance when compared with BPE vocabulary size of 32K. The target should always output valid English, hence we train BPE tokenizer on filtered CzEng (see \cref{filtered_czeng}) data set.
 
-\subsection{Source tokenizer}
+
+
+\section{Related work}
+\label{easr:related}
+In this section, we review related work. We examine ASR-related work in \cref{easr:rel_asr}, and in \cref{easr:re_encoding} we take a closer look at text encoding.
+
+\subsection{ASR}
+\label{easr:rel_asr}
+We already reviewed usage of phonemes in ASR in \cref{asr:phon:related}. At this point, we further expand corresponding work.
+
+One of the main challenges of this chapter is to build phoneme-to-grapheme (P2G) translation model. In the most studies, the P2G translation is utilized for enhancing ASR. More precisely, for out-of-vocabulary (OOV) words, the ASR system outputs phonemes instead of phonemes. P2G then tries to find proper orthographic representation. Examples of studies employing P2G in this manner are \perscite{1034672,horndasch2006phoneme,basson2013category}.
+
+One of the first attempts on P2G translation is \perscite{1161968}. Authors propose to use a tree-structure mechanism to keep track of the possibilities at various stages combined with phoneme-to-word dictionary and the structure of the English language. In order to speed-up the translation process, authors divide the dictionary into 10 sections determined by parts of speech. Authors also consider erroneous input. They propose to have more dictionary entries (for example to account for dialects) and human aid.
+
+Another study in P2G translations conduct \perscite{1034672}. They apply P2G to enhance readability of out-of-vocabulary (OOV) output in speech recognition. In their setup, ASR outputs standard (orthographic) text for known words. For OOVs, phonemes are outputted. Because the phonemes are hard to read for most users, authors propose to translate phonemes using a memory-based learning. Specifically, they propose two approaches. Fist, to use similarity metric to find closest examples in lexicon (features --- phonemes --- are weighted using gain ratio) and extrapolate result from them. Second, they propose to use IGTREE algorithm. Authors, surprisingly, report that actual word error rate in their setup (Dutch ASR) is higher. But on the other hand, the output should be better readable for a person. They report that 41 \% words are transcribed with most 1 error and 62 \% have only two errors. Furthermore, most of the incorrectly transcribed words do not exists in Dutch.
+
+\perscite{horndasch2006phoneme} introduce data-driven approach MASSIVE. Their main objective is to find appropriate orthographic representations for dictated internet search. Their system iteratively refines sequences of symbol pairs in different alphabets. In the first step, they find best phoneme-grapheme alignment using expectation-maximization algorithm. In the second step, they cluster neighboring symbols together to account for the insertions. Finally, from $n$-gram probabilities of symbol pairs are learned. During the inference, input string is split into single symbols. For each symbol is generated all possible symbol pairs. According to beam with, best sequences are taken. On German CELEX lexical database, they obtain 96.1 \% word accuracy. For English CMU, they obtain accuracy of 87.2 \% for 10-fold cross-validation.
+
+\subsection{Text encoding}
+\label{easr:re_encoding}
+In this subsection we give a brief overview of text encoding related work. High-level review of text representation in NMT can be found in \cref{intro:text_repre}. In this part, we study work on various techniques for enhancing translation quality. 
+
+Note that some authors use terms ``\textit{BPE size}'' and ``\textit{number of merge operations}'' as synonyms. But, the actual \textit{BPE size} equals \textit{number of merge operations} plus \textit{characters}. In most cases, the number of characters is small relative compared to the merge operations. Then is the discrepancy negligible. In our work, we use the term ``\textit{BPE size}'' as the total number of unique entries in BPE dictionary.
+
+First attempt to study impact of BPE vocabulary size in Neural Machine Translation was made by \perscite{denkowski2017stronger}. Specifically, they compare full-word systems with 16k and 32k BPEs. In their setups they use \textit{shared vocabularies} --- BPE learning is done on concatenation of source and target data sets. They conclude that using BPE is definitely better than using full-word vocabularies. For BPE, they suggest to use larger vocabulary over smaller one in high-resource setups (in their case over 1M parallel sentences). Reviewing they results, we observe only little performance degradation using 16k (smaller) BPE in high-resource setups (in DE-EN translation task by 0.4 BLEU and no difference for other tasks) and slightly better performance in low-resource tasks (0.3 and 0.4 BLEU for EN-FR and CS-EN respectively).
+
+In different direction --- towards character encoding went \perscite{cherry2018revisiting}. In their study, the authors compare BPE and character encoding in combination with LSTM NMT. They claim that artificial representations such as BPE are sub-optimal leading to e.g. (linguistically) improbable word fragmentations. Although, they outperform BPE, they acknowledge the problem of much higher computational requirements for both, training and inference.
+
+A deeper study of different setups (architectures, Joint vs Separate BPE, languages) and impact of vocabulary sizes on NMT performance offer \perscite{ding2019call}. Authors review several setups and a broad range of BPE sizes ranging from character-level to 32K. They show that using appropriate setting can help gain 3 to 4 BLEU points. Most experiments with smaller vocabularies (sizes up to 4K) performed better for low-resource setting. Although, for high-resource setting the larger BPE sizes are better. Authors also study joint and separate BPE. They conclude that the difference is negligible.
+
+
+Another authors \parcite{gupta2019character} study character-based and BPE NMT with Transformers under various conditions. They conclude that the BPE with 30K vocabulary is a standard choice in high resource setting. They also experiment with noisy data: when training on clean data, BPE performs slightly worse, however, when training on corrupted data, BPE with large vocabulary (30000) performed better as character level or BPE with smaller vocabulary. In low-resource setting, character lever models perform better. In high-resource setting however, large BPE models outperform other settings. Only exception is WMT Biomedical test set, which contains large proportion of unseen words.
+
+For our specific use case, \perscite{hrinchuk2019correction} use Bert \parcite{devlin2018bert} original 30K WordPieces vocabulary and does not examine other sizes or other training data.
+
+\pagebreak
+\section{Experiment motivation and outline}
+\label{easr:eperiment}
+As reviewed in previous section, we see that utilization of intermediate phonetic transcription is an established method in ASR. We therefor propose a pipeline described at the beginning of the chapter (see \cref{fig:asr_enhanced_pipeline}). 
+
+Unlike the most studies reviewed in \cref{easr:rel_asr}, we propose to use Transformer architecture for phoneme-to-grapheme translation. We believe that Transformer is best option for this tasks. Transformer has shown its potential in many NLP tasks. The most important we consider its ability to learn a structure of a sentence. We are convinced, this could help reduce errors in transcripts. Our other motivation to apply this architecture is its task versatility. Just by swapping training data, we can easily train spoken language translation system (precisely, translation of phoneme in source language to graphemes in target language). 
+
+We describe and evaluate training of Transformer phoneme-to-grapheme translation in \cref{easr:english,easr:czech}.
+
+Our survey in \cref{easr:re_encoding} clearly demonstrates an important role of text encoding on the translation model performance. Hence, preceding the model training we first study the impact of tokenizer selection on P2G translation in \cref{easr:tokenizer}.
+
+
+\section{Tokenizer selection}
+\label{easr:tokenizer}
+
+In this section we review alternatives for input and output tokenization. Because of resource scarcity, we conduct the experiment only on English and generalize the conclusion to Czech. 
+
+Throughout this experiment we use Byte Pair Encoding for tokenization of source and target sentences. We rule out word representation. It creates models with worse performance (in terms of speed and quality) \parcite{denkowski2017stronger}. Also, it cannot deal with out-of-vocabulary items.
+
+We decided for separate source and target vocabularies. We are motivated by findings of \perscite{ding2019call}. In general, they did not observe difference when using joint and separate vocabularies. They encourage the practitioner to consider particular use case. In our task, the input and output alphabets --- phonemes and graphemes --- are different. In this experiment we choose 8k BPE for target tokenization. We follow authors of NeMo toolkit\footnote{\url{https://nvidia.github.io/NeMo/nlp/neural_machine_translation.html}}. They claim this BPE size should help lower memory footprint and hence increase throughput leading to faster convergence. As training data, we use phonemized Czeng corpus. 
+
 As we previously discussed, selection of training data and size of vocabulary for target BPE is relatively straightforward. On the other hand, considering the source may be corrupted as it is produced by ASR system in our setup, there arise two questions: 
 
 \begin{itemize}
@@ -223,132 +105,186 @@ As we previously discussed, selection of training data and size of vocabulary fo
     \item which training data use to train the tokenizer (uncorrupted data translated from CzEng using \texttt{phonemizer}, data obtained from from ASR or mixture of both)?
 \end{itemize}
 
-\subsubsection{Related work}
-In this section we give a brief overview of related work. We would like to point out inconsistency of reporting BPE size in literature. Some authors use terms ``\textit{BPE size}'' and ``\textit{number of merge operations}'' as synonyms, although the actual \textit{BPE size} equals \textit{number of merge operations} plus \textit{characters}. In this work, we use term ``\textit{BPE size}'' in
-
-First attempt to study impact of BPE vocabulary size in Neural Machine Translation was made by \perscite{denkowski2017stronger}. Specifically, they compare full-word systems with 16k and 32k BPEs. In their setups they use \textit{shared vocabularies} --- BPE learning is done on concatenation of source and target data sets. They conclude that using BPE is definitely better than using full-word vocabularies. For BPE, they suggest to use larger vocabulary over smaller one in high-resource setups (in their case over 1M parallel sentences). Reviewing they results, we observe only little performance degradation using 16k (smaller) BPE in high-resource setups (in DE-EN translation task by 0.4 BLEU and no difference for other tasks) and slightly better performance in low-resource tasks (0.3 and 0.4 BLEU for EN-FR and CS-EN respectively).
-
-In different direction --- towards character encoding went \perscite{cherry2018revisiting}. In their study, the authors compare BPE and character encoding in combination with LSTM. They claim that artificial representations such as BPE are sub-optimal leading to e.g. (linguistically) improbable word fragmentations. Although, they outperform BPE, they recognize the problem of much higher computational requirements for both, training and inference.
-
-A deeper study of different setups (architectures, Joint vs Separate BPE, languages) and impact of vocabulary sizes on NMT performance offer \perscite{ding2019call}. Authors review several setups and a broad range of BPE sizes ranging from character-level to 32K. They show that using appropriate setting can help gain 3 to 4 BLEU points. Most experiments with smaller vocabularies (sizes up to 4K) performed better. 
-16k-32k is bad for low resource setting - best 0-1K, with large drop after 8K.
-\XXX{finish this}
 
 
-Another authors \parcite{gupta2019character} study character-based and BPE NMT with Transformers under various conditions. They conclude that the BPE with 30K vocabulary is a standard choice in high resource setting. They also experiment with noisy data: when training on clean data, BPE performs slightly worse, however, when training on corrupted data, BPE with large vocabulary (30000) performed better as character level or BPE with smaller vocabulary. In low resource setting, character lever models perform better. In high resource setting however, large BPE models outperform other settings. Only exception is WMT Biomedical test set, which contains large proportion of unseen words.
+\subsection{Experiment outline}
+Our task differs from situations described in previous work. Hence there is no clear answer for our previously stated questions.
 
-For our specific use case, \perscite{hrinchuk2019correction} use Bert \parcite{devlin2018bert} original 30K WordPieces vocabulary and does not examine other sizes or other training data.
+In order to resolve these questions we conduct a series of experiments. We train 16 Transformers, each with different source vocabulary (sizes with step of multiple of four: character-level, 128, 512, 2k, 8k and 32k. Each BPE size except for character-level is trained on clean, corrupted and mixture (procedure generating corrupted data is described in \cref{sec:asr_corrupted}). Target vocabulary remains same for all configurations --- 8k trained on clean graphemes, phonemized filtered CzEng 1.7. Afterwards we evaluate their performance on ``corrupted'' dev sets that were obtained in \cref{sec:asr_corrupted}.
 
-\subsubsection{Experiment outline}
-Our task differs from situations described in previous work, hence there is no clear answer for our previously stated questions.
+Taking into account the time and hardware complexity of training Transformer \texttt{big} configuration, we choose the \texttt{base} configuration for these experiments. We believe the behavior of the model will still be reasonable alike.
 
-In order to resolve these questions we conduct a series of experiments. We train 16 Transformers, each with different source vocabulary (sizes with step of multiple of four: character-level, 128, 512, 2k, 8k and 32k, with each BPE size (except character-level) trained on clean, corrupted and mixture) and same target vocabulary (8k trained on clean graphemes, phonemized filtered CzEng 1.7). Afterwards we evaluate their performance on ``corrupted'' dev sets that were obtained in \cref{sec:asr_corrupted}.
-
-Taking into account the time and hardware complexity of training Transformer \texttt{big} configuration, we choose \texttt{base}  configuration for these experiments. We believe the behavior of the model will still be reasonable alike.
-
-\subsubsection{Data preparation}
-Source BPE vocabularies are trained on: clean filtered Czeng for \textit{clean} setup and corrupted data from ASR ensemble setup (see \cref{sec:asr_corrupted}). For \textit{mixture} setup, we taken subset of 7M from clean filtered Czeng (as it has 57M sentence pairs) of the same size as the ASR data.
+\subsection{Data preparation}
+Source BPE vocabularies are trained on: clean filtered Czeng for \textit{clean} setup and corrupted data from ASR ensemble setup (see \cref{sec:asr_corrupted}). We have approximately 7M corrupted sentences. For \textit{mixture} setup, we taken a random subset of 7M from clean filtered Czeng. We do not take whole Czeng as it has 57M sentence pairs. 
 
 As training data for Transformers we use corrupted data from our ASR ensemble setup. We selected two development sets: first the \textit{dev clean} set from LibriSpeech and second the \textit{dev} set from Common Voice. The reason is that LibriSpeech contains longer utterances than Common Voice, but on the other hand the former has lower WER tha the latter. It is also worth noting that LibriSpeech \textit{dev clean}'s utterances are twice that long on overage (107 characters versus 52 characters).
 
-\subsubsection{Training}
-As mentioned previously, we use Transformer \texttt{base} configuration. We alter maximum sequence length to 1024, as for character-level, 128 and 512 BPE configurations many sentences do not fit into model. We train all models for 70000 steps on 2 GPUs using same batch size for all configurations: 12000 tokens. 
 
-\subsubsection{Results and analysis}
-Final results of all experiments are in \cref{tab:results_vocabularies,tab:results_vocabularies_common}. Overview of runs are pictured in \cref{fig:vocab_sizes,fig:vocab_sizes_common}.
+\begin{table}[p]
+	\centering
+	\begin{tabular}{l|ccc}
+		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
+		\hline
+	character &  5.82  &  -  &  -  \\
+	128 &  6.03  &  5.69  &  6.69  \\
+	512 &    5.54  &  5.50   &  5.49 \\
+	2k &  5.48  & 5.27  & 5.46  \\
+	8k &  5.44  &   5.39 & 5.47  \\
+	32k &  5.18  & 5.24  &  5.25 \\
+		
+	\end{tabular}
+	\caption{Results in \% of word error rate on the Libri Speech dev set.}
+	\label{tab:results_vocabularies_libri}
+\end{table}
+	
+\begin{table}[p]
+	\centering
+	\begin{tabular}{l|ccc}
+		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
+		\hline
+		character &  7.55  &  -  &  -  \\
+		128 & 7.38   &  7.32  & 7.40  \\
+		512 &  7.21  & 7.27   & 7.19  \\
+		2k & 7.12   & 7.20 & 7.22  \\
+		8k &  7.10  & 7.05  & 7.10  \\
+		32k &  6.98  & 7.03  &  6.93 \\
+		
+	\end{tabular}
+\caption{Results in \% of word error rate on the Common Voice dev set.}
+\label{tab:results_vocabularies_common}
+\end{table}
 
-We can observe clear dependency between WER and BPE vocabulary size: the bigger size the lower WER. For source of BPE training data, there is not a clear pattern with negligible differences among training source for the same vocabulary size. However, for 128 BPE it seems that the corrupted data are optimal for vocabulary training. Only for small vocabularies, the model is better in translation rather than correcting errors, hence it is better to use data with introduced errors. 
+	\begin{figure}[p]
+		\includegraphics[width=\linewidth*0.99,height=\textheight*0.4]{img/vocab_sizes}
+		\caption{Each model is evaluated on LibriSpeech corrupted dev set (see \cref{sec:asr_corrupted}) every 5000 steps. Bigger diamond marks shows where each trained model reached 10th epoch.}
+		\label{fig:vocab_sizes}
+	\end{figure}
 
-\subsubsection{Conclusion}
-Generally, it is better to use bigger vocabularies. This is consistent with \perscite{gupta2019character}: in high-resource setting (as ours: we train on 7M sentence pairs) when trained on corrupted data, the bigger vocabularies are better. We do not see much difference between clean, corrupt and mix. It seems that translation is the most important function of the model, as most of the words in corrupted data are anyway correct (recall, we filtered out sentences with WER over 50 \%), We also believe model that uses BPE trained on BPE will make the place around error more fragmented or ``odd'' to the model and this can be a ``clue'' for the model to correct the transcript around. This does not hold for small vocabularies. Such model is probably better in translation rather than correcting errors, hence it seems better to use data with introduced errors for this particular setup.
+	\begin{figure}[p]
+		\includegraphics[width=\linewidth*0.99,height=\textheight*0.4]{img/vocab_sizes_common}
+		\caption{Each model is evaluated on Common Voice corrupted dev set (see \cref{sec:asr_corrupted}) every 5000 steps. Bigger diamond marks shows where each trained model reached 10th epoch.}
+		\label{fig:vocab_sizes_common}
+	\end{figure}
+
+
+\subsection{Training}
+
+As mentioned previously, we use Transformer \texttt{base} configuration. We alter maximum sequence length to 1024 because for character-level, 128 and 512 BPE configurations many sentences do not fit into model. We train all models for 70000 steps on one GPU using same batch size for all configurations: 12000 tokens. 
+
+Overview of runs is pictured in \cref{fig:vocab_sizes,fig:vocab_sizes_common}. Final results on development sets of all experiments are in \cref{tab:results_vocabularies_libri,tab:results_vocabularies_common}.
+
+
+\begin{table}[p]
+	\centering
+	\begin{tabular}{l|ccc}
+		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
+		\hline
+		character	&	5.53	&	-	&	- \\
+		128	&	5.06	&	4.95	&	5.05 \\
+		512	&	5.05	&	4.79	&	4.87 \\
+		2k	&	4.86	&	5.09	&	4.97 \\
+		8k	&	4.92	&	4.99	&	4.96 \\
+		32k	&	4.81	&	4.65	&	4.55 \\
+		
+	\end{tabular}
+	
+	\caption{Results in \% of word error rate on the Common Voice test set.}
+	\label{tab:results_vocabularies_common_test}
+\end{table}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics{img/vocab_sizes_test_common}
+	\caption{Results in \% of word error rate on the Common Voice test set.}
+	\label{fig:vocab_sizes_common_graph}
+\end{figure}
+
+
+\begin{table}[p]
+	\centering
+	\begin{tabular}{l|ccc}
+		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
+		\hline
+		
+		character	&	5.64	&	-	&	- \\
+		128	&	5.93	&	5.97	&	6.04 \\
+		512	&	5.40	&	5.48	&	5.64 \\
+		2k	&	5.34	&	5.30	&	5.34 \\
+		8k	&	5.30	&	5.28	&	5.34 \\
+		32k	&	5.19	&	5.25	&	5.18 \\
+		
+	\end{tabular}
+	
+	\caption{Results in \% of word error rate on the Libri Speech test clean.}
+	\label{tab:results_vocabularies_libri_clean}
+\end{table}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics{img/vocab_sizes_test_clean}
+	\caption{Results in \% of word error rate on the Libri Speech test clean.}
+	\label{fig:vocab_sizes_test_clean}
+\end{figure}
+
+\begin{table}[p]
+	\centering
+	\begin{tabular}{l|ccc}
+		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
+		\hline
+		character	&	11.79	&	-	&	- \\
+		128	&	11.98	&	11.79	&	12.54\\
+		512	&	11.45	&	11.59	&	11.74\\
+		2k	&	11.60	&	11.45	&	11.47\\
+		8k	&	11.69	&	11.56	&	11.57\\
+		32k	&	11.36	&	11.43	&	11.37\\
+		
+	\end{tabular}
+	
+	\caption{Results in \% of word error rate on the Libri Speech test other.}
+	\label{tab:results_vocabularies_libri_other}
+\end{table}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics{img/vocab_sizes_test_other}
+	\caption{Results in \% of word error rate on the Libri Speech test other.}
+	\label{fig:vocab_sizes_test_other}
+\end{figure}
+
+
+
+\subsection{Results and analysis}
+
+Final results of all experiments are in \cref{tab:results_vocabularies_libri,tab:results_vocabularies_common} for development sets and in \cref{tab:results_vocabularies_common_test,tab:results_vocabularies_libri_clean,tab:results_vocabularies_libri_other}.
+
+Graphical comparison is in \cref{fig:vocab_sizes_common_graph,fig:vocab_sizes_test_clean,fig:vocab_sizes_test_other}.
+
+First of all, we can observe a drastic reduction of WER for Common Voice test set compared to Libri Speech test other. Acoustic model performs similarly on both test sets (measured in PWER --- see \cref{tab:en_phon_results}). We take a closer look at the training data. Common Voice filtered has 611990 recordings, but 81334 unique transcripts. This means that same text has been recorded multiple times or by many speaker. Common Voice ``corrupted'' has 3262524 unique ASR-provided transcritions (meaning that a sentence has a unique error) and 80710 different true transcripts. On the other hand, Libri Speech has 281241 recordings and 281071 unique transcripts. Hence, there are almost none different recordings for the same text. ``Corrupted'' Libri Speech has 3844983 unique erroneous ASR transcripts with 280850 different true transcripts. Hence, on average, each Common Voice sentence has 7 different recordings and 40 unique faulty ASR transcriptions. Libri Speech on the contrary does not have more recordings per text and has about 13 ASR-corrupted transcript per one original text. Hence, we are strongly convinced, that the trained Transformer models are over-fitting the Common Voice dataset.
+
+\paragraph{BPE size}
+Character-level encoding seems to be the worst or second worst possible representation. For Common Voice test set, it scores almost one percent point of WER more compared to the best result (5.53 vs. 4.55). Also, all other encodings performed almost half a percent point better. For both Libri Speech test sets it performed a bit better than BPE 128. 
+
+Generally, the figures suggest a clear trend: the larger the vocabulary the better. Among the different BPE sizes we can recognize the 32k vocabulary size has systematically best results on all test sets.
+
+Finally, we consider the following: a model can better learn from larger vocabulary sizes. \XXX{First, a model does not have to learn so much low-level orthography. Rather than memorizing characters (or other smaller units) it can focus on whole sentence and how individual words interacts. Second, a larger model has ability to detect errors because of anomalies in input encoding. Larger vocabularies produce a shorter representation. Corrupted word is more likely to be broken down to smaller peaces. When a model detects such situation, it can for example decide the right target word based on context, rather than the suspicious word. Such anomaly will most likely not occur in text encoded with small BPE. }
+
+\paragraph{Source of BPE training data}
+For Common Voice, we can witness some variation in performance. Best seems to be ``mixed'' configuration. Somewhat worse is ``corrupted'' and the worst is ``clean'' version. In this case, we think the ``mixed'' is best as it has enough frequent ``corrupted'' words. This enables a model to learn translate these corrupted words to correct ones. Also, it knows enough other words, so it can properly work with correct phonemes.
+
+For other test sets, we observe almost none differences. Only ``corrupted'' configuration has slightly less performance. 
+
+\XXX{We conclude therefore, that the source of training data for BPE has almost none impact on final result. One should consider to sweep various option for a more specific tasks. For example, we thing it could help as sort of domain adaptation and it could also help for dictated speech task.}
+
+\subsection{Conclusion}
+We carried out extensive study on impact of BPE vocabulary size and BPE training data source. Based on the empirical evidence, we assume it is better to use bigger vocabularies. This is consistent with \perscite{gupta2019character}: in high-resource setting (as ours: we train on 7M sentence pairs) when trained on corrupted data, the bigger vocabularies are better. We do not see much difference between clean, corrupt and mix. But the selection of particular source could be interesting for a specific task.
 
 Therefore, in further experiments and setups we will use 32k BPE vocabulary trained on clean training data.
 
-\XXX{add plot of attention with correct and corrupted sentence}
-
-\begin{table}[h]
-\begin{minipage}[h]{.50\textwidth}
-   \centering
-	\begin{tabular}{l|ccc}
-		%\hline 
-		%\thead{Experiment} & \thead{Czech \\ simpl.} & \thead{Czech \\ adapt.} & \thead{Czech \\ full} \\
-		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
-		\hline
-            character &  5.82  &  -  &  -  \\
-            128 &  6.03  &  5.69  &  6.69  \\
-            512 &    5.54  &  5.50   &  5.49 \\
-            2k &  5.48  & 5.27  & 5.46  \\
-            8k &  5.44  &   5.39 & 5.47  \\
-            32k &  5.18  & 5.24  &  5.25 \\
-	\end{tabular}
-\end{minipage}
-\begin{minipage}[h]{.49\textwidth}
-   \centering
-	\begin{tabular}{l|ccc}
-		%\hline 
-		%\thead{Experiment} & \thead{Czech \\ simpl.} & \thead{Czech \\ adapt.} & \thead{Czech \\ full} \\
-		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
-		\hline
-			128 &  144.56  & 136.73  &  103.97 \\
-            512 &  98.10  & 100.9   &   101.26 \\
-            2k &  64.41  & 81.20  & 82.32  \\
-            8k &  56.13  & 66.68  &  68.96 \\
-            32k &  50.28  &  48.34 & 50.03  \\
-	\end{tabular}
-\end{minipage}
-	\caption{Left: results in \% of word error rate on the LibriSpeech dev clean set. Right: average time per sentence in miliseconds.}
-	\label{tab:results_vocabularies}
-\end{table}
-
-\begin{table}[h]
-\begin{minipage}[h]{.50\textwidth}
-   \centering
-	\begin{tabular}{l|ccc}
-		%\hline 
-		%\thead{Experiment} & \thead{Czech \\ simpl.} & \thead{Czech \\ adapt.} & \thead{Czech \\ full} \\
-		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
-		\hline
-            character &  7.55  &  -  &  -  \\
-            128 & 7.38   &  7.32  & 7.40  \\
-            512 &  7.21  & 7.27   & 7.19  \\
-            2k & 7.12   & 7.20 & 7.22  \\
-            8k &  7.10  & 7.05  & 7.10  \\
-            32k &  6.98  & 7.03  &  6.93 \\
-
-	\end{tabular}
-\end{minipage}
-\begin{minipage}[h]{.49\textwidth}
-   \centering
-	\begin{tabular}{l|ccc}
-		%\hline 
-		%\thead{Experiment} & \thead{Czech \\ simpl.} & \thead{Czech \\ adapt.} & \thead{Czech \\ full} \\
-		\bf Size & \bf Clean & \bf Corrupt & \bf Mixed \\
-		\hline
-           128 & 23.90   & 19.11   & 19.02  \\
-            512 &  20.27   &   17.90  & 19.78  \\
-            2k &  12.51  &  15.38 & 16.70  \\
-            8k &  11.82  &  13.65  & 14.13  \\
-            32k & 10.79   &  12.78 & 11.07  \\
-	\end{tabular}
-\end{minipage}
-	\caption{Left: results in \% of word error rate on the Common Voice dev set. Right: average time per sentence in miliseconds.}
-	\label{tab:results_vocabularies_common}
-\end{table}
-
-\begin{figure*}[h]
-	\includegraphics[width=\linewidth,height=\textheight*0.8]{img/vocab_sizes}
-	\caption{Each model is evaluated on LibriSpeech corrupted dev set (see \cref{sec:asr_corrupted}) every 5000 steps. Bigger diamond marks shows where each trained model reached 10th epoch.}
-	\label{fig:vocab_sizes}
-\end{figure*}
 
 
-\begin{figure*}[h]
-	\includegraphics[width=\linewidth,height=\textheight*0.8]{img/vocab_sizes_common}
-	\caption{Each model is evaluated on Common Voice corrupted dev set (see \cref{sec:asr_corrupted}) every 5000 steps. Bigger diamond marks shows where each trained model reached 10th epoch.}
-	\label{fig:vocab_sizes_common}
-\end{figure*}
-
-\section{Enhanced ASR}
+\pagebreak
+\section{English and Czech Enhanced ASR}
+\label{easr:english}
 In this section is described training of the translation model of proposed enhanced ASR pipeline (see \cref{fig:asr_enhanced_pipeline}).
 
 \subsection{Training overview}
@@ -372,4 +308,3 @@ Our configurations:
 \end{itemize}
 
 We prematurely interrupted the training after 30000 steps, as deallocation of hardware was required and we saw no further improvement on development sets. Note, this differs from training planned for 30000 steps as the learning rate is dependent on maximum steps.
-

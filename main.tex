@@ -68,7 +68,12 @@
 \usepackage{pdflscape}
 \usepackage{multirow}
 \usepackage{tipa}
-
+\usepackage{afterpage}
+\usepackage{pgfplotstable}
+\usepackage{subfigure}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{pdflscape}
 
 %%% Basic information on the thesis
 
@@ -262,6 +267,7 @@ Keywords:
 \include{asr}
 \include{enhanced_asr}
 \include{slt}
+\include{finetune_enhanced_asr}
 \include{adaptation}
 \include{onlinezation}
 \include{conclusion}
@@ -327,6 +333,8 @@ Keywords:
         K & kilo, thousand \\
         M & mega, million \\
         NMT & \\
+        OOV & out-of-vocabulary \\
+        P2G & phoneme-to-grapheme \\
         STD & standard deviation \\
         WER & word error rate \\
         

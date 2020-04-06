@@ -1,0 +1,52 @@
+\begin{tikzpicture}
+  \begin{axis}
+    [
+    legend cell align={left},
+    legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
+      width      = 0.90\textwidth,
+      height     = 0.40\textwidth,
+      xmax       =  5.3,
+      xmin       = -0.3,
+      ymax       =  0.062,
+      ymin       = 0.05,
+      xtick={0,1,2,3,4,5},
+      xticklabels= {character,
+128,
+512,
+02k,
+08k,
+32k},
+    ]
+    \addplot [color=green,mark=*]  table {
+x y 
+0 0.05644991482
+1 0.05934418099
+2 0.05401894866
+3 0.05349211212
+4 0.05308382662
+5 0.05190225679
+};
+\addlegendentry{clean}
+
+\addplot [color=red,mark=diamond]  table {
+	x y 
+	1 0.05976679158
+	2 0.05489333206
+	3 0.05304826742
+	4 0.05289952153
+	5 0.05251198228
+};
+\addlegendentry{corrupted}
+
+\addplot [color=blue,mark=square]  table {
+	x y 
+	1 0.06042129656
+	2 0.05643883725
+	3 0.0534317569
+	4 0.05346331061
+	5 0.05185015553
+};
+\addlegendentry{mixed}
+    
+  \end{axis}
+ \end{tikzpicture}

@@ -341,7 +341,7 @@ Using TensorFlow, we got the best result 9.14 \%, about 0.2 \% percent point hig
 
 We also tried adding a language model to the second CTC decoder\footnote{When setting LM weight to higher than 0, we found that this implementation does not support labels containing more that one character, which causes a problem, as phonetic alphabet contains several multi-character phonemes. To overcome this complication, we substituted these multi-character labels with unused single-character labels (such as capital letters and numbers).}. Using KenLM, we trained a 3-gram language model on phonemized Czeng. For both single- and multi-character phonemes, using the language model helps. The result is for the single-character setup a bit better. We suspect the difference stems from our trick to overcome Baidu's CTC decoder limitation. Training data for language model data does not contain phoneme boundaries. Some multi-character phonemes consists of two other valid single-character ones. Thus, some neighbors might be considered as one phoneme and incorrectly substituted. The ASR model is trained on data with known phoneme segmentation. So, during decoding, the model outputs with higher probability two phonemes instead of one, while the language model gives to these phonemes lower likelihood.
 
-To test this assumption, we train 3-gram language models (for single- and multi-character ASR) on ASR training data (including phoneme segmentation). Note, we do not re-phonemize Czeng, as phonemization is time and power-consuming process. The best results are 8.30 and 8.45 \% PWER for multi- and single-character ASR. These results are consistent with the greedy and beam search without LM decoding. Therefore, we conclude that using native phoneme segmentation is slightly better. Hence, for English, we use multi-character phonemes.
+To test this assumption, we train 3-gram language models (for single- and multi-character ASR) on ASR training data (including phoneme segmentation). Note, we do not re-phonemize Czeng, as phonemization is time and power-consuming process. The best results are 8.30 and 7.74 \% PWER for multi- and single-character ASR. These results are consistent with the greedy and beam search without LM decoding. Therefore, we conclude that using native phoneme segmentation is slightly better. Hence, for English, we use multi-character phonemes.
 
 
 \begin{figure*}[t]
@@ -363,7 +363,7 @@ To test this assumption, we train 3-gram language models (for single- and multi-
 		
 		\hline
 		
-		\multirow{2}{*}{test} & multi-char. phonemes & - &  8.94 / 9.14$\dagger$ / 8.57$\ddagger$  \tabspace{14pt}\\
+		\multirow{2}{*}{test} & multi-char. phonemes & - &  8.94 / 9.14$\dagger$ / 8.30$\ddagger$  \tabspace{14pt}\\
 		
 		& single-char. phonemes & - &  9.09 / 9.53$\dagger$ / 7.84$\ddagger$  \\
 		%\hline

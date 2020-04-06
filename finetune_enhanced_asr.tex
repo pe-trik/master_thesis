@@ -1,0 +1,195 @@
+\chapter{Fine-tuning Enhanced ASR}
+\label{chap:fine_tune_enhanced}
+
+We devote this chapter to fine-tuning ASR pipeline described in \cref{chap:enhanced_asr}.
+
+In order to build the translation part of the pipeline (see \cref{fig:asr_enhanced_pipeline}) as robust as possible, we train the translation model to be capable of correcting some errors that are created by ASR. Therefore, in \cref{sec:asr_corrupted} we describe procedure of obtaining suitable ``corrupted'' training data which we use later on for making the translation model prone to the ASR-sourced errors.
+
+This chapter is organized as follows: in \cref{feasr:related} we review related work. \cref{sec:asr_corrupted,sec:asr_corrupted_cs} describe process in which we obtain training data with ``ASR errors''. Finally, \cref{easr:easr} reviews setups for final part of proposer Enhanced ASR pipeline and trains it.
+
+\section{Related work}
+\label{feasr:related}
+
+\section{Obtaining ``ASR corrupted'' training data}
+\label{sec:asr_corrupted}
+
+\begin{figure}[h]
+	\centering
+	\begin{tikzpicture}[thick, node distance=2.5cm, 
+	>=stealth,
+	bend angle=45,
+	auto,regentonne/.style={cylinder,aspect=0.3,draw,shape border rotate=90}]
+	\draw
+	node at (0,0)[block,regentonne] (libri) {\shortstack{LibriSpeech\\ \small{training data}}}
+	node [block, below right=0.4cm of libri] (ensemble1) {\shortstack{$40 \times$ QuartzNet\\ \small{small models}}}
+	node [block,regentonne, below =1.5cm of libri] (common) {\shortstack{Common Voice\\ \small{training data}}}
+	
+	node at (0,-6) [block,regentonne] (libri_dev) {\shortstack{LibriSpeech\\ \small{dev}}}
+	node [block,regentonne, below =0.3cm of libri_dev] (common_dev) {\shortstack{Common Voice\\ \small{dev}}}
+	
+	node at (5,-7) [block] (jasper) {\shortstack{Jasper\\ \small{big model} \\ \small{from final pipeline}}}
+	
+	node [block, right=1cm of ensemble1] (filter) {\shortstack{filter\\ \small unique source\\ $<$50\% WER}}
+	
+	node [block,regentonne,right=1cm of filter] (training) {\shortstack{``corrupted''\\ training data}}
+	
+	node at (10,-6) [block,regentonne] (libri_dev2) {\shortstack{``corrupted''\\LibriSpeech\\ \small{dev}}}
+	node [block,regentonne, below =0.3cm of libri_dev2] (common_dev2) {\shortstack{``corrupted''\\Common Voice\\ \small{dev}}};
+	
+	\draw[->](libri) -> node {}  (ensemble1);
+	\draw[->](common) -> node  {} (ensemble1);
+	\draw[->](ensemble1) -> node {}  (filter);
+	\draw[->](filter) -> node {}  (training);
+	\draw[->](libri_dev) -> node {}  (jasper);
+	\draw[->](common_dev) -> node {}  (jasper);
+	\draw[->](jasper) -> node {}  (libri_dev2);
+	\draw[->](jasper) -> node {}  (common_dev2);
+	
+	\end{tikzpicture}
+	\caption{After training of 10 ``smaller'' QuartzNet models with 4 chechpoints made along the way (hence $40 \times$), training data are transcribed and filtered. Similarly, Development sets are transcribed using ``bigger'' Jasper model that will be in the final ASR pipeline (see \cref{fig:asr_enhanced_pipeline}).}
+	\label{fig:asr_folds}
+\end{figure} 
+
+In this section we describe process in which we gather ``corrupted'' data from speech recognition model. We will use these data later to improve robustness of translation model.
+
+We design the setup similarly to that of \perscite{hrinchuk2019correction}. First, ten ASR models are trained. Additionally, we store checkpoints during training and keep last 4 of them, yielding 40 models. Second, we transcribe all available training data using the set of models obtained in previous step. Subsequently, we pair the ``corrupted'' transcriptions obtained with true transcriptions. We obtain parallel corpus of ``corrupted'' and ``clean'' sentences. These data will be then used in further training as source of ``natural'' noise that occurs in speech recognition.
+
+In the later stage, we will train translation model, the second part of the proposed pipeline (see \cref{fig:asr_enhanced_pipeline}). One of the requested properties is the ability to correct errors introduced by acoustic model. To be able to test this property during and after training, we prepare a special development sets. We will build on existing dev sets from LibriSpeech and Common Voice and ``corrupt'' them in the same manner as training data with a distinction: the final big Jasper model (that will be in the final ASR pipeline) is used instead of the ten smaller models. 
+
+Overview of the setup is pictured in \cref{fig:asr_folds}.
+
+\subsection{Data preparation}
+Speech corpora LibriSpeech and Common Voice are used. We concatenate these two and divide them into ten folds of same size. We intentionally do not shuffle the concatenated data set prior to splitting it into folds, so that the difference among the trained models is as much as possible (proportion of training data from LibriSpeech and from Common Voice will vary more). The models are trained on these folds in cross-validation manner: $i$-th model skips $i$-th fold during training.
+
+\subsection{Training}
+Similarly to \perscite{hrinchuk2019correction} we train ten models and also store checkpoints every 5000 steps. Instead of bigger Jasper we choose QuartzNet. Jasper and QuertzNet are two distinct architectures, nevertheless, they are similar enough and we assume they behave likewise. The main reason of our choise are reduced hardware requirements and hence faster convergence. In contrast with bigger ASR Jasper model that we train on 10 GPUs, each QuertzNet model for data collection is trained only on 1 GPU. After less than a day of training, the models perform almost as good as the bigger model.
+
+Transfer learning technique is again employed to reduce training time and improve model's performance. For English, the QuartzNet encoders are initialized with checkpoint available at NVIDIA NGC\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:quartznet15x5}} which is trained on LibriSpeech and Common Voice. As the target vocabulary differs for our setup (phonemes instead of graphemes), we apply the method from chapter \ref{chapter:asr} and so the training is divided into phases: (1) Decoder adaptation phase: encoder is initialized with pretrained weights and is freezed while decoder is randomly initialized. Only decoder is then trained, (2) Full training: encoder is unfreezed and trained together with decoder. Adaptation phase is set to take 2000 steps and full training then continues for another 30000 steps.
+
+\subsection{Results}
+ On average, after the first adaptation phase the word error rate of most models on LibriSpeech \texttt{dev clean} dropped under 16 \% after less than 5 hours. One model had WER two times worse than others (33.05 \%) and one did not converge at all. After full training which took about 15 hours, average WER is 5.3 \% with very small variance. Compared with big Jasper it is only about 1.5 percent points more. Evaluations during training can be seen in \cref{fig:ensemble_training} and final results are shown in \cref{tab:eng_folds}.
+
+\begin{figure*}[t]
+		\includegraphics[width=\linewidth,height=8cm]{img/ensemble}
+		\caption{Evaluation on dev set during training of 10 models (using greedy decoding). One epoch takes approximately 24400 steps.}
+		\label{fig:ensemble_training}
+\end{figure*}
+
+\begin{table}[t]
+		\centering
+		\resizebox{\columnwidth}{!}{
+		\begin{tabular}{l|cccccccccc}
+			\bf Model & \bf 1 & \bf 2 & \bf 3 & 4 & \bf 5 & \bf 6 & \bf 7 & \bf 8 & \bf 9 & \bf 10  \\
+			\hline 
+			
+			Adapt. phase & 15.17  & 
+            15.02  & 
+            16.66  & 
+            22.15  & 
+            15.07  & 
+            15.39  & 
+            15.24  & 
+            17.44  & 
+            15.38  & 
+            33.05 \\
+            Full training &
+            5.07  & 
+            5.21  & 
+            5.16  & 
+            4.99  & 
+            5.22  & 
+            5.34  & 
+            5.45  & 
+            5.31  & 
+            5.30  & 
+            5.98
+			
+		\end{tabular}
+		}
+		\caption{Results in \% of word error rate (using greedy decoding) on LibriSpeech \texttt{dev clean} for all trained models.}
+		\label{tab:eng_folds}
+\end{table}
+	
+\subsection{``Corrupted'' data collection}
+Unlike \perscite{hrinchuk2019correction}, in our experiment we do not employ cutout and dropout during data collection. In order to generate more data, we make checkpoints during training every 5000 steps and keep last 4 for every model. This give us 40 unique models.
+
+Concatenated LibriSpeech and Common Voice training data are used for inference on all 40 models yielding 36M sentence pairs. We filter pairs with unique source sentence and keep pairs where word error rate is under 50 \%. From the 36 millions sentence pairs we get 7M filtered sentence pairs, particulary 3.7M from LibriSpeech and 3.3M from Common Voice.
+
+\begin{table}[t]
+		\centering
+		\small
+		\begin{tabular}{l|ccc}
+			\bf Set & \bf AVG WER & \bf Median WER & \bf STD   \\
+			\hline 
+			Training &  10.24 \% & 2.70 \% & 16.64 \% \\
+			LibriSpeech \texttt{dev clean} &  4.33 \% & 0.0 \% & 8.37 \% \\
+			Common Voice \texttt{dev} &  11.98 \% & 0.0 \% & 17.71 \% \\
+		\end{tabular}
+		\caption{Results in \% of word error rate on LibriSpeech \texttt{dev clean} for all trained models.}
+		\label{tab:eng_corrupted_table}
+\end{table}
+
+\begin{figure*}[t]
+		\includegraphics[width=\linewidth,height=8cm]{img/histogram}
+		\caption{Evaluation on test set during training of 10 models.}
+		\label{fig:histogram}
+\end{figure*}
+
+Distribution of WER in training and dev sets is visible in histogram~\ref{fig:histogram}. Following \perscite{hrinchuk2019correction} we filter out all pairs with WER greater than 50~\%. As we can see in the histogram~\ref{fig:histogram}, only 4~\% of training data are left out. We can observe that the distribution of WER for training data almost copy the distribution of Common Voice dev with training data having slightly more pairs with smaller WER. On the other hand, LibriSpeech dev clean has significantly more examples with small WER.
+
+
+\subsection{Error analysis}
+\XXX{description of errors in corrupted data}
+
+\section{Czech ASR corrupted data}
+\label{sec:asr_corrupted_cs}
+In this section we reproduce previously described task for Czech language. Most challenging is to overcome scarcity of speech data --- Czech corpus has approximately 400h and we have two English corpora that yield together almost 2000h.
+
+\subsection{Task setup}
+Similarly to the setup described in \cref{sec:asr_corrupted}: we split the available data into ``folds''. Each fold then serves as a training corpus for one model. Next, we take all training data (the Parliament corpus) and put it through the previously obtained models. The output are pairs of ground-truth and ``corrupted'' data. Finally, we keep pairs with unique corrupted side and with word error rate under 50 \%.
+
+\subsection{Training}
+Following the receipt from English, we employ QuartzNet architecture, train all models on one GPU and follow the same transfer learning technique. We train-off from our best performing, fully trained, Czech ASR model (see \cref{chapter:asr}). Because of the Czech training data scarcity, we train only 5 folds. For more details regarding the training see \cref{sec:asr_corrupted}.
+
+\subsection{Training results}
+\cref{tab:cs_folds,fig:ensemble_training_cs} offer detailed training results for all models. We observe a dramatic WER decline at the beginning (until step 12k), followed by no change until the end. There are probably two reasons for this behavior: (1) data scarcity; (2) contrast in orthography of English and Czech --- Czech language has high grapheme-to-phoneme correspondence. We assume the latter to have a greater impact, as the model converged after 7 thousand steps, which is roughly right after seeing all examples once (2000 steps adaptation phase + one epoch of 4775 steps of the full training).
+
+\begin{figure*}[h]
+		\includegraphics[width=\linewidth,height=8cm]{img/ensemble_cs}
+		\caption{Evaluation on dev set during training of 5 models (using greedy decoding). One epoch is approximately 4750 steps.}
+		\label{fig:ensemble_training_cs}
+\end{figure*}
+
+\begin{table}[h]
+		\centering
+		\begin{tabular}{l|cccccccccc}
+			\bf Model & \bf 1 & \bf 2 & \bf 3 & 4 & \bf 5  \\
+			\hline 
+			
+			Adapt. phase &
+            97.91 &
+            17.63 &
+            13.53 &
+            14.09 &
+            13.37 \\
+            Full training &
+            7.17 &
+            7.03 &
+            7.14 &
+            7.25 &
+            7.13 
+			
+		\end{tabular}
+		\caption{Results in \% of word error rate (greedy decoding) on LibriSpeech \texttt{dev clean} for all trained models.}
+		\label{tab:cs_folds}
+\end{table}
+
+\subsection{Czech corrupted data collection}
+
+\begin{figure*}[t]
+	\includegraphics[width=\linewidth,height=8cm]{img/histogram_cs}
+	\caption{Evaluation on test set during training of 10 models.}
+	\label{fig:histogram_cs}
+\end{figure*}
+
+

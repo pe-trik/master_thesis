@@ -1,0 +1,88 @@
+\begin{tikzpicture}
+\small
+
+\begin{axis}[
+legend cell align={left},
+legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.01960784313725!black},
+xlabel={Steps},
+xmin=1000, xmax=31000,
+xtick style={color=black},
+y grid style={white!69.01960784313725!black},
+ylabel={Phoneme Word Error Rate (\%)},
+ymin=3, ymax=20,
+ytick style={color=black}
+]
+\addplot 
+table {
+0 99.94
+1000 25.39
+2000 13.75
+3000 9.11
+4000 10.40
+5000 9.89
+6000 7.79
+7000 7.47
+8000 7.16
+9000 7.15
+10000 7.09
+11000 7.17
+12000 7.11
+13000 7.15
+14000 7.14
+15000 7.14
+16000 7.08
+17000 7.18
+18000 7.14
+19000 7.20
+20000 7.11
+21000 7.20
+22000 7.19
+23000 7.09
+24000 7.14
+25000 7.09
+26000 7.06
+27000 7.06
+28000 7.14
+29000 7.10
+};
+\addlegendentry{cs phonemes dev}
+\addplot 
+table {
+0 99.83
+1000 21.24
+2000 17.91
+3000 12.66
+4000 14.07
+5000 13.28
+6000 11.16
+7000 10.41
+8000 10.10
+9000 10.00
+10000 10.06
+11000 10.04
+12000 10.05
+13000 10.09
+14000 9.98
+15000 10.08
+16000 10.03
+17000 10.03
+18000 10.04
+19000 10.05
+20000 10.05
+21000 10.04
+22000 10.04
+23000 10.05
+24000 10.02
+25000 10.03
+26000 9.99
+27000 10.03
+28000 10.00
+29000 10.05
+30000 10.00
+};
+\addlegendentry{cs single-chararacter phonemes dev}
+\end{axis}
+\end{tikzpicture}

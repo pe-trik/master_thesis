@@ -280,6 +280,7 @@ For other test sets, we observe almost none differences. Only ``corrupted'' conf
 \XXX{We conclude, therefore, that the source of training data for BPE has almost none impact on the final result. One should consider sweeping various options for a more specific task. For example, we think it could help us sort of domain adaptation, and it could also help for dictated speech task.}
 
 \subsection{Conclusion}
+\label{easr:tok_conclusion}
 We carried out an extensive study on the impact of BPE vocabulary size and BPE training data sources. Based on the empirical evidence, we assume it is better to use larger vocabularies. This is consistent with \perscite{gupta2019character}: in high-resource setting (as ours: we train on 7M sentence pairs) when trained on corrupted data, the larger vocabularies are better. We do not see much difference between clean, corrupt, and mix. But the selection of a particular source could be interesting for a specific task.
 
 Therefore, in further experiments and setups, we will use 32k BPE vocabulary trained on clean training data.
@@ -307,6 +308,7 @@ First, we are interested in model performance when trained on clean data. In thi
 As already commented, this task is unusual for Transformer. Therefore, we try different beam sizes during the inference. We believe it could help the model to find better transcriptions by considering less likely labels.
 
 \subsection{Training configuration}
+\label{easr:training}
 We tried to follow training tips for Transformer by \perscite{popel2018training}. We found that these suggestions do not work well with the NeMo toolkit. We tied many hyper-parameter settings. We found the following to work best for our purposes:
 
 For Transformer ``small'':
@@ -421,4 +423,11 @@ On the Libri Speech test, clean is the performance slightly inferior. On the tes
 Similarly to Czech, the model disregards orthography and tries to match graphemes to phoneme transcriptions. The overall quality hence follows the quality of the acoustic model.
 
 \subsection{Conclusion}
-We proposed and trained an enhanced ASR system. The trained models yet not outperform the baseline. But their performance, when naively trained on ``clean'' data, is only slightly worse. We are strongly convinced the model surpasses the baseline by introducing errors to the training. Another fact to consider is that the acoustic data were collected using greedy decoding. In the final pipeline, a beam search with language model re-scoring will be used. 
+\label{easr:conclusion}
+We proposed and trained an enhanced ASR system. We experimented with two Transformer models --- ``small'' and ``big'' --- and we also applied different beam sizes during the inference. 
+
+We found, the bigger models to perform better than the smaller ones. Further experiments on ASR and SLT will be therefore using the bigger architecture.
+
+Using different beam sizes did not lead to contrasting results. Nevertheless, there is still prospect of some difference when training on corrupted data.
+
+The trained models yet not outperform the baseline. But their performance, when naively trained on ``clean'' data, is only slightly worse. We are strongly convinced the model surpasses the baseline by introducing errors to the training. Another fact to consider is that the acoustic data were collected using greedy decoding. In the final pipeline, a beam search with language model re-scoring will be used. 

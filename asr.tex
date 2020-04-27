@@ -1,20 +1,20 @@
 \chapter{Automatic Speech Recognition}
 \label{chapter:asr}
 
-This chapter is devoted to Automatic Speech Recognition (ASR). Throughout this chapter, we describe in detail the process of training an ASR pipeline. One of the central challenges of this work is the scarcity of Czech training data. We propose a technique to overcome this problem. 
+This chapter is devoted to automatic speech recognition (ASR). Throughout this chapter, we describe in detail our modifications to the process of training an ASR pipeline. One of the central challenges of this work is the scarcity of Czech training data. We propose a technique to overcome this problem. 
 
 This chapter is organized as follows: \cref{asr:crosslingual_intermediate} presents and compares two techniques for overcoming the shortage of Czech ASR data. \cref{asr:transfer_phonemes} describes transfer learning from graphemes to phonemes.  the training of acoustic models for the final ASR/SLT pipeline. 
 
 
-\section{Coarse-to-Fine Intermediate Step and Cross-Lingual ASR Transfer}
+\section{Coarse-to-Fine Intermediate Step and Cross-Lin\-gual ASR Transfer}
 \label{asr:crosslingual_intermediate}
 
-In this section, we review techniques for overcoming training data shortage. Note, this section was submitted to the Interspeech conference. The differences between this section and the paper are only subtle: we added a description of QuartzNet architecture (see \cref{intro:quartznet}), made the tables and figures a bit smaller and detailed, and shortened the text a bit (to adhere to the 4-page limit). 
+In this section, we review techniques for overcoming training data shortage. Note, this section was submitted in the format of paper to the Interspeech conference and it is now under review.
 
 \subsection{Introduction}
 
-Contemporary end-to-end, deep-learning automatic speech recognition systems achieved state-of-the-art results on many public speech corpora, see e.g. \perscite{han2019state}
-on test-clean set from LibriSpeech \parcite{panayotov2015librispeech}.
+Contemporary end-to-end, deep-learning automatic speech recognition systems achie\-ved state-of-the-art results on many public speech corpora, see e.g. \perscite{han2019state}
+on test-clean set from LibriSpeech.
 
 To outperform traditional hybrid models, deep-learning ASR systems, however, must be trained on vast amounts of training data, on the order of a thousand of hours. Currently, there is only a limited number of public datasets that meet these quantity criteria. The variety of covered languages is also minimal. In fact, most of these large datasets contain only English. Although new speech datasets are continually emerging, producing them is a tedious and expensive task.
 
@@ -26,11 +26,11 @@ Furthermore, it became customary to publish checkpoints alongside with the neura
 there emerge repositories with pre-trained neural networks such as \textit{TensorFlow Hub}\footurl{https://tfhub.dev/} or \textit{PyTorch
 	Hub}.\footurl{https://pytorch.org/hub/} This gives us an opportunity to use pre-trained models, but similarly, most of the published checkpoints are trained for English speech.
 
-In our work, we propose a Coarse-to-Fine Intermediate Step and experiment with transfer learning \parcite{tan2018-survey}, i.e., the reuse of pre-trained models for other tasks. Specifically,
+In our work, we propose a cross-lingual coarse-to-fine intermediate step and experiment with transfer learning \parcite{tan2018-survey}, i.e., the reuse of pre-trained models for other tasks. Specifically,
 we reuse the available English ASR checkpoint of QuartzNet \parcite{kriman2019quartznet} and train it to recognize Czech speech instead.
 
-This section is organized as follows. In \cref{asr:related_work}, we give an overview of related work. In \cref{sec:data_models} we describe used models and data. Our proposed method is described in \cref{sec:experiments}, and the results are presented and discussed in \cref{sec:results}.
-Finally, in \cref{sec:conclusion} we summarize the work, and we give a brief outlook of our future plans.
+This section is organized as follows. In \cref{asr:related_work}, we give an overview of related work. In \cref{sec:data_models} we describe the used models and data. Our proposed method is described in \cref{sec:experiments}, and the results are presented and discussed in \cref{sec:results}.
+Finally, in \cref{sec:conclusion} we summarize the work%, and we give a brief outlook of our future plans.
 
 
 \subsection{Related Work}
@@ -52,7 +52,31 @@ Coarse-to-fine processing \parcite{raphael:coarse-to-fine:2001} has a long histo
 
 The term coarse-to-fine is also used in the context of hyperparameter optimization, see e.g., \perscite{coarse-to-fine-hyperparam:2017} or the corresponding DataCamp class,\footnote{\url{https://campus.datacamp.com/courses/hyperparameter-tuning-in-python/informed-search?ex=1}} to cut down the space of possible hyperparameter settings quickly.
 
-Our work is novel and differs from the abovementioned twofold: first, we reuse existing models and checkpoints to improve the speed and accuracy of an unrelated language. Second, in the Coarse-to-Fine Step method, we simplify, instead of unifying, Czech character set in order to improve cross-lingual transfer, but also to enhance monolingual training significantly.
+Our work is novel and differs from the abovementioned in two ways: First, we reuse existing models and checkpoints to improve the speed and accuracy of an unrelated language. Second, in the coarse-to-fine step method, we simplify (instead of unifying) Czech character set in order to improve cross-lingual transfer, but also to enhance monolingual training significantly.
+
+
+\subsection{Data and Models Used}
+\label{sec:data_models}
+
+%We build upon the following components:
+
+\paragraph{Pre-Trained English ASR.}
+
+As the parent English model we use the checkpoint available at the \textit{NVIDIA GPU Cloud}.\footurl{https://ngc.nvidia.com/catalog/models/nvidia:quartznet15x5} It is trained for 100 epochs with batch size 512 on 8 NVIDIA V100 GPUs and achieves 3.98\,\% WER on LibriSpeech \parcite{panayotov2015librispeech} test-clean.
+
+During the experiments, the model configuration provided by the NeMo authors is used with minor changes (we used 1000 warm-up steps and learning rate $10^{-3}$ for decoder adaptation). We note that we use $O1$ optimization setting. Which primarily means mixed-precision training (weights are stored in single precision, gradient updates are computed in double precision). We perform training on 10 NVIDIA GeForce GTX 1080 Ti GPUs with 11 GB VRAM.
+
+
+\paragraph{Czech Speech Data.}
+In our experiments, we use Large Corpus of Czech Parliament Plenary Hearings \parcite{dataset}. At the time of writing, it is the most extensive available speech corpus for the Czech language, consisting of approximately 400 hours.
+
+The corpus includes two held out sets: the development set extracted from the training data and reflecting the distribution of speakers and topics, and the test set which comes from a different period of hearings. We choose the latter for our experiments because we prefer the more realistic setting with a lower chance of speaker and topic overlap.
+
+A baseline, end-to-end Jasper model, trained on this corpus for 70 epochs, has an accuracy of 14.24\,\% WER on the test set.
+
+
+\subsection{Examined Configurations}
+\label{sec:experiments}
 
 
 \begin{figure*}[t]
@@ -91,40 +115,7 @@ Our work is novel and differs from the abovementioned twofold: first, we reuse e
 	\label{fig:transfers}
 \end{figure*}
 
-
-\subsection{Data and Models Used}
-\label{sec:data_models}
-
-%We build upon the following components:
-
-\paragraph{Pre-Trained English ASR.}
-
-We use teh checkpoint available at the \textit{NVIDIA GPU Cloud}.\footurl{https://ngc.nvidia.com/catalog/models/nvidia:quartznet15x5} It is trained for 100 epochs with batch size 512 on 8 NVIDIA V100 GPUs and achieves 3.98\,\% WER on LibriSpeech \parcite{panayotov2015librispeech} test-clean.
-
-During the experiments, the model configuration provided by the NeMo authors is used with minor changes (we used 1000 warm-up steps and for decoder adaptation learning rate $10^{-3}$). We note that we use $O1$ optimization setting. That is mixed-precision training (weights are stored in single precision, gradient updates are computed in double precision). We perform training on 10 NVIDIA GeForce GTX 1080 Ti GPUs with 11 GB VRAM.
-
-
-\paragraph{Czech Speech Data.}
-In our experiments, we use Large Corpus of Czech Parliament Plenary Hearings \parcite{dataset}. At the time of writing, it is the most extensive available speech corpus for the Czech language, consisting of approximately 400 hours.
-
-The corpus includes two held out sets: the development set extracted from the training data and reflecting the distribution of speakers and topics, and the test set which comes from a different period of hearings. We choose the latter for our experiments because we prefer the more realistic setting with a lower chance of speaker and topic overlap.
-
-A baseline, end-to-end Jasper model, trained on this corpus for 70 epochs, has an accuracy of 14.24\,\% WER on the test set.
-
-\begin{landscape}
-	\begin{figure}[t]
-		\includegraphics[width=\linewidth,height=13cm]{img/figure}
-		\caption{Evaluation on test set during training. % (every 500 steps).
-			Note, that WER curves for experiments with simplified vocabulary (thin lines) are not directly comparable with other curves until step 40,000 as the test set is on different (simplified) vocabulary. 10,000 steps takes approximately 5 hours of time.}
-		\label{fig:training}
-	\end{figure}
-\end{landscape}
-
-
-\subsection{Examined Configurations}
-\label{sec:experiments}
-
-\cref{fig:transfers} presents the examined setups. In all cases, we aim at Czech ASR. The baseline (not in the diagram) is to train the network from scratch on the whole Czech dataset, converting the speech signal directly to Czech graphemes, i.e., words in fully correct orthography, except punctuation and casing which are missing in both the training and evaluation data.
+\cref{fig:transfers} presents the examined setups. In all cases, we aim at the best possible Czech ASR, disregarding the performance of the model in the original English task. The baseline (not in the diagram) is to train the network from scratch on the whole Czech dataset, converting the speech signal directly to Czech graphemes, i.e., words in fully correct orthography, except punctuation and casing which are missing in both the training and evaluation data.
 
 \subsubsection{Basic Transfer Learning}
 \label{basic_transfer}
@@ -180,22 +171,29 @@ In the last experiment, we disregard the English pre-trained model and use only 
 		sim. CS $\rightarrow$ CS & 20.56  &  24.59 &  16.57  \\
 		%\hline
 	\end{tabular}
-	\caption{Results in \% of word error rate on the Czech (CS) test set. Note, all results are obtained on the same test set with following difference: ``Simplified'' reflects WER on Czech without accents (both hypothesis and reference stripped, e.g., ``\v{c}\'arka'' as ``carka''). ``Adaptation phase'' and ``Full training'' already use the original, unmodified test set.}
+	\caption{Results in \% of word error rate on the Czech (CS) test set. Note, all results are obtained on the same test set with following difference: The column ``Simplified'' reflects WER on Czech without accents (both hypothesis and reference stripped, e.g., ``\v{c}\'arka'' as ``carka''). ``Adaptation phase'' and ``Full training'' already use the original, unmodified test set.}
 	\label{tab:results}
 \end{table}
 
-
+\begin{landscape}
+	\begin{figure}[t]
+		\includegraphics[width=\linewidth,height=13cm]{img/figure}
+		\caption{Evaluation on test set during training. % (every 500 steps).
+			Note, that WER curves for experiments with simplified vocabulary (thin lines) are not directly comparable with other curves until step 40,000 as the test set is on a different (simplified) vocabulary. 10,000 steps takes approximately 5 hours of time.}
+		\label{fig:training}
+	\end{figure}
+\end{landscape}
 
 \subsection{Results and Discussion}
 \label{sec:results}
 
 
-\cref{tab:results} presents our final WER scores and \cref{fig:training} shows their development through the training. For simplicity, we use greedy decoding and no language model. We do not use a separate development. We simply take the model from the last reached training iteration.\footnote{Little signs of overfitting are apparent for the ``Simplified CS $\rightarrow$ CS'' setup so that an earlier iteration might have worked better, but we do not have another test set with unseen speakers to validate it.}
+\cref{tab:results} presents our final WER scores and \cref{fig:training} shows their development through the training. For simplicity, we use greedy decoding and no language model. We do not use a separate development set. We simply take the model from the last reached training iteration.\footnote{Little signs of overfitting are apparent for the ``Simplified CS $\rightarrow$ CS'' setup so that an earlier iteration might have worked better, but we do not have another test set with unseen speakers to validate it.}
 
 \subsubsection{Transfer across Unrelated Languages}
 
 We observe that initialization %of network weights
-with an unrelated language helps to speed-up training. This is best apparent in ``English $\rightarrow$ Czech simplified'' where the unchanged vocabulary allows us to reuse all the weights. WER drops under 30\,\%  after only 2000 steps (1 hour). This can be particularly useful if the final task does not require the lowest possible WER, such as sound segmentation.
+with an unrelated language helps to speed-up training. This is best apparent in ``English $\rightarrow$ Czech simplified'' where the unchanged vocabulary allows us to reuse all the weights. WER drops under 30\,\%  after only 2000 steps (1 hour of training). This can be particularly useful if the final task does not require the lowest possible WER, such as sound segmentation.
 
 
 If the target alphabet is altered (``English $\rightarrow$ Czech''), we observe a speed-up at the beginning of the training. Our setting with QuartzNet and as well as these results are similar to \perscite{kunze-etal-2017-transfer} with a high $k = 18$. % abstracted to QuartzNet's convolutional layers $C_1$ to $C_4$ and blocks $B_i$ with high $k = 18$.} 
@@ -203,14 +201,14 @@ However, this advantage diminishes with longer training, gaining only
 %becomes weaker as the training progresses. Towards the end, the advantage is roughly
 1 to 2\,\% points of WER over the baseline in the end.
 
-It seems, though, that in the experiments with different vocabularies, after the change to the full Czech vocabulary, the results are better for a randomly initialized network, rather than the one with transfer from English.
+It seems, though, that in the experiments with different vocabularies, after the change to the full Czech vocabulary, the results are better for a randomly initialized network (WER 16.56 \%), rather than the one with transfer from English (WER 16.88 \%) (see \cref{tab:results}).
 
 \subsubsection{Transfer across Target Vocabularies}
 
 In the course of two experiments, we altered the target vocabulary: the training starts with simplified Czech, and after about 40,000 steps, we switch to the full target vocabulary. This sudden change can be seen as spikes in \cref{fig:training}. Note that WER curves prior to the peak use the simplified (the same test set, but with stripped diacritics) Czech reference, so they are not directly comparable to the rest.
 
 The intermediate simplified vocabulary always brings a considerable improvement. In essence, the final WER is lower by 2.18 (16.88 vs. 19.06 in \cref{tab:results}) for the models transferred from English and by 3.62 (16.57 vs. 20.19) for Czech-only runs.
-One possible reason for this improvement is the ``easier'' intermediate task of simpler Czech. Although the exact difficulty is hard to compare as the target alphabet is smaller, but more spelling ambiguities may arise. This task helps the network to find a better-generalizing region in the parameter space. Another possible reason that this sudden change and reset of the last few layers allows the model to reassess and escape a local optimum in which the ``English $\rightarrow$ Czech'' setup could be trapped.
+One possible reason for this improvement is the ``easier'' intermediate task of simpler Czech. Note that the exact difficulty is hard to compare as the target alphabet is smaller, but more spelling ambiguities may arise. This task helps the network to find a better-generalizing region in the parameter space. Another possible reason that this sudden change and reset of the last few layers allows the model to reassess and escape a local optimum in which the ``English $\rightarrow$ Czech'' setup could be trapped.
 
 
 \subsection{Conclusion and Future Work}
@@ -229,8 +227,8 @@ Our final model for Czech is better by over 3.5 WER absolute over the baseline, 
 We see further potential in the coarse-to-fine training. We would like to explore this area more thoroughly, e.g., by introducing multiple simplification stages or testing the technique on more languages.
 
 
-\subsection{Note on the results}
-After reviewing the Large Corpus of Czech Parliament Plenary Hearings, we found out that the transcripts contained systematic errors (SIL tag for silence was accidentally left in at the beginnings and ends of some transcripts). This resulted in systematic errors during testing. 
+\subsection{Note on the Results}
+After reviewing the Large Corpus of Czech Parliament Plenary Hearings, we found out that the transcripts contained systematic errors (SIL tag for silence was accidentally left in at the beginnings and ends of some transcripts). This resulted in systematic mismatch of the system output and the reference transcript during testing. 
 
 Unfortunately, we made this finding after discarding some of the models, so we were unable to re-run the test. We kept only the best model. After fixing the transcript errors in development and test set --- no model retraining --- the model obtained marvelous results: WER of 4.91 \% on the development and 6.42 \% on the test set using beam search with language model (see \cref{tab:results_rerun}). These results are thus ten \% points better than initially stated in \cref{tab:results}.
 
@@ -255,93 +253,106 @@ Unfortunately, we made this finding after discarding some of the models, so we w
 %********************* ASR to phonemes *********************
 %***********************************************************
 
-\section{Speech recognition to phonemes}
+\section{Speech Recognition to Phonemes}
 \label{asr:transfer_phonemes}
 In this section, we build ASR systems for English and Czech with phonemes as target vocabulary. During the training, we build upon our findings from the previous section.
 
-This section is organized as follows: first, in \cref{asr:phon:related} we review related work and discuss the motivation for the transition from graphemes to phonemes as target vocabulary. Next, in \cref{asr:phon:experiment} we present the experiment set-up. \cref{asr:phon:training} gives details about training. Finally, we evaluate results in \cref{asr:phon:eval}.
+This section is organized as follows: First, in \cref{asr:phon:related} we review related work and discuss the motivation for the transition from graphemes to phonemes as target vocabulary. Next, in \cref{asr:phon:experiment} we present the experiment set-up. \cref{asr:phon:training} gives details about training. Finally, we evaluate results in \cref{asr:phon:eval}.
 
-\subsection{Related work}
+\subsection{Related Work}
 \label{asr:phon:related}
 
 Phonemes are well-established modeling units in speech recognition. From the beginnings of the ASR technology in the 1950s, researchers employed phonemes \parcite{juang2005automatic}. 
 
-For the GMM-HMM models, a state typically represents part of a phone \parcite{yu2016automatic}. Phone is a linguistic unit representing a sound regardless of the meaning in a particular language. On the other hand, we have phonemes that are also linguistic units representing a sound. However, opposed to the phones, if a phoneme is switched for another, it could change the meaning of a word in a particular language. A common trick for improving quality is to combine phones into diphones (two consecutive phones) or triphones (three successive phones) \parcite{kamath2019deep}.  
+For the GMM-HMM models, a state typically represents part of a phone \parcite{yu2016automatic}. A \emph{phone} is a linguistic unit representing a sound regardless of the meaning in a particular language. On the other hand, we have \emph{phonemes} that are also linguistic units representing a sound. However, opposed to the phones, if a phoneme is switched for another one, it could change the meaning of a word in a particular language. A common trick for improving the quality is to combine phones into \emph{diphones} (two consecutive phones) or \emph{triphones} (three successive phones) \parcite{kamath2019deep}.  
 
-\perscite{riley1992recognizing} attend the comparison of different linguistic units for sound representation. Namely, they compare phonemic (using phones), phonetic (using phonemes), and multiple phonetic realizations with associated likelihoods. All experiments use the GMM-HMM ASR model. Using the phonemic representation, the authors were able to achieve 93.4 \% word accuracy on DARPA Resource Management Task. Using the most probable phonetic spelling, the authors improved the result to 94.1 \%. Authors also propose using more phonetic realizations, which are obtained automatically from the TIMIT phonetic database. In their best setup, which achieves an accuracy of 96.3 \%, they report the average 17 representations per word.
+\perscite{riley1992recognizing} perform a comparison of different linguistic units for sound representation. Namely, they compare phonemic (using phones), phonetic (using phonemes), and multiple phonetic realizations with associated likelihoods. All experiments use the GMM-HMM ASR model. Using the phonemic representation, the authors were able to achieve 93.4 \% word accuracy on DARPA Resource Management Task. Using the most probable phonetic spelling, the authors improved the result to 94.1 \%. Authors also propose using more phonetic realizations for each word, allowing different pronunciations. These are obtained automatically from the TIMIT phonetic database. In their best setup, which achieves an accuracy of 96.3 \%, they report the average of 17 representations per word.
 
-Important work popularizing neural networks in ASR is \perscite{waibel1989phoneme} published at the end of the 1980s. Work proposes to use a time-delayed neural network to model acoustic-phonetic features and to model the temporal relationship between them. Authors demonstrate that the proposed NN can learn shift-invariant internal abstraction of speech and use this to make a robust final decision. Authors choose phonemes as a modeling unit.
+An important piece of work popularizing neural networks in ASR is that of \perscite{waibel1989phoneme}. Work proposes to use a time-delayed neural network to model acoustic-phonetic features and to model the temporal relationship between them. Authors demonstrate that the proposed NN can learn shift-invariant internal abstraction of speech and use this to make a robust final decision. The authors choose phonemes as the modeling unit.
 
 More recent studies that still use hybrid models (mainly, HMM and DNN) employ multi-task learning to improve phone recognition task significantly. 
 
-For example, \perscite{seltzer2013multi} improves the primary task of predicting acoustic states (61 phonemes, three states each) using a different secondary assignment. They propose three additional problems: (1) Phone Label Task, where the system predicts phone labels for each acoustic state. (2) State Context Task, in which the model predicts previous and following acoustic state. (3) Phone Context Task, where the model predicts previous and next phone.
+For example, \perscite{seltzer2013multi} improve the primary task of predicting acoustic states (61 phonemes, three states each) using a different secondary assignment. They propose three additional problems: (1) Phone Label Task, where the system predicts phone labels for each acoustic state. (2) State Context Task, in which the model predicts the previous and following acoustic state. (3) Phone Context Task, where the model predicts the previous and next phone.
 
-Another example of multi-task learning in ASR is \perscite{chen2014joint}. The authors use DNN for the triphone recognition task. To improve the performance in this task, they suggest using the additional assignment of trigrapheme recognition, which they claim to be highly related learning tasks. In their setup, both problems share the internal representation (hidden layers of DNN). Authors successfully demonstrate that their contribution outperforms other single task methods, even the ROVER system \parcite{fiscus1997post}, that combines both the abovementioned tasks.
+Another example of multi-task learning in ASR is \perscite{chen2014joint}. The authors use a DNN for the triphone recognition task. To improve the performance in this task, they suggest using the additional task of trigrapheme recognition, which they claim to be highly related. In their setup, both problems share the internal representation (the hidden layers of DNN). The authors successfully demonstrate that their contribution outperforms other single task methods and even the ROVER system \parcite{fiscus1997post}, that combines both the abovementioned tasks.
 
-Finally, though not directly from the ASR field, an excellent utilization for phoneme ASR in Spoken Language Translation suggests \perscite{salesky-etal-2019-exploring}. For their End-to-End SLT pipeline, they first obtain phonemes alignment using the DNN-HMM system. They average feature vectors with the same phoneme for consecutive frames. Phonemes then serve as input features for End-to-End SLT. 
+Finally, though not directly from the ASR field, an excellent utilization for phoneme ASR in speech translation is suggested by \perscite{salesky-etal-2019-exploring}. For their end-to-end speech translation pipeline, they first obtain phoneme alignment using the DNN-HMM system. They average feature vectors with the same phoneme for consecutive frames. Phonemes then serve as input features for End-to-End Speech Translation. 
 
-\subsection{Experiment set-up}
+\subsection{Experiment Set-Up}
 \label{asr:phon:experiment}
-Based on the abovementioned review of related work, we design our experiment. The main goal of our work is to build an SLT system. This has a significant impact on our decision-making about the rough outline.
+Based on the abovementioned review of related work, we design our experiment. The main goal of our work is to build an spoken language \emph{translation} system. This has a significant impact on our decision-making about the rough outline.
 
-We target our ASR to phonemes rather than graphemes. We presume they are more suitable linguistic modeling units for the recognition task, while they keep the problem similar to the grapheme recognition task (mainly supported by  \perscite{riley1992recognizing,juang2005automatic,chen2014joint}). \XXX{This especially holds for Czech, as the phonetical and graphical transcriptions are relatively alike. We specifically decided for IPA phonemes and not for other phonetic units like phones. We believe that they are adequate and we can quickly get phonetical transcription for most languages using \texttt{phonemizer}\footnote{\url{https://github.com/bootphon/phonemizer}} tool.}
+We target our ASR to phonemes rather than graphemes. We presume they are more suitable linguistic modeling units for the recognition task, while they keep the problem similar to the grapheme recognition task (mainly supported by  \perscite{riley1992recognizing,juang2005automatic,chen2014joint}). This is perhaps more true for Czech where the phonetical and graphical transcriptions are relatively alike. We specifically decided for IPA phonemes and not for other phonetic units like phones. We believe that they are adequate and we can quickly get phonetical transcription for most languages using the \texttt{phonemizer}\footnote{\url{https://github.com/bootphon/phonemizer}} tool.
 
-We find the End-to-End system promising for the future. Therefore, unlike the DNN-HMM architecture used by the \perscite{salesky-etal-2019-exploring}, we bet on E2E architecture. Notably, for English, we employ bigger Jasper \parcite{Li2019}, and for Czech, we utilize smaller QuartzNet \parcite{kriman2019quartznet}. Our decision to use different architectures for English and Czech is motivated by the volume of the training data. For English, we have almost 2000 hours and for Czech only about 400 hours of transcribed speech.
+We find the end-to-end system architecture for ASR promising for the future. Therefore, unlike the DNN-HMM architecture used by the \perscite{salesky-etal-2019-exploring}, we bet on E2E architecture. Notably, for English, we employ the bigger Jasper architecture \parcite{Li2019}, and for Czech, we utilize the smaller QuartzNet architecture \parcite{kriman2019quartznet}. Our decision to use different architectures for English and Czech is motivated by the volume of the training data and the number of trainable parameters of the respective models. For English, we have almost 2000 hours of transcribed speech and 333 million of parameters in the Jasper model while for Czech only about 400 hours of transcribed speech and 18.9 million of parameters in the QuartzNet model.
 
-We take advantage of the fact that the grapheme and phoneme recognition tasks are similar. We employ transfer learning from pre-trained grapheme models. Inspired by our previously proposed ``Adaptation method'' (see \cref{sec:experiments}), we first strip the ``grapheme'' decoder and adapt the model (only a randomly initialized decoder) for new modeling units --- phonemes. After the adaptation, we train the whole model.
+We take advantage of the fact that the grapheme and phoneme recognition tasks are similar. We employ transfer learning from pre-trained grapheme models. Inspired by our previously proposed ``Adaptation method'' (see \cref{sec:experiments}), we first strip the ``grapheme'' decoder. We replace the stripped grapheme decoder with a new decoder with correct number of output classes to account number of phonemes. This new decoder is then randomly initialized (using Glorot uniform). During the adaptation phase we adapt the model (only a randomly initialized decoder). After the adaptation, we train the whole model (encoder and decoder together).
 
 \subsection{Training}
 \label{asr:phon:training}
-In this section, we review the training of the experiment, as described in \cref{asr:phon:experiment}. Note, we have different training plans for English and Czech. Common are the schemes: first, the Adaptation phase, and second, the Full training.
+In this section, we review the training of the experiment, as described in \cref{asr:phon:experiment}. Note that we have different training procedures for English and Czech. The training scheme is common to both languages: first, the Adaptation phase, and second, the Full training.
 
 We use mixed-precision training, which means that the weights are stored in \texttt{float16} (making the model smaller), and weight updates are computed in \texttt{float32} precision (reducing the quality loss).
 
-When it comes to phoneme segmentation, technical question arises. Both trained architectures output character labels. But, some phonemes are multi-character (for example ``\textipa{a:}'' or ``\textipa{dZ}''). We already dealt with this problem in the previous section. Czech alphabet has digraph ``ch''. We decided to disregard this character in the ASR to Czech graphemes as it can be easily rewritten using ``c'' and ``h''. Here is the problem more complicated. Many phonemes in both languages are multi-characters (Czech has 13 and English 27). Hence, disregarding these phonemes might influence model performance. Bearing this in mind, we conduct two additional experiments. The first experiment obeys the phoneme segmentation, and the second brakes all phonemes to single characters. As the English model has much greater hardware requirements, we train only Czech variants and generalize the results to English.
+When it comes to phoneme segmentation, one technical question arises. Both trained architectures output character labels, but some phonemes are multi-character (for example ``\textipa{a:}'', ``\textipa{dZ}'', ``\textipa{aI}'', ``\textipa{aI@}'' or ``\textipa{aI\textrhookschwa}'',). We already dealt with this problem in the previous section due to the Czech digraph ``ch''. We decided to disregard this character in the ASR to Czech graphemes as it can be easily rewritten using ``c'' and ``h''. Here the problem is more frequent. Many phonemes in both languages are multi-character (Czech has 13 and English 27). Hence, disregarding these phonemes might influence the model performance. Bearing this in mind, we conduct two additional experiments. The first experiment obeys the phoneme segmentation, and the second breaks all phonemes to single characters. As the English model has much greater hardware requirements, we train only Czech variants and assume the results will carry over to English.
 
-We first attempt to follow a phoneme segmentation given by the \texttt{phonemizer}. \texttt{phonemizer} can output phonetic transcriptions including separators between pho\-ne\-mes and words. We use ``$\mid$'' as phoneme separator.
+We first attempt to follow the phoneme segmentation given by the \texttt{phonemizer}. \texttt{phonemizer} can output phonetic transcriptions including separators between pho\-ne\-mes and words. We use ``$\mid$'' as the phoneme separator.
 
-In the second attempt, we break all multi-character phonemes. Additionally, we break single-character phonemes that consists of combining letters and we replace these special letters with a placeholder. For English we substitute ``\textipa{\textsuperscript{j}}'' with ``J'', combining tilde (like ``\textipa{\~O}'') with ``I'', and vertical line below (e.g., ``\textipa{\textsyllabic{n}}'') with ``L''. For Czech, we introduce placeholders for vertical line below (e.g., ``\textipa{\textsyllabic{l}}'') with ``L'', for up tack below (e.g., ``\textipa{\textraising{r}}'') with ``T'' and ring above (e.g., ``\textipa{\r{r}}'') with ``R''. So, for example Czech word ``p\v{r}\'ipadn\v{e}'' has phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'', which is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
+%In the second attempt, we decompose all multi-character phonemes. Additionally, we break single-character phonemes that consist of combining letters and we replace these special letters with a placeholder. For English we substitute ``\textipa{\textsuperscript{j}}'' with ``J'', combining tilde (like ``\textipa{\~O}'') with ``I'', and vertical line below (e.g., ``\textipa{\textsyllabic{n}}'') with ``L''. For Czech, we introduce placeholders for vertical line below (e.g., ``\textipa{\textsyllabic{l}}'') with ``L'', for up tack below (e.g., ``\textipa{\textraising{r}}'') with ``T'' and ring above (e.g., ``\textipa{\r{r}}'') with ``R''. So, for example Czech word ``p\v{r}\'ipadn\v{e}'' has phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'', which is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
+
+In the second attempt, we decompose all multi-character phonemes. Additionally, we break single-character phonemes that consist of combining letters and we replace these special letters with a placeholder. Note that the substitute letters I, L, T, R were chosen so that they do not occur in the respective language. So, for example the Czech word ``p\v{r}\'ipadn\v{e}'' with the phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'' is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
 
 \paragraph{Czech ASR}
 For training and testing, we use the ``phonemized'' corpus of the Czech Parliament Plenary Hearings. As the dataset is five times smaller than English corpora, we utilize the smaller QuartzNet.
 
-We train off the best model from the previous experiment described in \cref{asr:crosslingual_intermediate}. This model yields on the Parliament corpus WER of 4.91 \% on development and 6.42 \% test set using beam search with decoding.
+We train off the best model from the previous experiment described in \cref{asr:crosslingual_intermediate}. This model yields WER of 4.91 \% on the development and 6.42 \% the test set on the Parliament corpus using beam search with decoding.
 
 The Adaptation Step takes 2000 steps. As the model's memory footprint is smaller during this phase, we increase the batch size to 256. Two thousand steps are warm-up, the maximal learning rate is $4 \times 10^{-3}$.
 
-Full training takes 30000 steps. The model memory requirements increases, therefore we reduce the batch size to 32. We also reduce the learning rate to $10^{-3}$.
+The full training takes 30000 steps. The model memory requirements increase, therefore we reduce the batch size to 32. We also reduce the learning rate to $10^{-3}$.
 
-Both experiments with phonemes alphabets use the same configuration.
+Both experiments with phonemes alphabets (the broken and non-broken one) use the same configuration.
 
 \paragraph{English ASR}
-For training and evaluation, we translate to phonemes (using \texttt{pho\-ne\-mi\-zer} tool) corpora LibriSpeech and Mozilla Common Voice. We use both (shuffled) datasets for the Adaptation and Full training.
+For the training and evaluation of English ASR, we translate to pho\-ne\-mes the corpora LibriSpeech and Mozilla Common Voice (again using the \texttt{pho\-ne\-mi\-zer} tool). We use both (shuffled) datasets for the Adaptation and Full training phases.
 
 The training is executed on 10 NVIDIA GTX 1080 Ti GPUs with 11 GB VRAM.
 
-We train off the Jasper ASR model available online\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:multidata set_jasper10x5dr}}. This model was trained on LibriSpeech, Mozilla Common Voice, WSJ, Fisher, and Switchboard corpora. The model yields on LibriSpeech 3.69 \% on test-clean, and 10.49 \% on test-other using greedy decoding.
+We train off the Jasper ASR model as available online.\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:multidata set\_jasper10x5dr}} This model was trained on the LibriSpeech, Mozilla Common Voice, WSJ, Fisher, and Switchboard corpora. The model yields 3.69 \% on the test-clean, and 10.49 \% on the test-other using greedy decoding on the LibriSpeech.
 
-The Adaptation Step takes 2000 steps. As the model's memory footprint is smaller during this phase, we increase the batch size to 64 (global batch size is 640). One thousand steps are warm-up; the maximal learning rate is $4 \times 10^{-3}$.
+The Adaptation phase takes 2000 steps. As the model's memory footprint is smaller during this phase, we increase the batch size to 64 (global batch size is 640). One thousand steps are warm-up; the maximal learning rate is $4 \times 10^{-3}$.
 
-The Full training takes ten epochs. The model memory requirements increases, therefore we reduce the batch size to 16 (global batch size is 160). We also reduce the learning rate to $10^{-3}$.
+The Full training takes ten epochs. The model memory requirements increase, therefore we reduce the batch size to 16 (global batch size is 160). We also reduce the learning rate to $10^{-3}$.
 
 \subsection{Evaluation}
 \label{asr:phon:eval}
-In this section we review the course of training and evaluate model's performance.
+In this section, we review the course of training and evaluate the models' performance.
 
-Note, the results are not directly comparable with graphemes. The mapping to phonemes is not a bijection. For example in American English \emph{I am} maps to only one ``phoneme word'' \textipa{[aI\ae m]}.
+Note, the results are not directly comparable with graphemes. The mapping to phonemes is not a 1-1. For example in American English \emph{I am} maps to only one ``phoneme word'' \textipa{[aI\ae m]}.
 
 \paragraph{Czech}
-Course of training is displayed in \cref{fig:cs_phon} and final evaluation are in \cref{tab:cs_phon_results}. 
+The course of the Czech training is displayed in \cref{fig:cs_phon} and the final evaluation is in \cref{tab:cs_phon_results}. 
 
-As expected, rapid PWER fall at the beginning of the training (see \cref{fig:en_phon}) proves that the grapheme and phoneme recognition tasks are indeed similar.
+As expected, rapid Phoneme Word Error Rate (PWER) fall at the beginning of the training (see \cref{fig:en_phon}) proves that the grapheme and phoneme recognition tasks are indeed similar because the pre-trained weights adapt so quickly and well to the new target units.
 
-We made a surprising observation: beam search decoding is always worse than greedy decoding. We tested beam sizes of power two from 1 to 64. We use two different beam search implementations: TensorFlow\footnote{\url{https://www.tensorflow.org/}} and Baidu's CTC decoder\footnote{\url{https://github.com/PaddlePaddle/DeepSpeech}} with KenLM\footnote{\url{https://github.com/kpu/kenlm}} language model. 
+We made a surprising observation: beam search decoding is always worse than greedy decoding. We tested the beam sizes of power two from 1 to 64. We use two different beam search implementations: TensorFlow\footnote{\url{https://www.tensorflow.org/}} and Baidu's CTC decoder\footnote{\url{https://github.com/PaddlePaddle/DeepSpeech}} with KenLM\footnote{\url{https://github.com/kpu/kenlm}} language model. 
 
-Using TensorFlow, we got the best result 9.14 \%, about 0.2 \% percent point higher than with the greedy search for multi-character ASR. For single-character ASR, the difference is even more significant: 9.09 and 9.53 \% PWER. 
+Using TensorFlow, we got the best result 9.14 \% PWER, about 0.2 \% percent point higher than with the greedy search for multi-character ASR. For single-character ASR, the difference is even more significant: 9.09 \% for greedy and 9.53 \% PWER for beam search. 
 
-We also tried adding a language model to the second CTC decoder\footnote{When setting LM weight to higher than 0, we found that this implementation does not support labels containing more that one character, which causes a problem, as phonetic alphabet contains several multi-character phonemes. To overcome this complication, we substituted these multi-character labels with unused single-character labels (such as capital letters and numbers).}. Using KenLM, we trained a 3-gram language model on phonemized Czeng. For both single- and multi-character phonemes, using the language model helps. The result is for the single-character setup a bit better. We suspect the difference stems from our trick to overcome Baidu's CTC decoder limitation. Training data for language model data does not contain phoneme boundaries. Some multi-character phonemes consists of two other valid single-character ones. Thus, some neighbors might be considered as one phoneme and incorrectly substituted. The ASR model is trained on data with known phoneme segmentation. So, during decoding, the model outputs with higher probability two phonemes instead of one, while the language model gives to these phonemes lower likelihood.
+We also tried adding a language model to the second CTC decoder.\footnote{When setting LM weight to higher than 0, we found that this implementation does not support labels containing more that one character, which causes a problem to the several multi-character phonemes in the phonetic alphabet.} Using KenLM, we trained a 3-gram language model on phonemized Czech part of the CzEng. For both single- and multi-character phonemes, the language model helps. The result for the single-character setup is a bit better. We suspect the difference stems from our trick (substituting multi-character phonemes with a new single character --- see \cref{asr:phon:training}) to overcome Baidu's CTC decoder limitation. Training data for language model does not contain phoneme boundaries. Some multi-character phonemes consists of two other valid single-character (or even multi-character) ones. Thus, during the substitution of multi-character phonemes, some neighboring phonemes might be considered as one phoneme and incorrectly substituted. The ASR model is trained on data with known phoneme segmentation (given by the \texttt{phonemizer}). So, during decoding, the model can sometimes output with higher probability two phonemes instead of one, while the language model gives to these phonemes lower score (because of the training data mismatch of the language and ASR model). Illustration of this problem is in \cref{tab:phon_examples}.
 
-To test this assumption, we train 3-gram language models (for single- and multi-character ASR) on ASR training data (including phoneme segmentation). Note, we do not re-phonemize Czeng, as phonemization is time and power-consuming process. The best results are 8.30 and 7.74 \% PWER for multi- and single-character ASR. These results are consistent with the greedy and beam search without LM decoding. Therefore, we conclude that using native phoneme segmentation is slightly better. Hence, for English, we use multi-character phonemes.
+\begin{table}[]
+	\centering
+	\begin{tabular}{l|ll}
+		Phonemes & \multicolumn{2}{c}{Examples} \\ \hline
+		``\textipa{i}'', ``\textipa{@}'' and ``\textipa{i@}''& \textipa{s}$\mid$\textipa{I}$\mid$\textipa{\*r}$\mid$\textbf{\textipa{i}$\mid$\textipa{@}}$\mid$\textipa{s} & \textipa{v}$\mid$\textipa{E}$\mid$\textipa{\*r}$\mid$\textbf{\textipa{i@}}$\mid$\textipa{s} \\
+		``\textipa{aI}'', ``\textipa{@}'' and ``\textipa{aI@}'' & \textipa{dZ}$\mid$\textbf{\textipa{aI}$\mid$\textipa{@}}$\mid$\textipa{n}$\mid$\textipa{t}  & \textipa{k}$\mid$\textipa{w}$\mid$\textbf{\textipa{aI@}}$\mid$\textipa{t}  
+	\end{tabular}
+	\caption{Examples of multi-character phonemes consisting of other single- and multi-character phonemes. ``$\mid$'' is segmentation mark. These segmentation marks are present in ASR training data, but not in the language model training data.}
+	\label{tab:phon_examples}
+\end{table}
+
+To test this assumption, we train 3-gram language models (for single- and multi-character ASR) on ASR training data that include phoneme segmentation. Note, we do not re-phonemize CzEng, as phonemization is time and power-consuming process. The best results are 8.30 and 7.74 \% PWER for multi- and single-character ASR. These results are consistent with the greedy and beam search without LM decoding. Therefore, we conclude that using native phoneme segmentation is slightly better. Hence, for English, we use multi-character phonemes.
 
 
 \begin{figure*}[t]
@@ -352,32 +363,24 @@ To test this assumption, we train 3-gram language models (for single- and multi-
 
 \begin{table}[t]
 	\centering
-	\begin{tabular}{lc|cc}
-		%\hline 
-		%\thead{Experiment} & \thead{Czech \\ simpl.} & \thead{Czech \\ adapt.} & \thead{Czech \\ full} \\
-		\bf Type & \bf Method & \bf Adaptation phase & \bf Full training \\
-		\hline
-		\multirow{2}{*}{dev} & multi-char. phonemes & 13.75 &  7.09  \tabspace{14pt}\\
-		
-		& single-char. phonemes & 17.91 & 10.04 \\
-		
-		\hline
-		
-		\multirow{2}{*}{test} & multi-char. phonemes & - &  8.94 / 9.14$\dagger$ / 8.30$\ddagger$  \tabspace{14pt}\\
-		
-		& single-char. phonemes & - &  9.09 / 9.53$\dagger$ / 7.84$\ddagger$  \\
-		%\hline
+	\begin{tabular}{lc|c|ccc}
+		\multirow{2}{*}{Type} & \multirow{2}{*}{Method} & Adaptation & \multicolumn{3}{c}{Full training} \\
+		&                       & phase & greedy & beam s. & beam s. with LM \\ \hline
+		\multirow{2}{*}{dev}  & multi-char. phonemes  & 13.75 & 7.09   & -       & -               \\
+		& single-char. phonemes & 17.91 & 10.04  & -       & -               \\ \hline
+		\multirow{2}{*}{test} & multi-char. phonemes  & -     & 8.94   & 9.14    & 8.30            \\
+		& single-char. phonemes & -     & 9.09   & 9.53    & 7.84           
 	\end{tabular}
-	\caption{Results in \% of \emph{Phoneme} Word Error Rate (PWER) using greedy decoding, except for $\dagger$ and $\ddagger$, using beam search with and without language model respectively. The language model is trained on Czeng. Note, PWER is not directly comparable to WER.}
+	\caption{Results in \% of \emph{Phoneme} Word Error Rate (PWER). The language model is trained on CzEng. Note, PWER is not directly comparable to WER.}
 	\label{tab:cs_phon_results}
 \end{table}
 
 \paragraph{English}
-The course of the training was controlled on two development sets and is pictured in \cref{fig:en_phon}. The final results on development and test sets are in \cref{tab:en_phon_results}. 
+The course of the English training was carried out on two development sets and is pictured in \cref{fig:en_phon}. The final results on the development and test sets are in \cref{tab:en_phon_results}. 
 
-We again test beam search with and without a language model. We train 3-gram LM and use ASR training data, as these contain separated phonemes. Obtained results could be, therefore, better if we took more training data.
+We again test beam search with and without a language model. We train 3-gram LM and use ASR training data, as these contain separated phonemes. The obtained results could be, therefore, better if we took more training data.
 
-Again, beam search decoding performs worse than greedy decoding. Adding a language model to re-score beams helps reduce PWER. There is a slight reduction in the Libri Speech test clean. Test other gets better about three \% points PWER. For the Common Voice test set, the PWER reduction is considerable --- almost 40 \% relative to the greedy decoding. As possible explanation why LM helps Common Voice so much is that nearly two-thirds of the LM training data come from this data set. 
+Again, beam search decoding performs worse than greedy decoding. Adding a language model to re-score beams helps to reduce PWER. There is a slight reduction in the Libri Speech test-clean. Test-other gets better about three \% points PWER. For the Common Voice test set, the PWER reduction is considerable --- almost 40 \% compared to the greedy decoding. As a possible explanation why LM helps Common Voice so much is that nearly two-thirds of the LM training data come from this data set and there is a significant overlap of sentences in the training data and the test set. 
 
 \begin{figure*}[t]
 	\includegraphics[width=\linewidth,height=7cm]{img/en_phon}
@@ -387,35 +390,26 @@ Again, beam search decoding performs worse than greedy decoding. Adding a langua
 
 \begin{table}[t]
 	\centering
-	\begin{tabular}{lc|cc}
-		%\hline 
-		%\thead{Experiment} & \thead{Czech \\ simpl.} & \thead{Czech \\ adapt.} & \thead{Czech \\ full} \\
-		\bf Type & \bf Corpus & \bf Adaptation phase & \bf Full training \\
-		\hline
-		\multirow{2}{*}{dev} & Libri Speech Clean & 46.07 &   3.84 \tabspace{14pt}\\
-		
-		& Common Voice & 54.69 &  11.86 \\
-		
-		\hline
-		
-		\multirow{3}{*}{test} & Libri Speech Clean & - &  4.18 / 4.48$\dagger$ / 3.58$\ddagger$ \tabspace{14pt}\\
-		
-		& Libri Speech Other & - &  11.48 / 11.67$\dagger$ / 8.57$\ddagger$  \\
-		
-		& Common Voice & - &  10.21 / 10.47$\dagger$ / 6.46$\ddagger$  \\
-		%\hline
+	\begin{tabular}{lc|c|ccc}
+		\multirow{2}{*}{Type} & \multirow{2}{*}{Corpus} & Adaptation & \multicolumn{3}{c}{Full training} \\
+		&                    &   phase    & greedy & beam s. & beam s. with LM \\ \hline
+		\multirow{2}{*}{dev}   & Libri Speech Clean & 46.07 & 3.84   &      -       &           -          \\
+		& Common Voice       & 54.69 & 11.86  &       -      &         -            \\ \hline
+		\multirow{3}{*}{test} & Libri Speech Clean & -     & 4.18   & 4.48        & 3.58                \\
+		& Libri Speech Other & -     & 11.48  & 11.67       & 8.57                \\
+		& Common Voice       & -     & 10.21  & 10.47       & 6.46               
 	\end{tabular}
-	\caption{Results in \% of \emph{Phoneme} Word Error Rate (PWER) using greedy decoding (no mark), beam search ($\dagger$) and beam search with language model ($\ddagger$). The language model is trained on phonemized ASR training data. Note, PWER is not directly comparable to WER.}
+	\caption{Results in \% of \emph{Phoneme} Word Error Rate (PWER). The language model is trained on phonemized ASR training data. Note, PWER is not directly comparable to WER.}
 	\label{tab:en_phon_results}
 \end{table}
 
 
-\subsection{Conclusion and future work}
-We proposed an alternative text representation for ASR --- phonemes --- and trained models for Czech and English language. Further, we examined two different approaches for phonemes encoding: respecting multi-character phonemes and single-character ones. We concluded that using native, multi-character phonemes is slightly better. We also successfully trained language models for use with phonetic transcriptions. 
+\subsection{Conclusion and Future Work}
+We proposed an alternative text representation for ASR --- phonemes --- and trained models for Czech and English language. Further, we examined two different approaches for phoneme encoding: respecting multi-character phonemes and single-character ones. We concluded that using native, multi-character phonemes is slightly better. We also successfully trained language models for use with phonetic transcriptions. 
 
-If the phoneme-based ASR better than grapheme-based ASR, cannot be answered simply. The mapping between graphemes and phonemes is not straightforward. Therefore, we leave it to the next chapter.
+The question whether the phoneme-based ASR works better than grapheme-based ASR, cannot be answered simply. The mapping between graphemes and phonemes is not straightforward. Therefore, we leave it to the next chapter.
 
-In the future, we would like to review coarse-to-fine methods for improving phoneme-based ASR. We believe that similarly to grapheme-based ASR, this could reduce training time and lower final PWER. 
+In the future, we would like to examine coarse-to-fine methods for improving phoneme-based ASR. We believe that similarly to grapheme-based ASR as observed in \cref{asr:crosslingual_intermediate}, this could reduce the training time and lower the final PWER. 
 
 Another technique, multi-task learning, proposed and applied in HMM-based ASR by \perscite{chen2014joint}, could source of a further performance boost. 
 

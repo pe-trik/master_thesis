@@ -127,7 +127,7 @@ We employ this model in our enhanced ASR pipeline as a correction and language m
 
 
 \pagebreak
-\section{Data representation}
+\section{Data Representation}
 This section introduces the input and output data representations. The way how we encode and feed the neural network can significantly influence performance. In this work, we transcribe recordings, i.e., we work with voice and text data. First, we introduce MFCC --- the voice presentation, and then we discuss text encoding.
 
 \subsection{MFCC}
@@ -167,7 +167,7 @@ MFCC pipeline as described in \perscite{muda2010voice} and \perscite{kamath2019d
 
 An example of a mel-spectrogram is in \cref{fig:mel}.
 
-\begin{figure}[]
+\begin{figure}[h!b]
 	\centering
 	\begin{subfigure}[t]{.49\textwidth}
 		\centering
@@ -199,8 +199,9 @@ An example of a mel-spectrogram is in \cref{fig:mel}.
 	\label{fig:mel}
 \end{figure}
 
-\pagebreak
-\subsection{Text representation in NMT}
+\clearpage
+
+\subsection{Text Representation in NMT}
 \label{intro:text_repre}
 
 There are many approaches to text representation in NMT. The first decision that has to be made is the size of the basic text unit. Text can be treated as a sequence of atomic:
@@ -223,7 +224,7 @@ In our work, we use the BPE implementation YouTokenToMe.\footnote{\url{https://g
 We would like to point out inconsistency of reporting BPE size in literature. Some authors use terms the ``\textit{BPE size}'' and ``\textit{number of merge operations}'' as synonyms, although the actual \textit{BPE size} equals \textit{number of merge operations} plus \textit{the size of the alphabet}. In this work, we use the term ``\textit{BPE size}'' to refer to the absolute vocabulary size --- including the size of the alphabet. 
 
 \pagebreak
-\section{Data sets}
+\section{Data Sets}
 We dedicate this section to data sets used for the training of models in our work. First, we introduce speech corpora LibriSpeech and Common Voice, and then we introduce the parallel corpus CzEng.
 
 \subsection{LibriSpeech}

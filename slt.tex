@@ -1,38 +1,38 @@
 \chapter{Spoken Language Translation}
 \label{chap:slt}
-In the preceding chapter, we introduced and trained an ``Enhanced ASR''. The pipeline of the Enhanced ASR system consists of an acoustic model and a translation model. In the case of the ASR, the translation model rewrites phonetic transcriptions to graphemes in the language of the input. 
+In the preceding chapter, we introduced and trained an ``Enhanced ASR''. The pipeline of the Enhanced ASR system consists of an ``acoustic'' model and a ``translation'' model. In the case of the ASR, the translation model rewrites phonetic transcriptions to graphemes in the language of the input. 
 
-In this chapter, we develop a Spoken Language Translation pipeline for Czech and English language --- in both directions. We build the pipeline architecture upon previously proposed Enhanced ASR. From the Enhanced ASR, we take the acoustic model, which remains the identical. The essential difference is the change of target language for the translation model. 
+In this chapter, we develop a spoken language translation pipeline for Czech and English language --- in both directions. We build the pipeline architecture upon previously proposed Enhanced ASR. From the Enhanced ASR, we take the acoustic model, which remains identical. The essential difference is the change of target language for the translation model. 
 
 We organize this chapter as follows: first, we analyze associated work on SLT in \cref{slt:related}. Next follows our motivation and experiment outline in \cref{slt:outline}. In \cref{slt:training} we describe training process and in \cref{slt:evaluation} we evaluate the trained systems. Finally, we conclude the experiment in \cref{slt:conclusion}.
 
-\section{Related work}
+\section{Related Work}
 \label{slt:related}
 
-With the advent of Deep Learning, we observe a clear trend towards End-To-End models in SLT.
+With the advent of deep learning, we observe a clear trend towards end-to-end models in SLT.
 
-For instance, \perscite{weiss2017sequence} presents a attention-based model. They use the very architecture as ASR --- encoder, and decoder. Their End-to-End trained network outperforms ASR-MT cascade on Spanish-English speech translation task.
+For instance, \perscite{weiss2017sequence} presents a attention-based model. They use the very architecture as ASR --- encoder, and decoder. Their end-to-end trained network outperforms ASR-MT cascade on Spanish-English speech translation task.
 
-Our great inspiration in our work and particularly for our Spoken Language Translation, is the study of \perscite{salesky-etal-2019-exploring}. They examine an alternative speech feature representation for the End-To-End Speech Translation. The authors propose to use compressed phoneme-like speech representation. Their method first generates phoneme labels for a speech utterance. Second, consecutive frames with the same label are averaged-out. To compute the phoneme labels, authors use a hybrid HMM-DNN system implemented in Kaldi \parcite{Kaldi}. For the translation, they use a sequence-to-sequence model based on LSTM. The authors observe an improvement of the translation quality up to 5 BLEU on low- and high-resource language pairs.
+Our great inspiration in our work and particularly for our spoken language translation, is the study of \perscite{salesky-etal-2019-exploring}. They examine an alternative speech feature representation for the end-to-end speech translation. The authors propose to use compressed phoneme-like speech representation. Their method first generates phoneme labels for a speech utterance. Second, consecutive frames with the same label are averaged-out. To compute the phoneme labels, authors use a hybrid HMM-DNN system implemented in Kaldi \parcite{Kaldi}. For the translation, they use a sequence-to-sequence model based on LSTM. The authors observe an improvement of the translation quality up to 5 BLEU on low- and high-resource language pairs.
 
 
-\section{Motivation and experiment outline}
+\section{Motivation and Experiment Outline}
 \label{slt:outline}
-We propose to split the SLT pipeline to the acoustic and SLT model. As an intermediate representation, we implement phonemes. We are highly motivated by their success in the \perscite{salesky-etal-2019-exploring}. Also, as reviewed in earlier chapters on ASR (\cref{chapter:asr,chap:enhanced_asr}), phonemes are a competitive representation unit in speech processing.  
+We propose to split the SLT pipeline to the acoustic and SLT model (the architecture is identical with \cref{fig:asr_enhanced_pipeline}). As an intermediate representation, we choose phonemes. We are highly motivated by their success in the \perscite{salesky-etal-2019-exploring}. Also, as reviewed in earlier chapters on ASR (\cref{chapter:asr,chap:enhanced_asr}), phonemes are a competitive representation unit in speech processing.  
 
-In our Spoken Language Translation pipeline, we take the acoustic model from the \cref{chapter:asr}. Specifically, we use the ASR to the phonemes. As a translation model, we utilize the Transformer architecture.
+In our spoken language translation pipeline, we take the acoustic model from the \cref{chapter:asr}. Specifically, we use the ASR to the phonemes. As a translation model, we utilize the Transformer architecture.
 
 We compare our proposed SLT system with a more conventional SLT pipeline --- an ASR-MT tandem.
 
 \section{Training}
 \label{slt:training}
-Following the experiment outline from the preceding section, we train two translation models. Additionally, we also train baseline translation models. 
+Following the experiment outline as described in the preceding section, we train two translation models (Czech phonemes to English graphemes and English phonemes to Czech phonemes). Additionally, we also train baseline translation models (English and Czech, in both directions). 
 
-The training procedure remains mostly identical to the training scheme of the Enhanced ASR (see \cref{easr:training}). As we concluded in \cref{easr:conclusion}, the bigger Transformer is a better fit for the ASR task. Furthermore, the translation task to a different language is an even more difficult problem. Accordingly, we work only with the Transformer ``big'' in this chapter.
+The training procedure remains almost identical to the training scheme in the Enhanced ASR (see \cref{easr:training}). As we concluded in the \cref{easr:conclusion}, the bigger Transformer is a better fit for the ASR task. Furthermore, the translation task to a different language is even more difficult problem. Accordingly, we work only with the Transformer ``big'' in this chapter.
 
-For evaluation during the training of baseline models, we decided for \texttt{news\-test\-2015}. For our phoneme-to-grapheme models, we phonemize the source side of the \texttt{news\-test\-2015} using \texttt{phonemizer}.
+For evaluation during the training of phoneme-to-grapheme models we use \texttt{news\-test\-2015}. We phonemize the source side of the data set using \texttt{phonemizer}.
 
-Again, as determined in \cref{easr:tok_conclusion}, we use separate vocabularies for source and target languages. Correspondingly, we use 32k vocabulary size. Both BPEs are trained on a clean, phonemized Czeng dataset.
+Again, as determined in \cref{easr:tok_conclusion}, we use separate vocabularies for source and target languages. Correspondingly, we use 32k vocabulary size. Source BPE is trained on a clean, phonemized CzEng dataset. Target is trained on clean original CzEng.
 
 For training, we utilize following hyper-parameters for Transformer ``big'':
 \begin{itemize}
@@ -43,61 +43,101 @@ For training, we utilize following hyper-parameters for Transformer ``big'':
 	\item max steps: 600000 with manual abortion
 \end{itemize}
 
-To attain better regularization, we involve the BPE drop-out technique proposed by \parcite{provilkov2019bpe}. We appoint the drop-out probability to 0.1, following the best setting from the original paper. The drop-out is applied to both the source and target.
+To attain better regularization, we involve the BPE drop-out technique proposed by \perscite{provilkov2019bpe}. We appoint the drop-out probability to 0.1, following the best setting from the original paper. The BPE drop-out is applied to both, the source and target of the translation.
 
-The progression of training as evaluations on \texttt{newstest2015} is depicted for Czech to English in the \cref{fig:cs_en} and for English to Czech in the \cref{fig:en_cs}. We can notice a gap between 
+The progression of training is in \cref{fig:cs_en} for Czech to English and in \cref{fig:en_cs} for English to Czech as evaluations on \texttt{newstest2015}.
 
 \begin{figure*}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/cs_en}
-	\caption{Evaluations on newstest2015 during the training. Phonemized Czech side as source and (original, in graphemes) English side as target. Baseline model is tested on original source.}
+	\caption{Evaluations on newstest2015 during the training. Phonemized Czech side as source and (original, in graphemes) English side as target.}
 	\label{fig:cs_en}
 \end{figure*}
 
 \begin{figure*}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/en_cs}
-	\caption{Evaluations on newstest2015 during the training. Phonemized English side as source and (original, in graphemes) Czech side as target. Baseline model is tested on original source.}
+	\caption{Evaluations on newstest2015 during the training. Phonemized English side as source and (original, in graphemes) Czech side as target.}
 	\label{fig:en_cs}
 \end{figure*}
 
 \section{Evaluation}
 \label{slt:evaluation}
-In this section we evaluate trained models.
+In this section, we evaluate the trained models as part of the proposed spoken language translation pipeline (see \cref{fig:asr_enhanced_pipeline}).
 
-We evaluate an SLT pipeline consisting of an ASR and an NMT model. More precisely, our proposed pipeline includes an acoustic model --- an ASR to phonemes --- and a translation model --- an NMT from phonemes to graphemes in the target language. 
+We evaluate an SLT pipeline consisting of an ASR and an NMT model. More precisely, our proposed pipeline includes an acoustic model (i.e. a model transcribing speech to phonemes) and a translation model (i.e., an NMT from phonemes in source language to graphemes in the target language). 
 
-Note, all models used in this comparison are trained on the same data sets. The only contrast is the phonemization of transcripts for our acoustic model and translation source for the SLT translation model.
+Note, all models used in this comparison (baseline and proposed) are trained on the same datasets. The only contrast is the phonemization of transcripts for the proposed acoustic model and translation source for the proposed SLT translation model.
 
 Again, as in the previous chapter, we apply different beam sizes during the evaluation.
 
-\paragraph{Beam size} 
-SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt_en_cs} are consistent with the established in the Neural Machine Translation. We see that the models are, in general, confident at each step. Enlarging the beam size leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations.
+\subsection{SLT Test Set Preparation}
+\XXX{To the best of our knowledge, there is no SLT test set from Czech to English.} We therefore decided to create one.
+
+We base our test set on a subset of the \texttt{newstest2018}. The original \texttt{news\-test\-2018} contains more than 3000 sentences. The test set is a collection of article passages from various news. There are articles of Czech origin, but also of English one. For our purposes, we selected only the articles of the Czech origin. 
+
+The re-speaker was instructed to use our online tool \texttt{Voice Recorder}\footnote{We developed this tool within the ELITR project (\url{elitr.eu}). \XXX{Can I make the GH repository public?} Source code of the recorder is available at \url{https://github.com/ELITR/voice-recorder}}. The interface displays one sentence at time. The user can read the sentence, record it and replay. If she or he is not satisfied with the recording, the re-speaker may record a new version. With this workflow, the sentences are already segmented.
+
+We employed one re-speaker --- a Czech woman.
+
+Because of limited resources, we were able to record 747 sentences. This resulted in 1:18:35 English, and 1:11:38 of Czech audio.
+
+We evaluated the performance of our acoustic models on obtained test set. The results are in the \cref{tab:acoustic_eval}. 
+
+We were quite surprised by the poor performance of Czech acoustic models --- 34.33 \% Phoneme Word Error Rate (PWER) and 34.51 \% Word Error Rate (WER). We believe, this is due to the nature of the training data we used for the training of the models. The Corpus of Czech Parliament Plenary Hearings has a unique acoustic. Further, there is a high prevalence of man speakers. Ultimately, the size of the training corpus is rather small --- only 400 hours.
+
+On the other hand, the English models performed better --- 18.61 \% PWER and 18.60 \% WER. First, the models are trained on approximately 2000 hours of speech. Also, the Common Voice dataset that is used for traing of the models contains many non-native speakers.
+
+Still, the performance of the models is rather inferior to the test sets in well-knows datasets (such as LibriSpeech or Common Voice). We believe, this is partially due to the high frequency of Czech proper nouns and specificity of the texts origin (news articles). 
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{lc|c}
+		& Model alphabet & Performance   \\ \hline
+		\multirow{2}{*}{Czech}   & phonemes       & 34.33 \% PWER \\
+		& graphemes      & 34.51 \% WER  \\ \hline
+		\multirow{2}{*}{English} & phonemes       & 18.61 \% PWER \\
+		& graphemes      & 18.60 \% WER 
+	\end{tabular}
+	\caption{Evaluation of acoustic models on our test set derived from \texttt{newstest2018}.}
+	\label{tab:acoustic_eval}
+\end{table}
+
+\subsection{Beam Size} 
+SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt_en_cs} are consistent with the established in the neural machine translation. We see that the models are, in general, confident at each step. Enlarging the beam size leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations.
+
+The only exception to this is the English to Czech proposed SLT. The beam size of 16 outperformed other beam sizes. However, the margin is relatively small --- 0.23 BLEU. The model is probably less confident when the source is corrupted by the acoustic model.
 
 \subsection{Czech to English}
-For evaluation purposes, we take the acoustic model from the \cref{asr:transfer_phonemes}. This model has Phoneme Word Error Rate (PWER) 8.94 \% on the phonemized Corpus of Czech Parliament Plenary Hearings.
+For evaluation of the Czech to English SLT pipeline, we take the acoustic model from the \cref{asr:transfer_phonemes}. This model has Phoneme Word Error Rate 8.94 \% on the phonemized Corpus of Czech Parliament Plenary Hearings.
 
-We compare our proposal with a more typical setup --- a standard ASR followed by an NMT. We employ the best performing ASR model from \cref{asr:crosslingual_intermediate}. This model has a Word Error Rate of 7.64 \% on the Corpus of Czech Parliament Plenary Hearings.
+We compare our proposal with a more typical setup --- a standard ASR followed by an NMT. We employ the best performing ASR model from \cref{asr:crosslingual_intermediate}. This model has a Word Error Rate 7.64 \% on the Corpus of Czech Parliament Plenary Hearings.
 
 \cref{tab:eval_slt} contains SacreBLEU scores for Czech to English SLT. Translation samples are in \cref{tab:cs_en_names,tab:cs_en_sample}.
 
-In the SLT evaluation --- translation source are transcripts obtained from the ASR --- the proposed system outperforms the baseline. We observe, the baseline struggles to predict casing and punctuation correctly. We also evaluate the translations with stripped punctuation and lower-cased. The margin narrows down, but still, the proposed system outperforms the baseline.
+Additionally to the SLT pipeline evaluation, we also evaluate performance of the models on ``translation'' task. We take the true transcripts (phoneme transcripts for the proposed model and grapheme transcripts for the baseline model) and use them as the source of the SLT translation systems.
 
-When tested on clean input --- a translation task --- both models perform almost equivalently. Grapheme model is slightly better when the source is enriched with punctuation and letter casing. On the other hand, phonemes do not have upper-case counterparts. Additionally, \texttt{phonemizer} do not output punctuation. Hence, we also compare a setup, where the graphemes model's input is lower-cased and without punctuation. In this case, the phoneme translation model surpasses the traditional NMT. 
+First, we evaluate the SLT task. We observe that the proposed phoneme-based system outperforms the baseline. The margin is rather small in terms of the SacreBLEU metric.
 
-A compelling observation is how the proposed model handles the proper nouns. In \cref{tab:cs_en_names}, we see that the baseline model is incapable of distinguishing the proper names. Instead, the baseline tries to find the ``closest'' common noun. On the other hand, the proposed system seems to be capable of detecting the proper noun. Although the spelling is not always correct, it is at least phonetically similar.
+In the translation task (with correct transcripts as sources), the baseline closely outperforms the proposed system. This is probably due to the easier detection and consecutive translation of proper nouns in graphemes.
 
-\paragraph{Manual evaluation}
-We also assess the translation quality obtained in the SLT evaluation (the source is sound, transcribed, and then translated). 
+We see that the errors introduced by the acoustic/ASR model considerably derogate the translation quality --- 11 points of SacreBLEU. A probable cause of such drastic SacreBLEU score reduction is high (phoneme) word error rate of the acoustic and ASR models (more than 30 \%). This is quite surprising, as the re-speaker is Czech native.
 
-We design the evaluation procedure as a blind experiment. We proceed as follows:
+\paragraph{Manual Evaluation}
+We also manually assess the translation quality obtained in the SLT evaluation.
+
+We design the evaluation procedure as a blind experiment. We use \texttt{QuickJudge}\footnote{\url{https://github.com/ufal/quickjudge}} and proceed as follows:
 
 \begin{itemize}
-	\item target sentences together with hypotheses of proposed and baseline system are de-punctuated and lower-cased (as the baseline struggles to capitalize and punctuate correctly),
-	\item each triplet (target and the two hypotheses) are printed on three consecutive lines,
-	\item order of hypotheses is randomly switched for each triplet (to prevent favoring one particular system across the test set),
-	\item an evaluator can choose an arbitrary triplet for evaluation, 
-	\item the evaluators are advised to ignore data points with both incorrect candidate translations,
-	\item they are instructed first to read the hypotheses,
-	\item finally, they should select a better suitable translation considering these criteria (in the given order):
+	\item we evaluate only a random sub-sample of the whole test set,
+	\item we shuffle the order of segments (tuples consisting of the source, ground truth and hypotheses) in test set using \texttt{--shuffle} option,
+	\item order of hypotheses in a segment is randomly switched (to prevent favoring one particular system across the test set),
+	\item we evaluate the first 50 samples (note, the original order in the test set was previously destroyed), 
+	\item we annotate hypotheses as follows:
+	\begin{itemize}
+		\item ``\texttt{**}'' for correct translation,
+		\item ``\texttt{*}'' for almost correct translation,
+		\item nothing for incorrect translation,
+	\end{itemize}
+	\item we consider these criteria (in the given order):
 	\begin{itemize}
 		\item content,
 		\item validity, or at least, phonological similarity of proper nouns,
@@ -105,29 +145,36 @@ We design the evaluation procedure as a blind experiment. We proceed as follows:
 	\end{itemize}
 \end{itemize}
 
-We employ two volunteers. We (the author) also do the evaluation. Final votes distribution is in the \cref{tab:cs_en_manual}. All judges chose the proposed as better performing. Particularly, they marked in 64 \% (volunteer 1), 69 \% (volunteer 2), and 72 \% (author) cases the translations of the proposed system as better.
-
-\begin{table}[]
+\begin{table}[t]
 	\centering
-	\begin{tabular}{l|cc|c}
-		& Proposed & Baseline & Total \\ \hline
-		Evaluator 1 & 14       & 8   & 22     \\ 
-		Evaluator 2 & 11       & 5   & 16 \\
-		Author      & 24       & 9   & 33     \\\hline
-		Sum         & 49       & 23  &
-	\end{tabular}
-	\caption{Manual evaluation of translation quality. Each entry is the number of votes.}
-	\label{tab:cs_en_manual}
+	\begin{tabular}{l|ccc}
+		& Correct & Almost correct & Incorrect \\ \hline
+		Proposed      & 12      & 14             & 24        \\
+		Baseline      & 7       & 15             & 28        \\ \hline
+		Only$\dagger$ proposed & 7       & 4              & 7         \\
+		Only$\dagger$ baseline & 2       & 5              & 11        \\ \hline
+		Both          & 1       & 6              & 17       
+	\end{tabular}	\caption{Distribution of ratings of manual annotation ofn the Czech to English SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
+	\label{tab:manual_cs_en}
 \end{table}
 
+Distribution of manual annotations of the Czech to English SLT is in the \cref{tab:manual_cs_en}. 
+
+As suggested by the SacreBLEU score, the proposed system outperforms the baseline in manual annotation. The proposed SLT system produces a correct translation in more cases than the baseline (12 correct, 14 almost correct vs. 7 correct and 15 almost correct). However, we must acknowledge that the overall performance of both systems is rather poor --- in 24 cases (out of 50) the proposed and in the 28 cases the baseline failed to provide acceptable translations.
+
+We discover a few notable differences while reviewing the translations. First, we find a better handling of proper nouns by the proposed system as very important. The translation are rarely without errors, but they are correctly recognized as proper nouns. Further, they tend to have a close pronunciation as the original.
+
+Also, if the system fails to recognize a word, it is commonly made a proper noun (e.g., ``Herec byl tehdy o 12 let starší...'' translates as ``Hannes was twelve years older...''). This is a bit distracting, but we see a possibility that in a broader context, the word can be understood by a user.
+
+Interesting is also a more correct recognition on numbers. This is probably due to side-effect of the phonemization. The CzEng corpus is not consistent in using numbers. On the other hand, \texttt{phonemizer} rewrites all numbers written using numeric character to words.
 
 \begin{table}[]
 	\centering
 	\small
 	\begin{tabular}{l|llll}
-		\textbf{Original} & Sally Anne Bowman & Martin Ráž  & Karim Rashid     & Karel Štědrý       \\ \hline
-		\textbf{Proposed} & Sally Ambomen     & Martinarase & Cary Rashid      & Karl the Generous  \\
-		\textbf{Baseline} & server ambamen    & marathon    & carym to stir up & benevolent channel
+		\textbf{Original} & Tomáš Rosický & František Savov  & Karim Rashid     & Karel Štědrý       \\ \hline
+		\textbf{Proposed} & Thomas Rozicki     & Francis Sava & Cary Rashid      & Karl the Generous  \\
+		\textbf{Baseline} & Tomas Rizky    & Frantise Saho    & Cary Rash & Kanel the Generous
 	\end{tabular}
 	\caption{Samples of names from Czech to English SLT.}
 	\label{tab:cs_en_names}
@@ -136,20 +183,20 @@ We employ two volunteers. We (the author) also do the evaluation. Final votes di
 \begin{table}[]
 	\centering
 	\begin{tabular}{ll}
-		\multicolumn{1}{l|}{\textbf{Source}}   & V zahraničí Češi spotřebují více ze svého tarifu než doma.      \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & Czechs consume more of their tariffs abroad than at home. \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & Czechs consume more from their tariffs than at home.      \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} & foreign what is more used by their tariff than by home    \\
+		\multicolumn{1}{l|}{\textbf{Source}}   & Obviněný podle všeho nad svým činem lítost neprojevoval.      \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & The accused apparently showed no regret for his actions. \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & The accused seemed to show little remorse for his or her lack of pity.      \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} & The accusation seemed to show no regret for his actions.    \\
 		\textbf{}                              &                                                           \\
-		\multicolumn{1}{l|}{\textbf{Source}}   & Jsou to novodobí nepřátelé svobody.      \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & They are the modern enemies of freedom.      \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & They're modern-day enemies of freedom.                 \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} & are the New Age of Enemy Freedom      \\
+		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{Zakázku poprvé vysoutěžila v roce 2013, kdy ministerstvo průmyslu\\ a obchodu vedl Martim Kuba ODS.}      \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{The competition was first launched in 2013 when the Department of\\ Industry and Trade was led by Martim Kuba of the ODS party.}      \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{The contract was first won in 2013 when Martin Cuba OTS was in\\ charge of the Ministry of Industry and Trade.}                 \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} & \makecell[l]{She first competed for the contract in 2,13, when the Department of\\ Industry and Trade led Martin Cuba from...}      \\
 		\textbf{}                              &                                                           \\
-		\multicolumn{1}{l|}{\textbf{Source}}   & Na druhém místě v žebříčku spotřebovaných dat se pak umístila Itálie.      \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & Italy ranked second in the list of consumed data. \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & Italy ranked second in the data rankings.      \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} & then Italy was placed in the second place in the data used up ladder   
+		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{Dvojice mladých Rusů Ilja Žirnov a Kira Čerkasovová byla\\ pohřešována od prosince 2005.}      \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{The two young Russians, Ilja Zhirnov and Kira Cherkasov, had been\\ missing since December 2005.} \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{A pair of small Russians, Ilya Zirnov Akira Cherkasova, were missing\\ since December 2005.}      \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} &\makecell[l]{Ilya Zernov, Akiracergasov, has been missing since December.}   
 	\end{tabular}
 	\caption{Sentence samples from Czech to English SLT.}
 	\label{tab:cs_en_sample}
@@ -162,8 +209,8 @@ We employ two volunteers. We (the author) also do the evaluation. Final votes di
 		\begin{tabular}{c|cccc|ccc|ccc}
 			\multicolumn{1}{l|}{} &
 			\multirow{3}{*}{\textbf{Model}} &
-			\multirow{3}{*}{\textbf{Souce}} &
-			\multirow{3}{*}{\textbf{Souce error}} &
+			\multirow{3}{*}{\textbf{Source}} &
+			\multirow{3}{*}{\textbf{Source error}} &
 			\multirow{3}{*}{\textbf{Target}} &
 			\multicolumn{3}{c|}{\textbf{Cased, interpuct.}} &
 			\multicolumn{3}{c}{\textbf{Uncased, no interpunct.}} \\
@@ -173,29 +220,15 @@ We employ two volunteers. We (the author) also do the evaluation. Final votes di
 			P2G &
 			ASR Phon &
 			PWER 34.33 \% &
-			\multirow{2}{*}{En Graph} &
-			18.74 &
-			\textbf{19.38} &
-			18.69 &
-			18.74 &
-			\textbf{19.37} &
-			18.57 \tabspace{16pt}\\
-			\multicolumn{1}{c|}{} &  baseline & ASR Graph & WER 34.51 \% &   & 14.85    & 15.28    & 14.77    & 18.41    & 18.74    & 18.06    \\[0.2\normalbaselineskip] \hline
-			\multicolumn{1}{c|}{\multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{Translation}\\ (clean source)\end{tabular}}} &
+			\multirow{2}{*}{En Graph} & 19.47 & \textbf{20.07} & 19.75 & 19.56 & \textbf{19.96} & 19.43 \tabspace{16pt}\\
+			\multicolumn{1}{c|}{} &  baseline & ASR Graph & WER 34.51 \% &   & 18.39 & 19.69 & 19.01 & 18.5 & 19.74 & 18.99    \\[0.2\normalbaselineskip] \hline
+			\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{Translation}\\ (clean source)\end{tabular}}} &
 			P2G &
 			Clean Phon &
-			\multirow{3}{*}{0 \%} &
-			\multirow{3}{*}{En Graph} &
-			29.06 &
-			29.8 &
-			28.73 &
-			29.51 &
-			29.9 &
-			28.81 \tabspace{16pt}\\
+			\multirow{2}{*}{0 \%} &
+			\multirow{2}{*}{En Graph} & 30.14 & 30.82 & 30.35 & 30.44 & 30.82 & 30.56 \tabspace{16pt}\\
 			
-			\multicolumn{1}{c|}{} &  baseline & ASR-like$\dagger$ Graph & & & 22.79    & 23.49    & 22.52    & 28.44    & 29.05    & 28.17  \\
-			
-			\multicolumn{1}{c|}{} & baseline  & Clean Graph & & & 30.73 & \textbf{31.55} & 30.87    & 30.17 & \textbf{30.89} & 30.11    
+			\multicolumn{1}{c|}{} &  baseline & Clean$\dagger$ Graph & & & 30.31 & \textbf{31.07} & 30.45 & 30.74 & \textbf{31.55} & 30.77
 		\end{tabular}
 		\caption{Evaluation of the proposed Czech to English model (phonemes to graphemes --- P2G) and the Czech to English baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped interpunction.}
 		\label{tab:eval_slt}
@@ -203,27 +236,48 @@ We employ two volunteers. We (the author) also do the evaluation. Final votes di
 \end{landscape}
 
 \subsection{English to Czech}
-We take the English acoustic model (an ASR to phonemes) from the \cref{asr:transfer_phonemes}. The model has a Phoneme Word Error Rate (PWER) 4.18 \% on Libri Speech test clean and 11.48 \% on the test other.
+In order to evaluate the English to Czech translation model as part of the proposed SLT pipeline, we take the English acoustic model from \cref{asr:transfer_phonemes}. The model has a phoneme word error rate 4.18 \% on LibriSpeech \texttt{test-clean} and 11.48 \% on the \texttt{test-other}.
 
-Baseline ASR model is a Jasper trained on Libri Speech and Common Voice. We downloaded the model from the NVIDIA NGC\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:multidata\%20set_jasper10x5dr}}.
+The baseline SLT pipeline uses as ASR model the Jasper model trained on LibriSpeech and Common Voice. We downloaded the model from the NVIDIA NGC.\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:multidata\%20set\_jasper10x5dr}}
 
-\cref{tab:eval_slt_en_cs} contains SacreBLEU scores for English to Czech SLT. Translation samples are in \cref{tab:en_cs_names,tab:en_cs_sample}.
+We also assess the translation models performance on the ``translation'' task (i.e., the translation sources are true transcripts, not burdened with errors introduced by the acoustic/ASR models).
+
+\cref{tab:eval_slt_en_cs} contains SacreBLEU scores of the English to Czech translation models as part of a SLT pipeline and in the translation task. Translation samples are in \cref{tab:en_cs_names,tab:en_cs_sample}.
+
+Similarly, as the Czech to English SLT, the proposed system (with phonemes as an intermediate step) outperforms the baseline. Again, the difference is rather small --- 0.52 BLEU. 
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{l|ccc}
+		& Correct & Almost correct & Incorrect \\ \hline
+		Proposed      & 16      & 21             & 13        \\
+		Baseline      & 18       & 18             & 14        \\ \hline
+		Only$\dagger$ proposed & 6       & 2              & 7         \\
+		Only$\dagger$ baseline & 6       & 1              & 8        \\ \hline
+		Both          & 4       & 11              & 6       
+	\end{tabular}	\caption{Distribution of manual annotation of the English to Czech SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
+	\label{tab:manual_en_cs}
+\end{table}
 
 
-Similarly, as the Czech to English SLT, the proposed system with phonemes as an intermediate step outperforms the baseline. The same goes for the translation task (clean source). Grapheme model is slightly better when the source is enriched with punctuation and letter casing. 
+We manually review the quality of the both SLT systems. The distribution of manual annotations of the Czech to English SLT is in the \cref{tab:manual_en_cs}. 
 
-Manual examination of sources reveals dramatically better translation quality compared to the Czech to English. We assume it is the consequence of the quality of the acoustic and ASR models. The acoustic and ASR model performs drastically better for English than for Czech. The (Phoneme) Word Error Rate is almost halved. This is fascinating, mainly as the Czech recordings are native and the English are non-native. A probable explanation could be the amount and monotony of the Czech training data --- 400 hours of parliament speeches vs. 2000 hours. 
+Compared to the opposite direction (Czech to English), the overall subjective translation quality improved significantly. We found only 13 and 14 translations respectively incorrect. Although the direction to Czech language is more challenging in general \XXX{do I need to support this?}, we explain this reduction of incorrect translations as the result of a better acoustic and ASR model.
 
-The handling of the proper nouns is better in both systems (compared to the Czech to English). Presumably, this might be the result of a better acoustic model.
+In the random sub-sample that we evaluated, we found the translations of the baseline to be slightly better. Still, the difference is relatively small. The baseline produced more ``correct'' translations, while the proposed produced less ``incorrect'' (``correct'' + ``almost correct'') translations. 
+
+We discovered that the baseline tends to mark unknown words as proper nous (e.g.: ``This species lives...'' translates as ``Tento Pecies žije...'', or ``...the murderer's parents...'' as ``rodičů Murdereora''). We marked such translation as ``almost correct'', as we think that such words can be understood in the context. Similarly, the proposed system does so, but more frequently around proper nous (e.g., ``...in the new Prima series Kapitán Exner'' as ``...v nové Primma Series Capitan Expert'').
+
+With the overall translation quality, the handling adequacy of proper nouns also rises (see the \cref{tab:en_cs_names}). It is worth noting that the re-speaker was a native Czech. The Czech proper nouns are hence correctly pronounced in Czech. Therefore, we find it quite interesting, that both system were able to translate the name satisfactorily.
 
 
 \begin{table}[]
 	\centering
 	\small
 	\begin{tabular}{l|llll}
-		\textbf{Original} & Sally Anne Bowman & Martin Ráž  & Karim Rashid     & Karel Štědrý       \\ \hline
-		\textbf{Proposed} & Sally a Bouman     & Markinrash & Carm Rushs      & Karašgibri  \\
-		\textbf{Baseline} & Sully a Bowmanová    & markinrashové    & kamuflážemi & Karoskibri
+		\textbf{Original} & Mádlová & Donald Trump  & Lucie Bílá     & Simona Krainová       \\ \hline
+		\textbf{Proposed} & Madlova     & Donald Tramp & Rusi-Billa      & Simana Cranova  \\
+		\textbf{Baseline} & Madlovová    &  Donald Trumf   & Rutiabilia & Simona Cranova
 	\end{tabular}
 	\caption{Samples of names from English to Czech SLT.}
 	\label{tab:en_cs_names}
@@ -232,20 +286,20 @@ The handling of the proper nouns is better in both systems (compared to the Czec
 \begin{table}[]
 	\centering
 	\begin{tabular}{ll}
-		\multicolumn{1}{l|}{\textbf{Source}}   & We have to be, otherwise it doesn't work.      \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & Musíme být, jinak to nejde. \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & Musíme být, jinak to nefunguje.      \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} & musíme být, jinak to nebude fungovat.    \\
+		\multicolumn{1}{l|}{\textbf{Source}}   & Now it is a finished product that is produced in our country.      \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & Nyní jde o hotový produkt, který je navíc vyráběný u nás. \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & Nyní je to hotový produkt, který se vyrábí v naší zemi.      \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} & Nyní se jedná o hotový produkt vyráběný v naší zemi.    \\
 		\textbf{}                              &                                                           \\
-		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{ Are you still optimistic about the changes\\ that have taken place within Sparta? }    \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & Jste stále optimistický ohledně změn, které se ve Spartě udály?      \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & Jste stále optimistický ohledně změn, ke kterým došlo ve Spatě?                 \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} & jste stále optimističtí ohledně změn, ke kterým došlo v rámci      \\
+		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{An extensive fire damaged the Torch skyscraper in Dubai\\ in February 2015, ruining more than 100 apartments.}    \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{Rozsáhlý požár poškodil dubajský mrakodrap The Torch \\rovněž v únoru 2015, zničil přes sto bytů. }     \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{Rozsáhlý požár poškodil mrakodrap v Dubaji v únoru 2015\\ a zničil více než sto bytů.   }              \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} & \makecell[l]{Rozsáhlý požár poškodil průmyslovou výrobu mrakolestných\\ mrakodrapů v únoru, dva tisíce patnáct a zničil více než sto bytů.     } \\
 		\textbf{}                              &                                                           \\
-		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{The others are Nicaragua, the Dominican Republic, El Salvador,\\ Haiti, Malta and Honduras. }     \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{Dalšími jsou Nikaragua, Dominikánská republika, Salvador,\\ Haiti, Malta a Honduras.} \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{Ostatní Annikatagua, Nominikánská republika, lsamana,\\ Heiti Matta a Honduras.    }  \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} & \makecell[l]{ostatní nikaragua, nominovaná republika Elsamada\\ haiti mata a Honduras   }
+		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{Dehydration manifests itself as a complete loss of\\ self-sufficiency.}     \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{Dehydratace se projeví jako naprostá ztráta soběstačnosti.} \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{Hydratace se projevuje jako naprostá ztráta sebeúčinku.    }  \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} & \makecell[l]{Dehydratace se projevuje jako úplná ztráta soběstačnosti.   }
 	\end{tabular}
 	\caption{Sentence samples from English to Czech SLT.}
 	\label{tab:en_cs_sample}
@@ -269,29 +323,15 @@ The handling of the proper nouns is better in both systems (compared to the Czec
 			P2G &
 			ASR Phon &
 			PWER 18.61 \% &
-			\multirow{2}{*}{Cs Graph} &
-			16.14 &
-			\textbf{16.63} &
-			16.43 &
-			14.03 &
-			\textbf{14.35} &
-			14.26 \tabspace{16pt}\\
-			\multicolumn{1}{c|}{} &  baseline & ASR Graph & WER 18.80 \% &   & 13.34    & 13.85    & 13.93    & 13.34    & 13.85    & 14.00    \\[0.2\normalbaselineskip] \hline
-			\multicolumn{1}{c|}{\multirow{3}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{Translation}\\ (clean source)\end{tabular}}} &
+			\multirow{2}{*}{Cs Graph} & 16.64 & 17.12 & \textbf{17.35} & 14.28 & 14.76 & \textbf{14.9}\tabspace{16pt}\\
+			\multicolumn{1}{c|}{} &  baseline & ASR Graph & WER 18.80 \% &   & 16.51 & 16.83 & 16.68 & 14.29 & 14.53 & 14.42    \\[0.2\normalbaselineskip] \hline
+			\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{Translation}\\ (clean source)\end{tabular}}} &
 			P2G &
 			Clean Phon &
-			\multirow{3}{*}{0 \%} &
-			\multirow{3}{*}{Cs Graph} &
-			21.30 &
-			21.71 &
-			21.37 &
-			19.17 &
-			19.64 &
-			19.14 \tabspace{16pt}\\
+			\multirow{2}{*}{0 \%} &
+			\multirow{2}{*}{Cs Graph} & 21.75 & 22.32 & 22.26 & 19.6 & 20.01 & 20.06 \tabspace{16pt}\\
 			
-			\multicolumn{1}{c|}{} &  baseline & ASR-like$\dagger$ Graph & & & 16.15    & 16.86    & 16.87    & 16.87    & 17.59    & 17.55  \\
-			
-			\multicolumn{1}{c|}{} & baseline  & Clean Graph & & & 23.46 & \textbf{23.87} & 23.67    & 20.75 & \textbf{20.95} & 20.61    
+			\multicolumn{1}{c|}{} &  baseline & Clean$\dagger$ Graph & & & 21.85 & \textbf{22.47} & 22.21 & 19.74 & \textbf{20.09} & 20.07
 		\end{tabular}
 		\caption{Evaluation of the proposed English to Czech model (phonemes to graphemes --- P2G) and the English to Czech baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped interpunction.}
 		\label{tab:eval_slt_en_cs}
@@ -300,6 +340,8 @@ The handling of the proper nouns is better in both systems (compared to the Czec
 
 \section{Conclusion}
 \label{slt:conclusion}
-We proposed an SLT system. We successfully trained the models for English and Czech (in both directions). Further, we compared these models with baselines. We achieved a higher SacreBLEU score. Also, we assessed the translation quality using human evaluation. Again, we proved the finer quality of the proposed system.
+We proposed an SLT pipeline with phonemes as intermediate representation. We successfully trained the models for English and Czech (in both directions). Further, we compared these models with baselines (traditional ASR to graphemes followed by an NMT model). In both direction, the proposed SLT pipeline achieves slightly higher SacreBLEU score. 
 
-In the future, we would like to review the adaptation of the system to the ASR errors. Also, other techniques known from Neural Machine Translation can be applied (e.g., backtranslation). We are convinced, the proposed systems are capable of even better translation quality. 
+We also assessed the translation quality subjectively using a random experiment. In this case, the baseline system performed better in the direction from English to Czech, and in the Czech to English direction performed the proposed SLT system better. 
+
+We believe that the proposed system has a potential in the future. Therefore, we would like to review the adaptation of the system to the errors produced by the acoustic model. Also, other techniques known from neural machine translation can be applied (e.g., backtranslation). We are convinced, the proposed systems are capable of even better translation quality. 

@@ -146,7 +146,7 @@ As training data for Transformers, we use corrupted data from our ASR ensemble s
 		32k &  5.18  & 5.24  &  5.25 \\
 		
 	\end{tabular}
-	\caption{Results in \% of word error rate on the Libri Speech dev set.}
+	\caption{Results in \% of word error rate on the LibriSpeech dev set.}
 	\label{tab:results_vocabularies_libri}
 \end{table}
 
@@ -228,14 +228,14 @@ Overview of runs is pictured in \cref{fig:vocab_sizes,fig:vocab_sizes_common}. F
 		
 	\end{tabular}
 	
-	\caption{Results in \% of word error rate on the Libri Speech test clean.}
+	\caption{Results in \% of word error rate on the LibriSpeech test clean.}
 	\label{tab:results_vocabularies_libri_clean}
 \end{table}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics{img/vocab_sizes_test_clean}
-	\caption{Results in \% of word error rate on the Libri Speech test clean.}
+	\caption{Results in \% of word error rate on the LibriSpeech test clean.}
 	\label{fig:vocab_sizes_test_clean}
 \end{figure}
 
@@ -253,14 +253,14 @@ Overview of runs is pictured in \cref{fig:vocab_sizes,fig:vocab_sizes_common}. F
 		
 	\end{tabular}
 	
-	\caption{Results in \% of word error rate on the Libri Speech test other.}
+	\caption{Results in \% of word error rate on the LibriSpeech test other.}
 	\label{tab:results_vocabularies_libri_other}
 \end{table}
 
 \begin{figure}[p]
 	\centering
 	\includegraphics{img/vocab_sizes_test_other}
-	\caption{Results in \% of word error rate on the Libri Speech test other.}
+	\caption{Results in \% of word error rate on the LibriSpeech test other.}
 	\label{fig:vocab_sizes_test_other}
 \end{figure}
 
@@ -272,12 +272,12 @@ Final results of all experiments are in \cref{tab:results_vocabularies_libri,tab
 
 Graphical comparison is in \cref{fig:vocab_sizes_common_graph,fig:vocab_sizes_test_clean,fig:vocab_sizes_test_other}.
 
-First of all, we can observe a drastic reduction of WER for the Common Voice test set compared to the Libri Speech test other. Acoustic model performs similarly on both test sets (measured in PWER --- see \cref{tab:en_phon_results}). We take a closer look at the training data. Common Voice filtered has 611990 recordings, but 81334 unique transcripts. This means that the same text has been recorded multiple times or by many speakers. Common Voice ``corrupted'' has 3262524 unique ASR-provided transcriptions (meaning that a sentence has a single error) and 80710 different true transcripts.
+First of all, we can observe a drastic reduction of WER for the Common Voice test set compared to the LibriSpeech test other. Acoustic model performs similarly on both test sets (measured in PWER --- see \cref{tab:en_phon_results}). We take a closer look at the training data. Common Voice filtered has 611990 recordings, but 81334 unique transcripts. This means that the same text has been recorded multiple times or by many speakers. Common Voice ``corrupted'' has 3262524 unique ASR-provided transcriptions (meaning that a sentence has a single error) and 80710 different true transcripts.
 
-On the other hand, Libri Speech has 281241 recordings and 281071 unique transcripts. Hence, there are almost none different recordings for the same text. ``Corrupted'' Libri Speech has 3844983 unique erroneous ASR transcripts with 280850 different valid transcripts. Hence, on average, each Common Voice sentence has seven different recordings and 40 individual faulty ASR transcriptions. Libri Speech, on the contrary, does not have more recordings per text and has about 13 ASR-corrupted transcripts per one original text. Hence, we are firmly convinced that the trained Transformer models are over-fitting the Common Voice dataset.
+On the other hand, LibriSpeech has 281241 recordings and 281071 unique transcripts. Hence, there are almost none different recordings for the same text. ``Corrupted'' LibriSpeech has 3844983 unique erroneous ASR transcripts with 280850 different valid transcripts. Hence, on average, each Common Voice sentence has seven different recordings and 40 individual faulty ASR transcriptions. LibriSpeech, on the contrary, does not have more recordings per text and has about 13 ASR-corrupted transcripts per one original text. Hence, we are firmly convinced that the trained Transformer models are over-fitting the Common Voice dataset.
 
 \paragraph{BPE Size}
-Character-level encoding seems to be the worst or second-worst possible representation. For the Common Voice test set, it scores almost one percentage point of WER more compared to the best result (5.53 vs. 4.55). Also, all other encodings performed almost half a percentage point better. For both Libri Speech test sets, it performed a bit better than BPE 128. 
+Character-level encoding seems to be the worst or second-worst possible representation. For the Common Voice test set, it scores almost one percentage point of WER more compared to the best result (5.53 vs. 4.55). Also, all other encodings performed almost half a percentage point better. For both LibriSpeech test sets, it performed a bit better than BPE 128. 
 
 Generally, the figures suggest a clear trend: the larger the vocabulary, the better. Among the different BPE sizes, we can recognize the 32k vocabulary size has the best results systematically on all test sets.
 
@@ -318,7 +318,7 @@ First, we are interested in model performance when trained on clean data. In thi
 
 As already commented, this task is unusual for Transformer. Therefore, we try different beam sizes during the inference. We believe it could help the model to find better transcriptions by considering less likely labels.
 
-\subsection{Training configuration}
+\subsection{Training Configuration}
 \label{easr:training}
 We tried to follow training tips for Transformer by \perscite{popel2018training}. We found that these suggestions do not work well with the NeMo toolkit. We tied many hyper-parameter settings. We found the following to work best for our purposes:
 
@@ -390,20 +390,20 @@ Overview of training captured by evaluation on phonemized newstest2016 is in \cr
 		& 16    &10.01    & 9.75    \\
 		\hline
 		
-		\multirow{3}{*}{Libri Speech test clean}    & 1    &    5.46 &    4.87    \\
+		\multirow{3}{*}{LibriSpeech test clean}    & 1    &    5.46 &    4.87    \\
 		& 4    &  5.36 &    4.87    \\
 		& 16     &5.37    & 4.85    \\
 		\multicolumn{2}{l|}{Jasper baseline} & \multicolumn{2}{c}{3.86} \\
 		\hline
 		
-		\multirow{3}{*}{Libri Speech test other}    & 1    &    12.11 &11.70    \\
+		\multirow{3}{*}{LibriSpeech test other}    & 1    &    12.11 &11.70    \\
 		& 4    &11.99     &    11.67    \\
 		& 16    & 12.00     & 11.67    \\
 		\multicolumn{2}{l|}{Jasper baseline} & \multicolumn{2}{c}{11.95} \\
 		
 	\end{tabular}
 	
-	\caption{Results in \% of Word Error Rate on the Libri Speech test other. Jasper baseline taken from original Jasper paper \parcite{Li2019}.}
+	\caption{Results in \% of Word Error Rate on the LibriSpeech test other. Jasper baseline taken from original Jasper paper \parcite{Li2019}.}
 	\label{tab:phon_en}
 \end{table}
 
@@ -427,9 +427,9 @@ Further, we observe the model to ``try hard'' to translate the input ``as is''. 
 Second, we must consider the quality of phonetic transcriptions. These are obtained from \cref{asr:transfer_phonemes}. The evaluation metric for these models is the Phoneme Word Error Rate (PWER). The PWER and the WER is not directly comparable. The model we used to obtain phonetic transcriptions has PWER 8.94 \%. In general, we suppose the PWER to be a bit worse. Some orthographically separate words (like ``I am'', or prepositions) become one phoneme word. Making a mistake in such a phoneme word can lead to a greater error rate. But there can be other linguistic phenomena. If we, for a brief moment, considered WER and PWER comparable, we observe the slightly better performance of the grapheme model. We believe there is still room for training a better acoustic model. As observed in \cref{chapter:asr}, transfer learning is better than training from scratch but might lead to sub-optimal results when compared with the proposed coarse-to-fine technique. 
 
 \paragraph{English Enhanced ASR}
-\cref{tab:phon_en} compares performance in terms of Word Error Rate (WER) on three test sets --- Common Voice test, Libri Speech test clean, and test other. Again, same as in Czech, we apply three different beam sizes (1, 4, and 16).
+\cref{tab:phon_en} compares performance in terms of Word Error Rate (WER) on three test sets --- Common Voice test, LibriSpeech test clean, and test other. Again, same as in Czech, we apply three different beam sizes (1, 4, and 16).
 
-On the Libri Speech test, clean is the performance slightly inferior. On the test other, the WER is comparable. It appears the acoustic model is the bottleneck. 
+On the LibriSpeech test, clean is the performance slightly inferior. On the test other, the WER is comparable. It appears the acoustic model is the bottleneck. 
 
 Similarly to Czech, the model disregards orthography and tries to match graphemes to phoneme transcriptions. The overall quality hence follows the quality of the acoustic model.
 

@@ -1,7 +1,8 @@
 \chapter{Enhanced ASR}
 \label{chap:enhanced_asr}
 
-\begin{figure}[h]
+\iffalse
+\begin{figure}[hb!]
 	\centering
 	\resizebox{.9\textwidth}{!}{
 		\begin{tikzpicture}[thick, node distance=4.5cm, 
@@ -19,7 +20,15 @@
 		\draw[<-](trans) -> node {}  (cor);
 		
 		\end{tikzpicture}}
-	\caption{Enhanced ASR pipeline. The input sound is first transcribed to phonemes using Jasper/QuartzNet ``acoustic'' model. Phonemes are fed to the ``translation'' model. Translation model not only translates, but also fix some errors in the ASR output and produces orthographic transcriptions.}
+	\caption{Enhanced ASR pipeline. The input sound is first transcribed to phonemes using Jasper/QuartzNet ``acoustic'' model. Phonemes are fed to the ``translation'' model. Translation model not only translates, but also fixes some errors in the ASR output and produces orthographic transcriptions.}
+	\label{fig:asr_enhanced_pipeline_}
+\end{figure} 
+\fi
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.9\textwidth]{img/easr2}
+	\caption{Enhanced ASR pipeline. The input sound is first transcribed to phonemes using Jasper/QuartzNet ``acoustic'' model. Phonemes are fed to the ``translation'' model. Translation model not only translates, but also fixes some errors in the ASR output and produces orthographic transcriptions.}
 	\label{fig:asr_enhanced_pipeline}
 \end{figure} 
 
@@ -27,78 +36,80 @@
 In this chapter, we describe and build enhanced ASR. We propose to split a conventional end-to-end ASR into to two successive models: 
 
 \begin{enumerate}
-	\item an acoustic model that outputs phonemes instead of graphemes,
-	\item ``translation'' model that consumes previously outputted phonemes and translates them into the graphemes.
+	\item an ``acoustic'' model that outputs phonemes instead of graphemes,
+	\item a ``translation'' model that consumes the phonemes and translates them to the graphemes.
 \end{enumerate}
 
-Illustration of proposed enhanced ASR pipeline is in \cref{fig:asr_enhanced_pipeline}.
+An illustration of the proposed enhanced ASR pipeline is in \cref{fig:asr_enhanced_pipeline}.
 
-The main idea is that the translation model that comes right after the acoustic model in our setup not only ``blindly'' translates phonemes into graphemes, but also corrects errors. Errors can occur, for example, due to adverse conditions during voice recording (e.g., background noise), speaker's dialect, or pronunciation errors. Some of these errors may be obscure for a person, as we are naturally able to communicate in a noisy environment. The motivation for the introduction of such a translation step into our pipeline is that such a model better understands language and can take more extended context into account when compared with plain end-to-end Jasper model. Furthermore, we can utilize other non-speech corpora, e.g., available monolingual data to a fine-tune part of our pipeline.
+The added hope is that the translation model right after the ``acoustic'' model will not only ``blindly'' translate phonemes into graphemes, but also correct errors. Errors can occur, for example, due to adverse conditions during voice recording (e.g., background noise), speaker's dialect, or pronunciation errors. Some of these errors may be obscure for a person, as we are naturally able to communicate in a noisy environment. The motivation for the introduction of such a translation step into our pipeline is that such a model better ``understands the language'' and can take an extended context into account compared to the rather convolutional Jasper model. Furthermore, we can utilize other non-speech corpora, e.g., available monolingual data to train this part of our pipeline.
 
-We decided to use phonemes as intermediate representation. We believe that conventional grapheme representation is too complicated and constrained for some languages with complicated rules of mapping speech to a transcript. This issue becomes immense when dealing with dialects and non-native speakers.
+We decided to use phonemes as an intermediate representation. We believe that conventional grapheme representation is too complicated and constrained for some languages with complicated rules of mapping speech to a transcript. This issue becomes immense when dealing with dialects and non-native speakers. The translation model in the second step thus may be a better fit for this transformation.
 
-We, step by step, describe the selection of hyperparameters and training of the translation model for the enhanced ASR pipeline. First, we discuss and experiment with source encoding, and afterward, we train the model.
+Step by step, we describe the selection of hyperparameters and training of the translation model for the enhanced ASR pipeline. First, we discuss and experiment with source encoding, and afterwards, we train the model.
 
-The chapter is organized as follows: we first review related work in \cref{easr:related}. In \cref{easr:tokenizer}, we experiment with various approaches to text encoding. In \cref{easr:english,easr:czech} we present the main objective of this chapter --- translation model for ASR.
-
-
+The chapter is organized as follows: we first review related work in \cref{easr:related}. In \cref{easr:tokenizer}, we experiment with various approaches to text encoding. In \cref{easr:english} we present the main objective of this chapter --- translation model for ASR.
 
 
-\section{Related work}
+
+
+
+\section{Related Work}
 \label{easr:related}
 In this section, we review related work. We examine ASR-related work in \cref{easr:rel_asr}, and in \cref{easr:re_encoding} we take a closer look at text encoding.
 
 \subsection{ASR}
 \label{easr:rel_asr}
-We already reviewed usage of phonemes in ASR in \cref{asr:phon:related}. At this point, we further expand corresponding work.
+We already reviewed usage of phonemes in ASR in \cref{asr:phon:related}. At this point, we further expand on the corresponding work.
 
-One of the main challenges of this chapter is to build a phoneme-to-grapheme (P2G) translation model. In most studies, the P2G translation is utilized for enhancing ASR. More precisely, for out-of-vocabulary (OOV) words, the ASR system outputs phonemes instead of phonemes. P2G then tries to find proper orthographic representation. Examples of studies employing P2G in this manner are \perscite{1034672,horndasch2006phoneme,basson2013category}.
+%este toto https://anon.cs.rochester.edu/u/www/research/cisd/pubs/2001/galescu-allen-ssw4.pdf
+One of the main challenges of this chapter is to build a phoneme-to-grapheme (P2G) translation model. In most studies, P2G translation is utilized for enhancing ASR. More precisely, for out-of-vocabulary (OOV) words, the ASR system outputs phonemes instead of graphemes. P2G then tries to find proper orthographic representation. Examples of studies employing P2G in this manner are \perscite{1034672+,horndasch2006phoneme,basson2013category}.
 
-One of the first attempts on P2G translation is \perscite{1161968}. Authors propose to use a tree-structure mechanism to keep track of the possibilities at various stages combined with phoneme-to-word dictionary and the structure of the English language. To speed up the translation process, the authors divide the dictionary into ten sections determined by parts of speech. Authors also consider erroneous input. They propose to have more dictionary entries (for example, to account for dialects) and human aid.
+One of the first attempts on P2G translation is \perscite{1161968}. The authors propose to use a tree-structure mechanism to keep track of the possibilities at various stages combined with phoneme-to-word dictionary and the structure of the English language. To speed up the translation process, the authors divide the dictionary into ten sections determined by parts of speech. Authors also consider erroneous input. They propose to have more dictionary entries (for example, to account for dialects) and human aid.
 
-Another study in P2G translations conduct \perscite{1034672}. They apply P2G to enhance the readability of out-of-vocabulary (OOV) output in speech recognition. In their setup, ASR outputs standard (orthographic) text for known words. For OOVs, phonemes are outputted. Because the phonemes are hard to read for most users, authors propose to translate phonemes using memory-based learning. Specifically, they offer two approaches. Fist, to use similarity metric to find closest examples in the lexicon (features --- phonemes --- are weighted using gain ratio) and extrapolate result from them. Second, they propose to use IGTREE algorithm. The authors, surprisingly, report that the actual word error rate in their setup (Dutch ASR) is higher than the baseline.
+Another study in P2G translations is conducted \perscite{1034672}. They apply P2G to enhance the readability of out-of-vocabulary (OOV) output in speech recognition. In their setup, ASR outputs standard (orthographic) text for known words. For OOVs, phonemes are outputted. Because the phonemes are hard to read for most users, the authors propose to translate phonemes using memory-based learning \parcite{daelemans2004timbl}. Specifically, they offer two approaches. First, they use a similarity metric to find closest examples in the lexicon (features, i.e. phonemes, are weighted using gain ratio) and extrapolate the result from them. Second, they propose to use the IGTREE algorithm \parcite{daelemans1997igtree}. The authors, surprisingly, report that the final word error rate in their setup (Dutch ASR) is higher than the baseline.
 
-But on the other hand, the output should be better readable for a person. They report that 41 \% words are transcribed with most one error, and 62 \% have only two errors. Furthermore, most of the incorrectly transcribed words do not exist in Dutch.
+At the same time, the output should be better readable for a person. They report that 41 \% words are transcribed with at most one error, and 62 \% have only two errors. Furthermore, the most of the incorrectly transcribed words do not exist in Dutch.
 
-\perscite{horndasch2006phoneme} introduce data-driven approach MASSIVE. Their main objective is to find appropriate orthographic representations for dictated internet search. Their system iteratively refines sequences of symbol pairs in different alphabets. In the first step, they find the best phoneme-grapheme alignment using the expectation-maximization algorithm. In the second step, they cluster neighboring symbols together to account for the insertions. Finally, $n$-gram probabilities of symbol pairs are learned. During the inference, the input string is split into single symbols. For each symbol is generated all possible symbol pairs. According to the beam width, the best sequences are taken. On the German CELEX lexical database, they obtain 96.1 \% word accuracy. For English CMU, they obtain an accuracy of 87.2 \% for 10-fold cross-validation.
+\perscite{horndasch2006phoneme} introduce a data-driven approach called MASSIVE. Their main objective is to find appropriate orthographic representations for dictated Internet search queries. Their system iteratively refines sequences of symbol pairs in different alphabets. In the first step, they find the best phoneme-grapheme alignment using the expectation-maximization algorithm. In the second step, they cluster neighboring symbols together to account for the insertions. Finally, $n$-gram probabilities of symbol pairs are learned. During the inference, the input string is split into individual symbols. For each symbol are generated all possible symbol pairs. According to the beam width, the best sequences are taken. On the German CELEX lexical database, they obtain 96.1 \% word accuracy. For English CMU, they obtain an accuracy of 87.2 \% for 10-fold cross-validation.
 
-\subsection{Text encoding}
+\subsection{Text Encoding}
 \label{easr:re_encoding}
-In this subsection, we give a brief overview of text encoding related work. High-level review of text representation in NMT can be found in \cref{intro:text_repre}. In this part, we study work on various techniques for enhancing translation quality. 
+In this section, we give a brief overview of work related to text encoding. A high-level review of text representation in NMT can be found in \cref{intro:text_repre}. In this part, we study work on various techniques for enhancing translation quality. 
 
-Note that some authors use terms ``\textit{BPE size}'' and ``\textit{number of merge operations}'' as synonyms. But, the actual \textit{BPE size} equals \textit{number of merge operations} plus \textit{characters}. In most cases, the number of characters is small relative compared to the merge-operations. Then is the discrepancy negligible. In our work, we use the term ``\textit{BPE size}'' as the total number of unique entries in the BPE dictionary.
+Note that some authors use terms ``\textit{BPE size}'' and ``\textit{number of merge operations}'' as synonyms. The actual \textit{BPE size}, however equals \textit{a number of merge operations} plus \textit{characters}. In most cases, the number of characters is small relative to the merge-operations. Then the discrepancy is negligible. In our work, we use the term ``\textit{BPE size}'' as the total number of unique entries in the BPE dictionary.
 
-The first attempt to study the impact of BPE vocabulary size in Neural Machine Translation was made by \perscite{denkowski2017stronger}. Specifically, they compare full-word systems with 16k and 32k BPEs. In their setups, they use \textit{shared vocabularies} --- BPE learning is done on a concatenation of source and target data sets. They conclude that using BPE is better than using full-word vocabularies. For BPE, they suggest using more extensive vocabulary over smaller ones in high-resource setups (in their case, over 1M parallel sentences). Reviewing their results, we observe only little performance degradation using 16k (smaller) BPE in high-resource setups. More precisely, in the DE-EN translation task by 0.4 BLEU and no difference for other configurations. Slightly better performance in low-resource tasks (0.3 and 0.4 BLEU for the EN-FR and the CS-EN, respectively).
+The first attempt to study the impact of BPE vocabulary size in Neural Machine Translation was made by \perscite{denkowski2017stronger}. Specifically, they compare full-word systems with 16k and 32k BPEs. In their setups, they use \textit{shared vocabularies} --- BPE learning is done on the concatenation of the source and target data sets. They conclude that using BPE is better than using full-word vocabularies. For BPE, they suggest using a more extensive vocabulary over smaller ones in high-resource setups (in their case, over 1M parallel sentences). Reviewing their results, we observe only little performance degradation using 16k (smaller) BPE in high-resource setups. More precisely by 0.4 BLEU, in the DE-EN translation task and no difference for other configurations. Slightly better performance in low-resource tasks means 0.3 and 0.4 BLEU for the EN-FR and the CS-EN, respectively.
 
-In different direction --- towards character encoding went \perscite{cherry2018revisiting}. In their study, the authors compare BPE and character encoding in combination with LSTM NMT. They claim that artificial representations such as BPE are sub-optimal, leading to, e.g. (linguistically) improbable word fragmentations. Although they outperform BPE, they acknowledge the problem of much higher computational requirements for both training and inference.
+\perscite{cherry2018revisiting} went in a different direction --- towards character encoding. In their study, the authors compare BPE and character encoding in combination with LSTM NMT. They claim that artificial representations such as BPE are sub-optimal, leading to, e.g. (linguistically) improbable word fragmentations. Although they outperform BPE, they acknowledge the problem of much higher computational requirements for both training and inference.
 
-A more in-depth study of different setups (architectures, Joint vs. Separate BPE, languages) and the impact of vocabulary sizes on NMT performance offer \perscite{ding2019call}. Authors review several configurations and a broad range of BPE sizes ranging from character-level to 32K. They show that using an appropriate setting can help gain 3 to 4 BLEU points. Most experiments with smaller vocabularies (sizes up to 4K) performed better for the low-resource configuration. Although, for a high-resource setting, the larger BPE sizes are better. The authors also study joint and separate BPE. They conclude that the difference is negligible.
+A more in-depth study of different setups (architectures, joint vs. separate BPE, languages) and the impact of vocabulary sizes on NMT performance offer \perscite{ding2019call}. Authors review several configurations and a broad range of BPE sizes ranging from character-level to 32K. They show that using an appropriate setting can help gain 3 to 4 BLEU points. Most experiments with smaller vocabularies (sizes up to 4K) performed better for the low-resource configuration. Although, for a high-resource setting, the larger BPE sizes are better. The authors also study joint and separate BPE. They conclude that the difference is negligible.
 
 
-Another author \parcite{gupta2019character} study character-based and BPE NMT with Transformers under various conditions. They conclude that the BPE with 30K vocabulary is a standard choice in high resource settings. They also experiment with noisy data: when training on clean data, BPE performs slightly worse, however, when training on corrupted data, BPE with large vocabulary (30000) performed better as character level or BPE with a smaller vocabulary. In low-resource sc, character lever models perform better. In a high-resource scenario, however, large BPE models outperform other settings. The only exception is the WMT Biomedical test set, which contains a large proportion of obscure words.
+\perscite{gupta2019character} study character-based and BPE NMT with Transformer under various conditions. They conclude that BPE with 30K vocabulary should be the standard choice in high resource settings. They also experiment with noisy data: when training on clean data, BPE performs slightly worse, however, when training on corrupted data, BPE with large vocabulary (30000) performed better than character level or BPE with a smaller vocabulary. In low-resource scenario, character lever models perform better. In a high-resource scenario, however, large BPE models outperform other settings. The only exception is the WMT Biomedical test set, which contains a large proportion of technical terms.
 
 For our specific use case, \perscite{hrinchuk2019correction} uses Bert \parcite{devlin2018bert} original 30K WordPieces vocabulary and does not examine other sizes or other training data.
 
 \pagebreak
-\section{Experiment motivation and outline}
+\section{Experiment Motivation and Outline}
 \label{easr:eperiment}
 As reviewed in the previous section, we see that the utilization of intermediate phonetic transcription is an established method in ASR. We, therefore, propose a pipeline described at the beginning of the chapter (see \cref{fig:asr_enhanced_pipeline}). 
 
 Unlike the most studies reviewed in \cref{easr:rel_asr}, we propose to use Transformer architecture for phoneme-to-grapheme translation. We believe that the Transformer is the best option for these tasks. The Transformer has shown its potential in many NLP tasks. Most importantly, we consider its ability to learn the structure of a sentence. We are convinced, this could help reduce errors in transcripts. Our other motivation to apply this architecture is its task versatility. Just by swapping training data, we can efficiently train a spoken language translation system. Precisely, translation of phoneme in a source language to graphemes in a target language. 
 
-We describe and evaluate training of Transformer phoneme-to-grapheme translation in \cref{easr:english,easr:czech}.
+We describe and evaluate training of Transformer phoneme-to-grapheme translation in \cref{easr:english}.
 
 Our survey in \cref{easr:re_encoding} demonstrates an essential role of text encoding on the translation model performance. Hence, preceding the model training, we first study the impact of tokenizer selection on P2G translation in \cref{easr:tokenizer}.
 
 
-\section{Tokenizer selection}
+\section{Tokenizer Selection}
 \label{easr:tokenizer}
 
 In this section, we review alternatives for input and output tokenization. Because of resource scarcity, we experiment only on English and generalize the conclusion to Czech. 
 
 Throughout this experiment, we use Byte Pair Encoding for the tokenization of source and target sentences. We rule out word representation. It creates models with worse performance (in terms of speed and quality) \parcite{denkowski2017stronger}. Also, it cannot deal with out-of-vocabulary items.
 
-We decided on separate source and target vocabularies. We are motivated by the findings of \perscite{ding2019call}. In general, they did not observe the difference when using shared and separate vocabularies. They encourage the practitioner to consider a particular use case. In our task, the input and output alphabets --- phonemes and graphemes --- are different. In this experiment, we choose 8k BPE for target tokenization. We follow authors of NeMo toolkit\footnote{\url{https://nvidia.github.io/NeMo/nlp/neural_machine_translation.html}}. They claim this BPE size should help lower memory footprint and hence increase throughput leading to faster convergence. As training data, we use phonemized Czeng corpus. 
+We decided on separate source and target vocabularies. We are motivated by the findings of \perscite{ding2019call}. In general, they did not observe the difference when using shared and separate vocabularies. They encourage the practitioner to consider a particular use case. In our task, the input and output alphabets --- phonemes and graphemes --- are different. In this experiment, we choose 8k BPE for target tokenization. We follow authors of NeMo toolkit\footnote{\url{https://nvidia.github.io/NeMo/nlp/neural_machine_translation.html}}. They claim this BPE size should help lower memory footprint and hence increase throughput leading to faster convergence. As training data, we use phonemized CzEng corpus. 
 
 As we previously discussed, the selection of training data and the size of vocabulary for target BPE is relatively straightforward. On the other hand, considering the source may be corrupted as the ASR system produces it in our setup, there arise two questions: 
 
@@ -109,15 +120,15 @@ As we previously discussed, the selection of training data and the size of vocab
 
 
 
-\subsection{Experiment outline}
+\subsection{Experiment Outline}
 Our task differs from the situations described in previous work. Hence there is no clear answer to our previously stated questions.
 
 To resolve these questions, we conduct a series of experiments. We train 16 Transformers, each with different source vocabulary (sizes with a step of multiple of four: character-level, 128, 512, 2k, 8k, and 32k. Each BPE size except for character-level is trained on clean, corrupted, and mixture (procedure generating corrupted data is described in \cref{sec:asr_corrupted}). Target vocabulary remains the same for all configurations --- 8k trained on clean graphemes, phonemized filtered CzEng 1.7. Afterwards we evaluate their performance on ``corrupted'' dev sets that were obtained in \cref{sec:asr_corrupted}.
 
 Taking into account the time and hardware complexity of training Transformer \texttt{big} configuration, we choose the \texttt{base} setting for these experiments. We believe the behavior of the model will still be reasonable alike.
 
-\subsection{Data preparation}
-Source BPE vocabularies are trained on: clean filtered Czeng for \textit{clean} setup and corrupted data from ASR ensemble setup (see \cref{sec:asr_corrupted}). We have approximately 7M corrupted sentences. For \textit{mixture} setup, we took a random subset of 7M from clean filtered Czeng. We do not take the whole Czeng as it has 57M sentence pairs. 
+\subsection{Data Preparation}
+Source BPE vocabularies are trained on: clean filtered CzEng for \textit{clean} setup and corrupted data from ASR ensemble setup (see \cref{sec:asr_corrupted}). We have approximately 7M corrupted sentences. For \textit{mixture} setup, we took a random subset of 7M from clean filtered CzEng. We do not take the whole CzEng as it has 57M sentence pairs. 
 
 As training data for Transformers, we use corrupted data from our ASR ensemble setup. We selected two development sets: first the \textit{dev clean} set from LibriSpeech and second the \textit{dev} set from Common Voice. The reason is that LibriSpeech contains longer utterances than Common Voice, but on the other hand, the former has lower WER than the latter. It is also worth noting that LibriSpeech \textit{dev clean}'s utterances are twice that long on overage (107 characters versus 52 characters).
 
@@ -255,7 +266,7 @@ Overview of runs is pictured in \cref{fig:vocab_sizes,fig:vocab_sizes_common}. F
 
 
 
-\subsection{Results and analysis}
+\subsection{Results and Analysis}
 
 Final results of all experiments are in \cref{tab:results_vocabularies_libri,tab:results_vocabularies_common} for development sets and in \cref{tab:results_vocabularies_common_test,tab:results_vocabularies_libri_clean,tab:results_vocabularies_libri_other}.
 
@@ -265,14 +276,14 @@ First of all, we can observe a drastic reduction of WER for the Common Voice tes
 
 On the other hand, Libri Speech has 281241 recordings and 281071 unique transcripts. Hence, there are almost none different recordings for the same text. ``Corrupted'' Libri Speech has 3844983 unique erroneous ASR transcripts with 280850 different valid transcripts. Hence, on average, each Common Voice sentence has seven different recordings and 40 individual faulty ASR transcriptions. Libri Speech, on the contrary, does not have more recordings per text and has about 13 ASR-corrupted transcripts per one original text. Hence, we are firmly convinced that the trained Transformer models are over-fitting the Common Voice dataset.
 
-\paragraph{BPE size}
+\paragraph{BPE Size}
 Character-level encoding seems to be the worst or second-worst possible representation. For the Common Voice test set, it scores almost one percentage point of WER more compared to the best result (5.53 vs. 4.55). Also, all other encodings performed almost half a percentage point better. For both Libri Speech test sets, it performed a bit better than BPE 128. 
 
 Generally, the figures suggest a clear trend: the larger the vocabulary, the better. Among the different BPE sizes, we can recognize the 32k vocabulary size has the best results systematically on all test sets.
 
 Finally, we consider the following: a model can better learn from larger vocabulary sizes. \XXX{First, a model does not have to learn low-level orthography extensively. Rather than memorizing characters (or other smaller units), it can focus on the whole sentence and how individual words interact. Second, a larger model can detect errors because of anomalies in input encoding. Larger vocabularies produce a shorter representation. Corrupted word is more likely to be broken down to smaller peaces. When a model detects such a situation, it can, for example, decide the right target word based on context, rather than the suspicious word. Such anomaly will most likely not occur in text encoded with small BPE. }
 
-\paragraph{Source of BPE training data}
+\paragraph{Source of BPE Training Data}
 For Common Voice, we can witness some variation in performance. Best seems to be ``mixed'' configuration. Somewhat worse is ``corrupted'' and the worst is ``clean'' version. In this case, we think the ``mixed'' is best as it has frequent enough ``corrupted'' words. This enables a model to learn to translate these corrupted words to correct ones. Also, it knows enough other words, so it can adequately work with correct phonemes.
 
 For other test sets, we observe almost none differences. Only ``corrupted'' configuration has slightly less performance. 
@@ -297,13 +308,13 @@ Therefore, in further experiments and setups, we will use 32k BPE vocabulary tra
 \label{easr:english}
 In this section we describe training of the translation model of proposed enhanced ASR pipeline (see \cref{fig:asr_enhanced_pipeline}). We train both English and Czech ``translation'' models.
 
-\subsection{Experiment outline}
+\subsection{Experiment Outline}
 \label{easr:outline}
-We seek models for translating transcripts written in phonemes into graphemes in the same language. As previously discussed, we decided to use Transformer architecture. Translating phonemes into graphemes is a somewhat nontraditional task for the Transformer model. We, therefore, experiment with both variants of the architecture --- ``small'' and ``big''. 
+We seek a model for translating transcripts written in phonemes into graphemes in the same language. As previously discussed, we decided to use Transformer architecture. Translating phonemes into graphemes is a somewhat nontraditional task for the Transformer model. We, therefore, experiment with both variants of the architecture --- ``small'' and ``big''. 
 
-In \cref{easr:tokenizer} we studied appropriate tokenizer. We concluded the larger the BPE vocabulary, the better performance the model has. We obtained the best results with 32k BPE. We also discussed the source of BPE training data (note, not Transformer model training data). We settled that there is no essential difference between clean, corrupted, and mixed setup in general. Keeping this in mind, we use clean phonemized Czeng data in this experiment for BPE vocabulary training. 
+In \cref{easr:tokenizer} we studied appropriate tokenizer. We concluded the larger the BPE vocabulary, the better performance the model has. We obtained the best results with 32k BPE. We also discussed the source of BPE training data (note, not Transformer model training data). We settled that there is no essential difference between clean, corrupted, and mixed setup in general. Keeping this in mind, we use clean phonemized CzEng data in this experiment for BPE vocabulary training. 
 
-First, we are interested in model performance when trained on clean data. In this part of the work, we use clean phonemized Czeng. In \cref{chap:fine_tune_enhanced} we further study fine-tuning of models for corrupted ASR data.
+First, we are interested in model performance when trained on clean data. In this part of the work, we use clean phonemized CzEng. In \cref{chap:fine_tune_enhanced} we further study fine-tuning of models for corrupted ASR data.
 
 As already commented, this task is unusual for Transformer. Therefore, we try different beam sizes during the inference. We believe it could help the model to find better transcriptions by considering less likely labels.
 
@@ -397,12 +408,12 @@ Overview of training captured by evaluation on phonemized newstest2016 is in \cr
 \end{table}
 
 
-\subsection{Performance evaluation}
+\subsection{Performance Evaluation}
 In this section we evaluate phoneme-to-grapheme translation models trained on clean phonemized data.
 
-\paragraph{Beam size} The gap for individual beam sizes is negligible. It seems that a model is relatively sure about its predictions. Given the machine phonemized data, this is not something unexpected. Later, when a model is exposed to ``corrupted'' training data, there could be some change in the behavior.
+\paragraph{Beam Size} The gap for individual beam sizes is negligible. It seems that a model is relatively sure about its predictions. Given the machine phonemized data, this is not something unexpected. Later, when a model is exposed to ``corrupted'' training data, there could be some change in the behavior.
 
-\paragraph{Transformer ``small'' vs. ``big''} From the results in both languages, we see that the bigger model outperforms the smaller. The difference is rather tiny --- at most, 0.5 \% WER. We assume that later when we introduce errors to training data, the performance gap between the variants gets higher.
+\paragraph{Transformer ``Small'' vs. ``Big''} From the results in both languages, we see that the bigger model outperforms the smaller. The difference is rather tiny --- at most, 0.5 \% WER. We assume that later when we introduce errors to training data, the performance gap between the variants gets higher.
 
 \paragraph{Czech Enhanced ASR}
 \cref{tab:phon_cs} compares performance in terms of Word Error Rate on the Czech Parliament corpus test set. 

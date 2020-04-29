@@ -1,58 +1,59 @@
 \begin{tikzpicture}
-    \small
-  \centering
-  \begin{axis}[
-        ybar, axis on top,
-        bar width=0.6cm,
-        ymajorgrids, tick align=inside,
-        major grid style={draw=white},
-        enlarge y limits={value=.1,upper},
-        ymin=0, ymax=84,
-        axis x line*=bottom,
-        axis y line*=right,
-        y axis line style={opacity=0},
-        tickwidth=0pt,
-        enlarge x limits=true,
-        legend style={
-            at={(0.5,-0.2)},
-            anchor=north,
-            legend columns=-1,
-            /tikz/every even column/.append style={column sep=0.5cm}
-        },
-        ylabel={Percentage (\%)},
-        ylabel near ticks,
-        symbolic x coords={
-           $\leq$ 10 \%,
-           $\leq$ 20 \%,
-           $\leq$ 30 \%,
-           $\leq$ 40 \%,
-           $\leq$ 50 \%,$\leq$ 100 \%},
-       xtick=data,
-       nodes near coords={
-        \pgfmathprintnumber[precision=0, fixed]{\pgfplotspointmeta}
-       }
-    ]
-        \addplot [draw=none, fill=red!30] coordinates {
-            ($\leq$ 10 \%, 48.90101961007887)
-            ($\leq$ 20 \%, 22.03376845961022)
-            ($\leq$ 30 \%, 13.392114278995107)
-            ($\leq$ 40 \%, 4.9193558444520065)
-            ($\leq$ 50 \%, 3.454167431270299)
-            ($\leq$ 100 \%, 7.299574375593496)};
-        \addplot [draw=none,fill=green!30] coordinates {
-            ($\leq$ 10 \%, 84.65530022238696)
-            ($\leq$ 20 \%, 10.56338028169014)
-            ($\leq$ 30 \%, 3.1134173461823575)
-            ($\leq$ 40 \%, 0.7042253521126761)
-            ($\leq$ 50 \%, 0.37064492216456635)
-            ($\leq$ 100 \%, 0.5930318754633062)};
-        \addplot [draw=none,fill=blue!30] coordinates {
-            ($\leq$ 10 \%, 56.85960497216502)
-            ($\leq$ 20 \%, 17.63898421413864)
-            ($\leq$ 30 \%, 12.842217646610235)
-            ($\leq$ 40 \%, 5.185693586517197)
-            ($\leq$ 50 \%, 3.065660032029284)
-            ($\leq$ 100 \%, 4.4078395485396165)};
-    \legend{Training data,Libri Speech dev clean,Common Voice dev}
-  \end{axis}
+  \small
+ \centering
+ \begin{axis}[
+    ybar, axis on top,
+    bar width=0.6cm,
+    ymajorgrids, tick align=inside,
+    major grid style={draw=white},
+    enlarge y limits={value=.1,upper},
+    ymin=0, ymax=84,
+    axis x line*=bottom,
+    axis y line*=right,
+    y axis line style={opacity=0},
+    tickwidth=0pt,
+    enlarge x limits=true,
+    legend style={
+      at={(0.5,-0.2)},
+      anchor=north,
+      legend columns=-1,
+      /tikz/every even column/.append style={column sep=0.5cm}
+    },
+    ylabel={Portion of the dataset (\%)},
+    xlabel={\% phoneme word error rate},
+    symbolic x coords={
+      0 - 10,
+      10 - 20,
+      20 - 30,
+      30 - 40,
+      40 - 50,
+      50 - 100 },
+    xtick=data,
+    nodes near coords={
+    \pgfmathprintnumber[precision=0, fixed]{\pgfplotspointmeta}
+    }
+  ]
+    \addplot [draw=none, fill=red!30] coordinates {
+      (0 - 10, 48.90101961007887)
+      (10 - 20, 22.03376845961022)
+      (20 - 30, 13.392114278995107)
+      (30 - 40, 4.9193558444520065)
+      (40 - 50, 3.454167431270299)
+      (50 - 100, 7.299574375593496)};
+    \addplot [draw=none,fill=green!30] coordinates {
+      (0 - 10, 84.65530022238696)
+      (10 - 20, 10.56338028169014)
+      (20 - 30, 3.1134173461823575)
+      (30 - 40, 0.7042253521126761)
+      (40 - 50, 0.37064492216456635)
+      (50 - 100, 0.5930318754633062)};
+    \addplot [draw=none,fill=blue!30] coordinates {
+      (0 - 10, 56.85960497216502)
+      (10 - 20, 17.63898421413864)
+      (20 - 30, 12.842217646610235)
+      (30 - 40, 5.185693586517197)
+      (40 - 50, 3.065660032029284)
+      (50 - 100, 4.4078395485396165)};
+  \legend{Collected data,Libri Speech \texttt{dev-clean}, Common Voice \texttt{dev}}
+ \end{axis}
 \end{tikzpicture}

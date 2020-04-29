@@ -1,51 +1,51 @@
 \begin{tikzpicture}
-    \small
-  \centering
-  \begin{axis}[
-        ybar, axis on top,
-        bar width=0.6cm,
-        ymajorgrids, tick align=inside,
-        major grid style={draw=white},
-        enlarge y limits={value=.1,upper},
-        ymin=0, ymax=84,
-        axis x line*=bottom,
-        axis y line*=right,
-        y axis line style={opacity=0},
-        tickwidth=0pt,
-        enlarge x limits=true,
-        legend style={
-            at={(0.5,-0.2)},
-            anchor=north,
-            legend columns=-1,
-            /tikz/every even column/.append style={column sep=0.5cm}
-        },
-        ylabel={Percentage (\%)},
-        ylabel near ticks,
-        symbolic x coords={
-           $\leq$ 10 \%,
-           $\leq$ 20 \%,
-           $\leq$ 30 \%,
-           $\leq$ 40 \%,
-           $\leq$ 50 \%,$\leq$ 100 \%},
-       xtick=data,
-       nodes near coords={
-        \pgfmathprintnumber[precision=0, fixed]{\pgfplotspointmeta}
-       }
-    ]
-        \addplot [draw=none, fill=red!30] coordinates {
-            ($\leq$ 10 \%, 29.598733970345652)
-		($\leq$ 20 \%, 33.07573015979392)
-		($\leq$ 30 \%, 16.78821789787502)
-		($\leq$ 40 \%, 4.983580883986865)
-		($\leq$ 50 \%, 2.5660771931639728)
-		($\leq$ 100 \%, 12.987659894834572)};
-        \addplot [draw=none,fill=green!30] coordinates {
-            ($\leq$ 10 \%, 62.94027565084227)
-            ($\leq$ 20 \%, 21.898928024502297)
-            ($\leq$ 30 \%, 9.073506891271057)
-            ($\leq$ 40 \%, 2.756508422664625)
-            ($\leq$ 50 \%, 0.9571209800918835)
-            ($\leq$ 100 \%, 2.3736600306278715)};
-    \legend{Training data,Parliament Test Set}
-  \end{axis}
+  \small
+ \centering
+ \begin{axis}[
+    ybar, axis on top,
+    bar width=0.6cm,
+    ymajorgrids, tick align=inside,
+    major grid style={draw=white},
+    enlarge y limits={value=.1,upper},
+    ymin=0, ymax=84,
+    axis x line*=bottom,
+    axis y line*=right,
+    y axis line style={opacity=0},
+    tickwidth=0pt,
+    enlarge x limits=true,
+    legend style={
+      at={(0.5,-0.2)},
+      anchor=north,
+      legend columns=-1,
+      /tikz/every even column/.append style={column sep=0.5cm}
+    },
+	ylabel={Portion of the dataset (\%)},
+	xlabel={\% phoneme word error rate},
+    symbolic x coords={
+      0 - 10,
+      10 - 20,
+      20 - 30,
+      30 - 40,
+      40 - 50,50 - 100 },
+    xtick=data,
+    nodes near coords={
+    \pgfmathprintnumber[precision=0, fixed]{\pgfplotspointmeta}
+    }
+  ]
+    \addplot [draw=none, fill=red!30] coordinates {
+      (0 - 10, 29.598733970345652)
+		(10 - 20, 33.07573015979392)
+		(20 - 30, 16.78821789787502)
+		(30 - 40, 4.983580883986865)
+		(40 - 50, 2.5660771931639728)
+		(50 - 100, 12.987659894834572)};
+    \addplot [draw=none,fill=green!30] coordinates {
+      (0 - 10, 62.94027565084227)
+      (10 - 20, 21.898928024502297)
+      (20 - 30, 9.073506891271057)
+      (30 - 40, 2.756508422664625)
+      (40 - 50, 0.9571209800918835)
+      (50 - 100, 2.3736600306278715)};
+  \legend{Collected data,Parliament Test Set}
+ \end{axis}
 \end{tikzpicture}

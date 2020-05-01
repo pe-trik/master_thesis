@@ -47,17 +47,17 @@ To attain better regularization, we involve the BPE drop-out technique proposed 
 
 The progression of training is in \cref{fig:cs_en} for Czech to English and in \cref{fig:en_cs} for English to Czech as evaluations on \texttt{newstest2015}.
 
-\begin{figure*}[h]
+\begin{figure}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/cs_en}
 	\caption{Evaluations on newstest2015 during the training. Phonemized Czech side as source and (original, in graphemes) English side as target.}
 	\label{fig:cs_en}
-\end{figure*}
+\end{figure}
 
-\begin{figure*}[h]
+\begin{figure}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/en_cs}
 	\caption{Evaluations on newstest2015 during the training. Phonemized English side as source and (original, in graphemes) Czech side as target.}
 	\label{fig:en_cs}
-\end{figure*}
+\end{figure}
 
 \section{Evaluation}
 \label{slt:evaluation}
@@ -70,6 +70,7 @@ Note, all models used in this comparison (baseline and proposed) are trained on 
 Again, as in the previous chapter, we apply different beam sizes during the evaluation.
 
 \subsection{SLT Test Set Preparation}
+\label{read-newstest}
 \XXX{To the best of our knowledge, there is no SLT test set from Czech to English.} We therefore decided to create one.
 
 We base our test set on a subset of the \texttt{newstest2018}. The original \texttt{news\-test\-2018} contains more than 3000 sentences. The test set is a collection of article passages from various news. There are articles of Czech origin, but also of English one. For our purposes, we selected only the articles of the Czech origin. 
@@ -97,7 +98,7 @@ Still, the performance of the models is rather inferior to the test sets in well
 		\multirow{2}{*}{English} & phonemes       & 18.61 \% PWER \\
 		& graphemes      & 18.60 \% WER 
 	\end{tabular}
-	\caption{Evaluation of acoustic models on our test set derived from \texttt{newstest2018}.}
+	\caption{Evaluation of acoustic models on our test set derived from \texttt{news\-test\-2018}.}
 	\label{tab:acoustic_eval}
 \end{table}
 

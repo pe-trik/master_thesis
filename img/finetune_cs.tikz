@@ -1,0 +1,75 @@
+\begin{tikzpicture}
+\small
+\begin{axis}[
+legend cell align={left},
+legend pos=north east,
+legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.01960784313725!black},
+xlabel={Global Steps (= 2 $\times$ Steps)},
+xmin=3000, xmax=30000,
+xtick style={color=black},
+y grid style={white!69.01960784313725!black},
+ylabel={Word Error Rate},
+ymin=6, ymax=10,
+ytick style={color=black}
+]
+\addplot 
+table {
+0 104.642
+2000 25.3549
+4000 8.59203
+6000 7.49824
+8000 7.08887
+10000 6.83344
+12000 6.6687
+14000 6.63244
+16000 6.59446
+18000 6.52271
+20000 6.51771
+22000 6.52765
+24000 6.55499
+26000 6.52857
+28000 6.62489
+30000 6.52541
+32000 6.58629
+34000 6.54761
+36000 6.61207
+38000 6.56453
+40000 6.57416
+42000 6.654
+44000 6.61975
+46000 6.64508
+48000 6.6975
+50000 6.66026
+52000 6.67042
+54000 6.64117
+56000 6.66604
+58000 6.69873
+60000 6.70952
+62000 6.70451
+64000 6.71784
+66000 6.73111
+};
+\addlegendentry{CS SLT Transfer}
+
+\addplot 
+table {
+2000 96.7268
+4000 93.959
+6000 91.0212
+8000 88.4469
+10000 56.3384
+12000 39.3096
+14000 27.7556
+16000 15.6459
+18000 10.7409
+20000 9.09155
+22000 8.23109
+24000 7.91725
+26000 7.68454
+};
+\addlegendentry{CS SLT Transfer}
+\end{axis}
+\end{tikzpicture}

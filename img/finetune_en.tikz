@@ -1,0 +1,78 @@
+\begin{tikzpicture}
+\small
+\begin{axis}[
+legend cell align={left},
+legend pos=north east,
+legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.01960784313725!black},
+xlabel={Global Steps (= 2 $\times$ Steps)},
+xmin=0, xmax=28000,
+xtick style={color=black},
+y grid style={white!69.01960784313725!black},
+ylabel={Word Error Rate},
+ymin=9, ymax=14,
+ytick style={color=black}
+]
+\addplot 
+table {
+0 104.737
+2000 88.718
+4000 77.1444
+6000 36.8656
+8000 20.8993
+10000 14.7947
+12000 13.0752
+14000 12.6133
+16000 12.0987
+18000 11.9584
+20000 11.8215
+22000 11.74
+24000 11.6263
+26000 11.5158
+28000 11.6636
+};
+\addlegendentry{Correction Baseline}
+
+\addplot 
+table {
+0 183.932
+2000 12.5694
+4000 11.6024
+6000 11.5505
+8000 11.3866
+10000 11.2587
+12000 11.4315
+14000 11.4495
+16000 11.5154
+18000 11.4652
+20000 11.4445
+22000 11.436
+24000 11.3645
+26000 11.4639
+28000 11.4463
+30000 11.3484
+
+};
+\addlegendentry{SLT Transfer}
+
+\addplot 
+table {
+12000 100
+15500 9.9093
+17500 9.84171
+19500 9.79919
+21500 9.82475
+23500 9.77508
+25500 9.80858
+27500 9.79747
+29500 9.84809
+31500 9.81392
+33500 9.78977
+35500 9.81273
+37500 9.90182
+};
+\addlegendentry{SLT + BERT Transfer}
+\end{axis}
+\end{tikzpicture}

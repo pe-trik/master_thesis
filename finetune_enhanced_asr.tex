@@ -35,7 +35,7 @@ Overview of the setup is pictured in \cref{fig:asr_folds}.
 \end{figure}
 
 \subsection{Data Preparation}
-To train the ensemble of the acoustic models, we use LibriSpeech and Common Voice datasets. We concatenate these two and divide them into ten folds of the same size. We deliberately not shuffle the concatenated dataset prior to splitting it into folds, so that the difference among the trained models is as much as possible (proportion of training data from LibriSpeech and from Common Voice will vary more). The models are trained on these folds in a cross-validation manner: $i$-th model skips $i$-th fold during training.
+To train the ensemble of the acoustic models, we use LibriSpeech and Common Voice datasets. We concatenate these two and divide them into ten folds of the same size. We deliberately not shuffle the concatenated dataset prior to splitting it into folds, so that the difference among the trained models is as much as possible (proportion of training data from LibriSpeech and Common Voice will vary more). The models are trained on these folds in a cross-validation manner: $i$-th model skips $i$-th fold during training.
 
 \subsection{Ensemble Training}
 We train ten models. Additionally, we store checkpoints every 5000 steps. Instead of bigger Jasper, we choose QuartzNet. Nevertheless, they are similar enough, and we assume they behave likewise. The main reason for our choice are reduced hardware requirements and hence faster convergence. In contrast with the bigger ASR Jasper model that we train on 10 GPUs, each QuertzNet model for data collection is trained only on one GPU. After less than a day of training, the models perform almost as good as the bigger model.
@@ -45,11 +45,11 @@ We utilize transfer learning to reduce the training time. For English, the Quart
 \subsection{Acoustic Models Performance}
 On average, after the first adaptation phase, the word error rate of the most models on LibriSpeech \texttt{dev-clean} dropped under 16 \% (this took approximately 5 hours). One model had WER two times worse than others (33.05 \%), and one did not converge at all. After the full training, which took about 15 hours, the average WER is 5.3 \% with very small variance. Compared with big Jasper, it is only about 1.5 \% points more. Evaluations during the training can be seen in \cref{fig:ensemble_training} and the final results are shown in \cref{tab:eng_folds}.
 
-\begin{figure*}[t]
+\begin{figure}[t]
 	\includegraphics[width=\linewidth,height=8cm]{img/ensemble}
 	\caption{Evaluation on LibriSpeech \texttt{dev-clean} during the training of ten models (using greedy decoding). One epoch takes approximately 24400 steps.}
 	\label{fig:ensemble_training}
-\end{figure*}
+\end{figure}
 
 \begin{table}[t]
 	\centering
@@ -183,20 +183,139 @@ Distribution of PWER in training and dev sets is in histogram~\ref{fig:histogram
 	\label{fig:histogram_cs}
 \end{figure}
 
+
+
+
+
+
 \section{Fine-Tuning of Enhanced ASR}
+In this section, we use the collected ``corrupted'' data to enhance the phoneme-to-grapheme translation models. We experiment with training and fine-tuning using this data. We also examine various transfer learning schemes.
+
+\subsection{Experiment Outline}
+We design the fine-tuning experiment similarly to that of \perscite{hrinchuk2019correction} described in \cref{feasr:related}. However, we must consider the differences in our ASR pipeline. Our ASR pipeline consists of an acoustic model transcribing the speech into phonemes, and a phoneme-to-grapheme translation model. On the other hand, the authors have an ASR model to graphemes and a correction model.
+
+In our experiments, we initialize the model weights from SLT tasks. We find the SLT task as a promising starting point for enhancing the ASR transcripts. We base our hopes on the fact that the main task of the encoder in the SLT is to create an abstract representation of the input sentence based on its meaning. This means the encoder must consider the content and semantics of the sentence. Similarly, the decoder must decode the content given by the encoder and is also responsible for creating a meaningful sentence in the target language. This is in contrast with what the Transformer model does when trained as a phoneme-to-grapheme translation model operating within one language. Based on our experience from \cref{chap:enhanced_asr}, we suspect the model remembers rules for rewriting the phonemes to graphemes without considering the context. 
+
+For the English ASR, we experiment with three different setups:
+
+\begin{description}
+	\item[Correction Baseline] As a baseline, we train the translation model from scratch. Considering the over-fitting that we observed in \cref{easr:tokenizer} (i.e., when the translation model is trained from scratch solely on corrupted data), we decided to mix (one to one) the corrupted training data with clean phonemized CzEng data.
+	
+	\item[SLT Transfer] In this setup, we proceed exactly as in the \emph{Correction Baseline}. Additionally, we initialize the Transformer encoder from English to the Czech SLT translation model, and the Transformer decoder is initialized from the Czech to English SLT translation model (see \cref{chap:slt} for more details on SLT).
+	
+	\item[SLT + BERT Transfer] This setup utilizes a checkpoint from SLT for the encoder and the pretrained BERT for the initialization of the decoder. We do not initialize the encoder as the source of the model are phonemes (thus, we would have to change the tokenizer). We hypothesize this would be a significant change of the task for the pre-trained BERT, and it would diminish the advantage of the pre-training. 
+	
+	There are several variants of BERT. We decided for \texttt{large-uncased}. We chose the \texttt{large} to match the Transformer encoder (that we initialized from SLT) model dimension (1024).
+	
+	Additionally, we use only corrupted training data from the LibriSpeech dataset for the fine-tuning. 
+\end{description}
+
+For the Czech ASR, we experiment with two setups:
+
+\begin{description}
+	\item[Correction Baseline] We train the Czech ASR phoneme-to-grapheme translation model baseline as the English counterpart. We train the model from scratch using a one to one mix of clean phonemized CzEng and corrupted training data (to overcome the over-fitting).
+	
+	\item[SLT Transfer] We initialize the Transformer model with weights from the SLT task. The encoder is initialized with the encoder from the Czech to English SLT. The decoder is initialized with the decoder from the English to Czech SLT.
+	
+\end{description}
 
 
+\subsection{Training/Fine-Tuning}
+We train the models on two GPUs with 16 GB VRAM. We set the batch size to 8000 tokens, learning rate to $2 \times 10^{-3}$, and 16000 warm-up steps. The length of the training is set to 6000000, but we manually abort it after the convergence.
+
+All phoneme-to-grapheme models share the same architecture (the Transformer \texttt{big}) except for the \emph{SLT + BERT Transfer}. In this case, the decoder copies the BERT \texttt{large-uncased} architecture (24-layer, 1024-hidden, 16-heads). 
+
+For the \emph{SLT + BERT Transfer}, we tried the same training procedure as for other setups. However, we were unable to obtain any reasonable performance (we got WER of 28\% on LibriSpeech \texttt{dev-other}). We hypothesize this is due to the vast amount of weights that must be randomly initialized in the decoder. The BERT model is essentially a Transformer encoder. Hence it does not have the encoder-decoder attention layer, which must be randomly initialized. During the training of the whole model with many randomly initialized weights, the initially trained weights from the BERT might depart too far from the optimum.
+
+To overcome this issue, we use an analogous adaptation trick as for the training of the acoustic model (see \cref{asr:transfer_phonemes}). We freeze all weights initialized from seed models and train only the randomly initialized weights until the convergence (the criterion was the loss on the validation dataset). This adaptation takes 13500 steps in our case. Subsequently, the training of the whole model continues as in the experiments.
+
+Oversight on the training provides the LibriSpeech \texttt{dev-other} for English, and the Parliament Hearings \texttt{test} for Czech. The overview is in \cref{fig:finetune_en,fig:finetune_cs}. We choose the test set instead of the development set for the Czech as the development set consists of unsegmented long recordings that do not fit into the Transformer model.
+
+\begin{figure}[h]
+	\includegraphics[width=\linewidth,height=7cm]{img/finetune_en}
+	\caption{Training/fine-tuning of the English phoneme-to-grapheme ASR models. Performance on the LibriSpeech \texttt{dev-other}.}
+	\label{fig:finetune_en}
+\end{figure}
+
+\begin{figure}[h]
+	\includegraphics[width=\linewidth,height=7cm]{img/finetune_cs}
+	\caption{Training/fine-tuning of the Czech phoneme-to-grapheme ASR models. Performance on Parliament Hearings \texttt{test}.}
+	\label{fig:finetune_cs}
+\end{figure}
+
+\subsection{Performance Evaluation}
+In this section, we evaluate the performance of the models. For English, we utilize Common Voice \texttt{test} set and LibriSpeech \texttt{test-clean} and \texttt{test-other}. For Czech, we use the test set from Parliament Hearings corpus. The results are in \cref{tab:werstrain,tab:werstrain_cs}.
+
+\paragraph{English} 
+From the results in \cref{tab:werstrain}, it is evident that the training/fine-tuning on corrupted data helps. 
+
+Particularly, the \emph{Correction Baseline} and \emph{SLT Transfer} are both trained on data that contains erroneous data from the Common Voice dataset. Both models perform on the Common Voice \texttt{test} very well (3.91 and 3.26 \% WER respectively). On the other hand, the \emph{SLT + BERT Transfer} performs on the Common Voice substantially worse (even worse than the \emph{Clean Baseline}). 
+
+For the LibriSpeech test sets however, we see that the models perform worse when trained on corrupted data containing Common Voice transcripts. The \emph{SLT + BERT Transfer}, which is fine-tuned only on corrupted data from LibriSpeech, performs better than the baseline.
+
+On our \texttt{read-newstest} (for details on the test set see \cref{read-newstest}), the \emph{Correction Baseline} and \emph{SLT Transfer} perform better than the \emph{Clean Baseline}. It seems that both models learned to correct some of the errors. Differently, the \emph{SLT + BERT Transfer}, which was fine-tuned on LibriSpeech corrupted data, performs worse than the \emph{Clean Baseline}. We assume that this is due to the slightly over-fitting of the model to the LibriSpeech corpus.
+
+In the case of \emph{SLT Transfer}, we observe a clear advantage of the initialization from the SLT task over the random initialization (\emph{Correction Baseline}). The training converges rapidly faster, and the final performance is better compared with the random initialization.
 
 
+\paragraph{Czech}
+The results in \cref{tab:werstrain_cs} suggest the same as for the English.
+
+Training using corrupted data enhance the ability of the model to recover from errors introduced by the acoustic model (both models surpass the \emph{Clean Baseline} by more than \XXX{TBD} \% WER). 
+
+Furthermore, it is clear that initializing the models from the SLT task helps in two ways. First, it significantly reduces the training time (by more than 20k global steps --- see \cref{fig:finetune_cs}). Second, it alleviates the final performance of the model.
 
 
+\begin{table}[t]
+	\centering
+	\begin{tabular}{l|cccc}
+		&\multirow{3}{*}{ \makecell[c]{Common Voice \\ \texttt{test} } } &\multicolumn{2}{c}{LibriSpeech} &\\
+		& & \multicolumn{2}{c}{\texttt{test}} & \texttt{read-newstest} \\
+		& & {\texttt{clean}} & {\texttt{other}} &\\ \midrule
+		Clean Baseline             & 9.72           & 4.87           & 11.67        & 16.38            \\
+		%Clean Baseline + LM            & 7.00           & 4.63           & 10.25                   \\
+		
+		Correction Baseline             & 3.91           & 5.25           & 11.81    & 15.56                \\
+		%Correction Baseline + LM            & 4.37           & 5.09           & 10.76                   \\
+		
+		SLT Transfer     & \textbf{3.26}            & 5.10            & 11.75        & \textbf{15.46 }           \\
+		%SLT Transfer + LM & 3.97            & 5.00            & 10.63                   \\
+		
+		SLT + BERT Transfer               & 12.93            & \textbf{4.13}             & \textbf{10.21}  & 19.00       \\      
+		%SLT + BERT Transfer + LM & 11.25 & \textbf{4.04}  & \textbf{9.69} \\
+	\end{tabular}   
+	\caption{Performance of the English ASR phoneme-to-grapheme translation models.}
+	\label{tab:werstrain}
+\end{table}
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{l|cc}
+		&  \texttt{test} & \texttt{read-newstest} \\ \midrule
+		Clean Baseline             & 9.60       &     33.22         \\
+		%Clean Baseline + LM            & 9.35                  \\
+		
+		Correction Baseline             & \XXX{TBD}   & \XXX{TBD}           \\
+		%Correction Baseline + LM            & TBD     \\
+		
+		SLT Transfer     & 6.54   & 29.74  \\
+		%SLT Transfer + LM & 6.92              \\
+	\end{tabular}   
+	\caption{Performance of the Czech ASR phoneme-to-grapheme translation models on the Czech Parliament Hearings corpus test set.}
+	\label{tab:werstrain_cs}
+\end{table}
 
 
+\section{Conclusion and Future Work}
+In this chapter, we reviewed a performance-enhancing technique for the proposed ASR pipeline.
 
+First, we gathered ``corrupted'' acoustic data. We trained an ensemble of acoustic models for each language (English and Czech). Consequently, we used these models to gather the corrupted data from speech corpora.
 
+Second, we utilized this data for the training/fine-tuning of the phoneme-to-grapheme translation models from the proposed ASR pipeline. We experimented with different setups. For example, we considered training on mixed ``clean'' and ``corrupted'' data or different transfer learning schemes.
 
+We observed that training-off the checkpoints from the spoken language translation task is the best option. Based on this observation, we suspect that a multi-task training scheme combining SLT and ASR tasks for a language tuple could be promising (i.e., a shared English encoder for English ASR and English-to-Czech SLT decoders, and vice versa).
 
-
+Further, it is clear that training using ``corrupted'' data helps to reduce the WER. However, the method for obtaining such data is restricted to speech corpora (speech and transcriptions). This is too constraining as speech corpora are generally less available than, for example, free texts (recall, for the training of ASR phoneme-to-grapheme translation we use one side of the CzEng --- phonemized as the source and original as target) which are effortlessly available in almost unlimited amounts. Besides, this scheme is even harder to apply for the SLT, as the speech-to-translation corpora are rare. Finally, the utilization of acoustic models is ``too expensive'' on hardware resources. To overcome these limitations, we see a potential for researching a method that would be able to simulate the errors produced by the acoustic model.
 
 
 \iffalse 

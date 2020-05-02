@@ -8,7 +8,7 @@ tick align=outside,
 tick pos=left,
 x grid style={white!69.01960784313725!black},
 xlabel={Global Steps (= 2 $\times$ Steps)},
-xmin=3000, xmax=30000,
+xmin=3000, xmax=42000,
 xtick style={color=black},
 y grid style={white!69.01960784313725!black},
 ylabel={Word Error Rate},
@@ -69,6 +69,14 @@ table {
 22000 8.23109
 24000 7.91725
 26000 7.68454
+28000 7.5438
+30000 7.4899
+32000 7.44256
+34000 7.31805
+36000 7.26901
+38000 7.2412
+40000 7.19553
+42000 7.14219
 };
 \addlegendentry{CS SLT Transfer}
 \end{axis}

@@ -15,6 +15,14 @@ In the case of SLT pipeline, two phoneme-to-grapheme translation models are need
 
 The schema of the proposed enhanced ASR pipeline with online adaptation is in \cref{fig:online_easr}.
 
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=.9\textwidth]{img/online_easr}
+	\caption{Enhanced ASR pipeline with online adaptation.}
+	\label{fig:online_easr}
+\end{figure} 
+
+
 \subsection{Online Adaptation Model}
 The obvious requirement on the online adaptation model is that it must be able to learn quickly. Hence, we rule out neural networks as they require higher volume of training data. If not provided, the neural networks tend to over-fit the examples. 
 
@@ -78,33 +86,16 @@ We use the trained $n$-gram model during the inference --- rewriting input using
 		\end{enumerate}
 \end{enumerate}
 
-\begin{figure}[t]
-	\centering
-	\includegraphics[width=.9\textwidth]{img/online_easr}
-	\caption{Enhanced ASR pipeline with online adaptation.}
-	\label{fig:online_easr}
-\end{figure} 
 
 
 \section{Experiments}
 \label{oeasr:experiments}
-In this section, we describe experiments with different variations in the proposed online adaptation algorithm.
+In this section, we experiment with different variations of the proposed online adaptation algorithm.
 
+\XXX{For testing of the adaptation model, we use our own parallel Czech - English ASR/SLT test set \texttt{read-newstest} (see \cref{read-newstest}). To develop the adaptation model independently on the phoneme-to-grapheme model, we use instead of corrected transcripts that would be given by the P2G model the golden transcripts.}
 
-\iffalse
-\begin{algorithm}[H]
-\KwData{training data (phoneme and grapheme text pairs)}
-\KwResult{rewriting rules}
-initialization\;
-\While{not at end of this document}{
-	read current\;
-	\eIf{understand}{
-		go to next section\;
-		current section becomes this one\;
-	}{
-		go back to the beginning of current section\;
-	}
-}
-\caption{How to write algorithms}
-\end{algorithm}
-\fi
+\subsection{Na\"ive Approach: Train \& Rewrite All}
+We first experiment with a rather ``na\"ive'' approach --- we use all sequences for training of the adaptation model and we rewrite all phoneme transcripts flowing through the model (i.e., disregarding correctness of the substrings/words).
+
+We assume that the speaker makes errors systematically (e.g., instead of [\textipa{3:}] pronounces [\textipa{er}] in every word).
+

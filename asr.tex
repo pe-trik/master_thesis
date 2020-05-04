@@ -294,13 +294,13 @@ In this section, we review the training of the experiment, as described in \cref
 
 We use mixed-precision training, which means that the weights are stored in \texttt{float16} (making the model smaller), and weight updates are computed in \texttt{float32} precision (reducing the quality loss).
 
-When it comes to phoneme segmentation, one technical question arises. Both trained architectures output character labels, but some phonemes are multi-character (for example ``\textipa{a:}'', ``\textipa{dZ}'', ``\textipa{aI}'', ``\textipa{aI@}'' or ``\textipa{aI\textrhookschwa}'',). We already dealt with this problem in the previous section due to the Czech digraph ``ch''. We decided to disregard this character in the ASR to Czech graphemes as it can be easily rewritten using ``c'' and ``h''. Here the problem is more frequent. Many phonemes in both languages are multi-character (Czech has 13 and English 27). Hence, disregarding these phonemes might influence the model performance. Bearing this in mind, we conduct two additional experiments. The first experiment obeys the phoneme segmentation, and the second breaks all phonemes to single characters. As the English model has much greater hardware requirements, we train only Czech variants and assume the results will carry over to English.
+When it comes to phoneme segmentation, one technical question arises. Both trained architectures output character labels, but some phonemes are multi-character (for example ``\textipa{a:}'', ``\textipa{dZ}'', ``\textipa{aI}'', ``\textipa{aI@}'' or ``\textipa{aI\textrhookschwa}'',). We already dealt with this problem in the previous section due to the Czech digraph ``ch''. We decided to disregard this character in the ASR to Czech graphemes as it can be easily rewritten using ``c'' and ``h''. Here the problem is more frequent. Many phonemes in both languages are multi-character (Czech has 13 and English 27). \XXX{Examples of words with different multi-character phonemes are in \cref{tab:phon_examples}. From the examples we see that some of the multi-character phonemes consist even of other single-character ones.} Hence, disregarding this issue might influence the model performance. Bearing this in mind, we conduct two additional experiments. The first experiment obeys the phoneme segmentation, and the second breaks all phonemes to single characters. As the English model has much greater hardware requirements, we train only Czech variants and assume the results will carry over to English.
 
-We first attempt to follow the phoneme segmentation given by the \texttt{phonemizer}. \texttt{phonemizer} can output phonetic transcriptions including separators between pho\-ne\-mes and words. We use ``$\mid$'' as the phoneme separator.
+We first attempt to follow the phoneme segmentation given by the \texttt{phonemizer}. \texttt{phonemizer} can output phonetic transcriptions including separators between pho\-ne\-mes and words. We use ``$\mid$'' as the phoneme separator (see \cref{tab:phon_examples}). 
 
 %In the second attempt, we decompose all multi-character phonemes. Additionally, we break single-character phonemes that consist of combining letters and we replace these special letters with a placeholder. For English we substitute ``\textipa{\textsuperscript{j}}'' with ``J'', combining tilde (like ``\textipa{\~O}'') with ``I'', and vertical line below (e.g., ``\textipa{\textsyllabic{n}}'') with ``L''. For Czech, we introduce placeholders for vertical line below (e.g., ``\textipa{\textsyllabic{l}}'') with ``L'', for up tack below (e.g., ``\textipa{\textraising{r}}'') with ``T'' and ring above (e.g., ``\textipa{\r{r}}'') with ``R''. So, for example Czech word ``p\v{r}\'ipadn\v{e}'' has phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'', which is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
 
-In the second attempt, we decompose all multi-character phonemes. Additionally, we break single-character phonemes that consist of combining letters and we replace these special letters with a placeholder. Note that the substitute letters I, L, T, R were chosen so that they do not occur in the respective language. So, for example the Czech word ``p\v{r}\'ipadn\v{e}'' with the phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'' is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
+In the second attempt, we decompose all multi-character phonemes (e.g., ``\textipa{dZ}'' is decomposed to ``\textipa{d}'' and ``\textipa{Z}''). \XXX{Note, some of the single-character phonemes are encoded in \texttt{UTF-8} as multi-character using combining letter. To circumvent this, we additionally break single-character phonemes that consist of combining letters and we replace these special letters with a placeholder.} Note that the substitute letters I, L, T, R were chosen so that they do not occur in the respective language. So, for example the Czech word ``p\v{r}\'ipadn\v{e}'' with the phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'' is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
 
 \paragraph{Czech ASR}
 For training and testing, we use the ``phonemized'' corpus of the Czech Parliament Plenary Hearings. As the dataset is five times smaller than English corpora, we utilize the smaller QuartzNet.
@@ -333,13 +333,13 @@ Note, the results are not directly comparable with graphemes. The mapping to pho
 \paragraph{Czech}
 The course of the Czech training is displayed in \cref{fig:cs_phon} and the final evaluation is in \cref{tab:cs_phon_results}. 
 
-As expected, rapid Phoneme Word Error Rate (PWER) fall at the beginning of the training (see \cref{fig:en_phon}) proves that the grapheme and phoneme recognition tasks are indeed similar because the pre-trained weights adapt so quickly and well to the new target units.
+As expected, a rapid Phoneme Word Error Rate (PWER) fall at the beginning of the training (see \cref{fig:en_phon}) proves that the grapheme and phoneme recognition tasks are indeed similar because the pre-trained weights adapt so quickly and well to the new target units.
 
 We made a surprising observation: beam search decoding is always worse than greedy decoding. We tested the beam sizes of power two from 1 to 64. We use two different beam search implementations: TensorFlow\footnote{\url{https://www.tensorflow.org/}} and Baidu's CTC decoder\footnote{\url{https://github.com/PaddlePaddle/DeepSpeech}} with KenLM\footnote{\url{https://github.com/kpu/kenlm}} language model. 
 
 Using TensorFlow, we got the best result 9.14 \% PWER, about 0.2 \% percent point higher than with the greedy search for multi-character ASR. For single-character ASR, the difference is even more significant: 9.09 \% for greedy and 9.53 \% PWER for beam search. 
 
-We also tried adding a language model to the second CTC decoder.\footnote{When setting LM weight to higher than 0, we found that this implementation does not support labels containing more that one character, which causes a problem to the several multi-character phonemes in the phonetic alphabet.} Using KenLM, we trained a 3-gram language model on phonemized Czech part of the CzEng. For both single- and multi-character phonemes, the language model helps. The result for the single-character setup is a bit better. We suspect the difference stems from our trick (substituting multi-character phonemes with a new single character --- see \cref{asr:phon:training}) to overcome Baidu's CTC decoder limitation. Training data for language model does not contain phoneme boundaries. Some multi-character phonemes consists of two other valid single-character (or even multi-character) ones. Thus, during the substitution of multi-character phonemes, some neighboring phonemes might be considered as one phoneme and incorrectly substituted. The ASR model is trained on data with known phoneme segmentation (given by the \texttt{phonemizer}). So, during decoding, the model can sometimes output with higher probability two phonemes instead of one, while the language model gives to these phonemes lower score (because of the training data mismatch of the language and ASR model). Illustration of this problem is in \cref{tab:phon_examples}.
+We also tried adding a language model to the second CTC decoder.\footnote{When setting LM weight to higher than 0, we found that this implementation does not support labels containing more that one character, which causes a problem to the several multi-character phonemes in the phonetic alphabet.} Using KenLM, we trained a 3-gram language model on phonemized Czech part of the CzEng. For both single- and multi-character phonemes, the language model helps. The result for the single-character setup is a bit better. We suspect the difference stems from our trick (substituting multi-character phonemes with a new single character --- see \cref{asr:phon:training}) to overcome Baidu's CTC decoder limitation. Training data for language model does not contain phoneme boundaries. Some multi-character phonemes consists of two other valid single-character (or even multi-character) ones. Thus, during the substitution of multi-character phonemes, some neighboring phonemes might be considered as one phoneme and incorrectly substituted. The ASR model is trained on data with known phoneme segmentation (given by the \texttt{phonemizer}). So, during decoding, the model can sometimes attribute a higher probability to two phonemes instead of one, while the language model gives to these phonemes lower score (because of the training data mismatch of the language and ASR model). An illustration of this problem is in \cref{tab:phon_examples}. \XXX{For example, the phonetic transcriptions of ``serious'' and ``various'' are \textipa{sI\*ri@s} and \textipa{vE\*ri@s}. They both share common suffix --- \textipa{\*ri@s}. But, when we consider the segmentation that outputs the \texttt{phonemizer}, ``various'' has one phoneme \textipa{i@} and ``serious'' has two phonemes --- \textipa{i} and \textipa{@}.}
 
 \begin{table}[]
 	\centering
@@ -348,11 +348,11 @@ We also tried adding a language model to the second CTC decoder.\footnote{When s
 		``\textipa{i}'', ``\textipa{@}'' and ``\textipa{i@}''& \textipa{s}$\mid$\textipa{I}$\mid$\textipa{\*r}$\mid$\textbf{\textipa{i}$\mid$\textipa{@}}$\mid$\textipa{s} & \textipa{v}$\mid$\textipa{E}$\mid$\textipa{\*r}$\mid$\textbf{\textipa{i@}}$\mid$\textipa{s} \\
 		``\textipa{aI}'', ``\textipa{@}'' and ``\textipa{aI@}'' & \textipa{dZ}$\mid$\textbf{\textipa{aI}$\mid$\textipa{@}}$\mid$\textipa{n}$\mid$\textipa{t}  & \textipa{k}$\mid$\textipa{w}$\mid$\textbf{\textipa{aI@}}$\mid$\textipa{t}  
 	\end{tabular}
-	\caption{Examples of multi-character phonemes consisting of other single- and multi-character phonemes. ``$\mid$'' is segmentation mark. These segmentation marks are present in ASR training data, but not in the language model training data.}
+	\caption{Examples of multi-character phonemes consisting of other single- and multi-character phonemes. ``$\mid$'' is the segmentation mark. These segmentation marks are present in ASR training data, but not in the language model training data.}
 	\label{tab:phon_examples}
 \end{table}
 
-To test this assumption, we train 3-gram language models (for single- and multi-character ASR) on ASR training data that include phoneme segmentation. Note, we do not re-phonemize CzEng, as phonemization is time and power-consuming process. The best results are 8.30 and 7.74 \% PWER for multi- and single-character ASR. These results are consistent with the greedy and beam search without LM decoding. Therefore, we conclude that using native phoneme segmentation is slightly better. Hence, for English, we use multi-character phonemes.
+To test this assumption, we train a 3-gram language models (for single- and multi-character ASR) on ASR training data that include phoneme segmentation. Note, we do not re-phonemize CzEng, as phonemization is time and power-consuming process. The best results are 8.30 and 7.74 \% PWER for multi- and single-character ASR. These results are consistent with the greedy and beam search without LM decoding. Therefore, we conclude that using native phoneme segmentation is slightly better. Hence, for English, we use multi-character phonemes.
 
 
 \begin{figure*}[t]
@@ -371,16 +371,16 @@ To test this assumption, we train 3-gram language models (for single- and multi-
 		\multirow{2}{*}{test} & multi-char. phonemes  & -     & 8.94   & 9.14    & 8.30            \\
 		& single-char. phonemes & -     & 9.09   & 9.53    & 7.84           
 	\end{tabular}
-	\caption{Results in \% of \emph{Phoneme} Word Error Rate (PWER). The language model is trained on CzEng. Note, PWER is not directly comparable to WER.}
+	\caption{Results in \% of \emph{Phoneme} Word Error Rate (PWER). The language model is trained on CzEng. Note, PWER is not directly comparable to WER. \XXX{The column ``Adaptation phase'' represents model performance after the adaptation of the decoder to new modeling units (i.e., the encoder is frozen and only decoder is trained).}}
 	\label{tab:cs_phon_results}
 \end{table}
 
 \paragraph{English}
 The course of the English training was carried out on two development sets and is pictured in \cref{fig:en_phon}. The final results on the development and test sets are in \cref{tab:en_phon_results}. 
 
-We again test beam search with and without a language model. We train 3-gram LM and use ASR training data, as these contain separated phonemes. The obtained results could be, therefore, better if we took more training data.
+We again test beam search with and without a language model. We train 3-gram LM and use ASR training data, as these contain separated phonemes. The obtained results could be, therefore, better if we took more training data for the language model and bigger $n$-grams.
 
-Again, beam search decoding performs worse than greedy decoding. Adding a language model to re-score beams helps to reduce PWER. There is a slight reduction in the Libri Speech test-clean. Test-other gets better about three \% points PWER. For the Common Voice test set, the PWER reduction is considerable --- almost 40 \% compared to the greedy decoding. As a possible explanation why LM helps Common Voice so much is that nearly two-thirds of the LM training data come from this data set and there is a significant overlap of sentences in the training data and the test set. 
+Again, as the observed performance in table \cref{tab:en_phon_results} suggests, beam search decoding performs worse than greedy decoding. Adding a language model to re-score beams helps to reduce PWER. There is a slight reduction in the Libri Speech test-clean. Test-other gets better about 3 \% PWER absolute. For the Common Voice test set, the PWER reduction is considerable --- almost 40 \% compared to the greedy decoding. As a possible explanation why LM helps Common Voice so much is that nearly two-thirds of the LM training data come from this data set and there is a significant overlap of sentences in the training data and the test set. 
 
 \begin{figure*}[t]
 	\includegraphics[width=\linewidth,height=7cm]{img/en_phon}
@@ -399,7 +399,7 @@ Again, beam search decoding performs worse than greedy decoding. Adding a langua
 		& Libri Speech Other & -     & 11.48  & 11.67       & 8.57                \\
 		& Common Voice       & -     & 10.21  & 10.47       & 6.46               
 	\end{tabular}
-	\caption{Results in \% of \emph{Phoneme} Word Error Rate (PWER). The language model is trained on phonemized ASR training data. Note, PWER is not directly comparable to WER.}
+	\caption{Results in \% of \emph{Phoneme} Word Error Rate (PWER). The language model is trained on phonemized ASR training data. Note, PWER is not directly comparable to WER. \XXX{The column ``Adaptation phase'' represents model performance after the adaptation of the decoder to new modeling units (i.e., the encoder is frozen and only decoder is trained).}}
 	\label{tab:en_phon_results}
 \end{table}
 
@@ -411,6 +411,6 @@ The question whether the phoneme-based ASR works better than grapheme-based ASR,
 
 In the future, we would like to examine coarse-to-fine methods for improving phoneme-based ASR. We believe that similarly to grapheme-based ASR as observed in \cref{asr:crosslingual_intermediate}, this could reduce the training time and lower the final PWER. 
 
-Another technique, multi-task learning, proposed and applied in HMM-based ASR by \perscite{chen2014joint}, could source of a further performance boost. 
+Another technique, multi-task learning, proposed and applied in HMM-based ASR by \perscite{chen2014joint}, could bring a further performance boost. 
 
 

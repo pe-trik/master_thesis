@@ -93,7 +93,7 @@ table {
 146000 2.52
 148000 2.51
 };
-\addlegendentry{Transformer ``small''}
+\addlegendentry{Transformer ``base''}
 \addplot 
 table {
 0 101.44

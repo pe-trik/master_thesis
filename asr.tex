@@ -26,7 +26,7 @@ Furthermore, it became customary to publish checkpoints alongside with the neura
 there emerge repositories with pre-trained neural networks such as \textit{TensorFlow Hub}\footurl{https://tfhub.dev/} or \textit{PyTorch
 	Hub}.\footurl{https://pytorch.org/hub/} This gives us an opportunity to use pre-trained models, but similarly, most of the published checkpoints are trained for English speech.
 
-In our work, we propose a cross-lingual coarse-to-fine intermediate step and experiment with transfer learning \parcite{tan2018-survey}, i.e., the reuse of pre-trained models for other tasks. Specifically,
+In our work, we propose a cross-lingual coarse-to-fine intermediate step and experiment with transfer learning \parcite{tan2018survey}, i.e., the reuse of pre-trained models for other tasks. Specifically,
 we reuse the available English ASR checkpoint of QuartzNet \parcite{kriman2019quartznet} and train it to recognize Czech speech instead.
 
 This section is organized as follows. In \cref{asr:related_work}, we give an overview of related work. In \cref{sec:data_models} we describe the used models and data. Our proposed method is described in \cref{sec:experiments}, and the results are presented and discussed in \cref{sec:results}.

@@ -1,7 +1,21 @@
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
 
+Spoken language translation (SLT) is an area of natural language processing that gained much popularity in recent years. The technology has many practical scenarios such as business meetings, conferences or in multi-national organizations (e.g. EU). Currently, human interpreters are employed, but deep learning brings new possibilities in attempts to automate the task.
+
+Contemporary SLT system consists of standalone automatic speech recognition (ASR) followed by a machine translation (MT). More recent studies review end-to-end SLT models. Their advantage is technical simplicity and better preservation of nonverbal information contained in speech. On the other hand, their obvious limitation is requirement of ``end-to-end'' training dataset, i.e., source language voice recordings paired with the translated transcripts in target language. Such datasets are only a little available and not available at all for most language pairs.
+
+A promising idea is to refactor the traditional two-step approach of ASR of the source language and MT of the text into the target language. The idea is to shorten the ASR step, finishing only with a string of phonemes, and translate directly from source-side phonemes to target text.
+
+In this thesis, we explore SLT with the outlined change: speech recognition into phonemes and translation from phonemes in the source to target words. For this, we build an SLT framework with intermediate phoneme-level transcription step for the translation between Czech and English in both directions. 
+
+We start from the acoustic model. The challenge for this part is to overcome the scarcity of Czech training data. We review a transfer from English, and propose a coarse-to-fine technique. This technique can be used combined with the transfer learning method, but we demonstrate that alone performs even better. Subsequently, we deal with the proposed change of the output representation in phonemes. To speed-up the training, we use a transfer from conventional ASR with ``adaptation phase'' proposed in the coarse-to-fine method.
+
+Further, we continue with the translation model. We deal with practical considerations such as input and output encoding. We experiment with different model sizes, and also enhancing the model performance with ability to correct some of the errors produced by the acoustic model.
+
+Finally, we experiment with speaker adaptation on the fly. 
+
 \section*{Thesis organization}
 We settled on a less traditional strategy for the organization of this work: in every chapter we review the related work rather than in a standalone chapter. We review mutual related work in \cref{chap:theory} (such as neural network architectures or corpora).
 
-Chapters progressively deal with problematic starting with Automatic Speech Recognition in \cref{chapter:asr}, further enhancing ASR in \cref{chap:enhanced_asr}, continuing with Spoken Language Translation in \cref{chap:slt}. Adaptation to speaker is described in \cref{chap:adaptation}. We also deal with ``bringing our work to life'' in \cref{chap:onlinezation}. Finally, we conclude the work in \cref{chap:conclusion}.
+Chapters progressively deal with problematic starting with automatic speech recognition in \cref{chapter:asr}, further enhancing ASR in \cref{chap:enhanced_asr}, continuing with spoken language translation in \cref{chap:slt}. Adaptation to speaker is described in \cref{chap:adaptation}. Finally, we conclude the work in \cref{chap:conclusion}.

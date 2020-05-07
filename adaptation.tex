@@ -42,7 +42,7 @@ As already described, we learn the phoneme rewrite rules from aligned ``incorrec
 	\end{enumerate}
 \end{enumerate}
 
-The last computed alignment defines the rewrite rules: ``rewrite the symbol from the source string (the ``incorrect'' one) to the symbol on the corresponding position in the target string (the ``correct'' one)''. The insertions in the alignment are represented with special $\epsilon$ character in the source string:
+The last computed alignment defines the rewrite rules: ``rewrite the symbol from the source string (the ``incorrect'' one) to the symbol on the corresponding position in the target string (the ``correct'' one)''. The insertions in the alignment are represented with special $\epsilon$ character in the source string (insertion, \textipa{Ins3:S@n}):
 
 \begin{center}
 	\begin{tabular}{c}
@@ -92,10 +92,59 @@ We use the trained $n$-gram model during the inference --- rewriting input using
 \label{oeasr:experiments}
 In this section, we experiment with different variations of the proposed online adaptation algorithm.
 
-\XXX{For testing of the adaptation model, we use our own parallel Czech - English ASR/SLT test set \texttt{read-newstest} (see \cref{read-newstest}). To develop the adaptation model independently on the phoneme-to-grapheme model, we use instead of corrected transcripts that would be given by the P2G model the golden transcripts.}
+For testing of the adaptation model, we use the parallel Czech - English ASR/SLT test set \texttt{read-newstest} (see \cref{read-newstest} on page \pageref{read-newstest}). To develop the adaptation model independently on the phoneme-to-grapheme model, we use instead of corrected transcripts that would be given by the P2G model the golden transcripts. Additionally, we create ``fake'' acoustic output with artificial errors to better analyze the behavior of the model.
+
+We simulate ``online'' online adaptation by iterating over the test set with step of 100 sentences, i.e., we in each iteration the training set for the adaptation model grows by 100 sentences and the model corrects next 100 sentences.
 
 \subsection{Na\"ive Approach: Train \& Rewrite All}
-We first experiment with a rather ``na\"ive'' approach --- we use all sequences for training of the adaptation model and we rewrite all phoneme transcripts flowing through the model (i.e., disregarding correctness of the substrings/words).
+We first experiment with a rather ``na\"ive'' approach --- we use all sequences for training of the adaptation model and we rewrite all phoneme transcripts flowing through the model (i.e., disregarding correctness of the substrings/words). This means, that we create \emph{identity} rewrite rules even for correct words (e.g., ``\textipa{@} $\rightarrow$ \textipa{@}'') and the $n$-gram model teaches on all this rules. 
 
-We assume that the speaker makes errors systematically (e.g., instead of [\textipa{3:}] pronounces [\textipa{er}] in every word).
+Our motivation to test this approach is that we assume that the speaker makes errors systematically (e.g., instead of [\textipa{nt}] pronounces [\textipa{nd}] in every word).
+
+\paragraph{Test on artificial data}
+In order to have better control, we first test this na\"ive method on artificial data. We take the golden phoneme transcripts of the English \texttt{read-news\-test} and introduce errors to it. We decided to start with one systematic error of the speaker: to pronounce [\textipa{nt}] as [\textipa{nd}]. 
+
+We set the order of the $n$-gram model to 2 (the smallest allowed order) and simulate the adaptation. 
+
+During the first step (first 100 sentences are used for training, following 100 sentences for correction) we dump the obtained rules: We get identity rules for each phoneme except for ``\textipa{t}'' for which we have two rules (``\textipa{t} $\rightarrow$ \textipa{t}'' and ``\textipa{t} $\rightarrow$ \textipa{d}''). This is as expected. 
+
+Now we want the $n$-gram model to ``learn'' that this rule is applied only for phoneme pair [\textipa{nd}].
+
+We take a closer look at the $n$-gram training data. We calculate following 2-gram probabilities:
+
+\begin{equation}\label{rule1}
+	P( \textnormal{\textipa{d} $\rightarrow$ \textipa{d}} | \textnormal{\textipa{n} $\rightarrow$ \textipa{n}}) =
+	\frac{
+		c( \textnormal{\textipa{d} $\rightarrow$ \textipa{d}} | \textnormal{\textipa{n} $\rightarrow$ \textipa{n}})
+	}{
+		\sum\limits_{r \in \textnormal{Rules}} c( r | \textnormal{\textipa{n} $\rightarrow$ \textipa{n}})
+	} =
+	\frac{82}{398},
+\end{equation}
+
+\begin{equation}\label{rule2}
+P( \textnormal{\textipa{d} $\rightarrow$ \textipa{t}} | \textnormal{\textipa{n} $\rightarrow$ \textipa{n}}) =
+\frac{
+	c( \textnormal{\textipa{d} $\rightarrow$ \textipa{t}} | \textnormal{\textipa{n} $\rightarrow$ \textipa{n}})
+}{
+	\sum\limits_{r \in \textnormal{Rules}} c( r | \textnormal{\textipa{n} $\rightarrow$ \textipa{n}})
+} =
+\frac{61}{398},
+\end{equation}
+
+\begin{equation}
+\forall r \in \textnormal{Rules}, r \neq \textnormal{\textipa{n} $\rightarrow$ \textipa{n}}: P( \textnormal{\textipa{d} $\rightarrow$ \textipa{t}} | r) = 0.
+\end{equation}
+%-49.90927171707153 -54.84227800369263
+
+We also check the probabilities given by the KenLM. For both rewrite rules \cref{rule1,rule2}, the KenLM outputs equal probabilities, which is incorrect. We assume, this may be due to lower precision that is needed when working with large amounts of data, which is not our case. To overcome this, we implement our own $n$-gram model and continue in analysis.
+
+In case of extending string ``\textipa{tSEk mEn \ae n}'' (Czech men an[d]), the beam search (BS) correctly applies both rules creating two beams. The beam with suffix ``\textipa{d}'' has higher probability.
+
+A problem emerges when the BS further extends the beams and comes to point ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9n}'' (Czech men and women aren'[t]). Again, the BS correctly applies both rules, producing beams ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9nd}'' and ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9nt}''. The latter is correct, but the former has higher probability as the 2-gram ``\textipa{n} $\rightarrow$ \textipa{n} $|$ \textipa{d} $\rightarrow$ \textipa{d}'' has higher probability.
+
+One could try to solve this instance of the problem by using higher-order $n$-gram. However, this would cause the same kind of problems somewhere else. Another problem of using larger $n$-gram model would be many out-of-vocabulary $n$-grams. OOV $n$-grams would have extremely low probability (0 or $-\infty$ for log probability) which would score valid sequences as extremely improbable. This renders the ``na\"ive'' approach poor.
+
+
+
 

@@ -1,0 +1,105 @@
+\begin{tikzpicture}
+\small
+\begin{axis}[
+legend cell align={left},
+legend pos=north east,
+legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.01960784313725!black},
+xlabel={Sentences},
+xmin=0, xmax=750,
+xtick style={color=black},
+y grid style={white!69.01960784313725!black},
+ylabel={Word Error Rate},
+ymin=0, ymax=6,
+ytick style={color=black}
+]
+\addplot 
+table {
+100 3.85333
+200 3.63036
+300 4.44444
+400 2.96465
+500 4.61733
+600 4.49309
+700 3.91753
+};
+\addlegendentry{source}
+
+    \addplot 
+table {
+	
+	100 3.60472
+	200 3.10231
+	300 3.43915
+	400 2.10946
+	500 3.0993
+	600 3.34101
+	700 2.98969
+	
+};
+\addlegendentry{2-gram}
+
+
+\addplot 
+table {
+	
+	100 2.42387
+	200 1.65017
+	300 1.69312
+	400 1.93843
+	500 1.70778
+	600 2.70737
+	700 1.75258
+	
+};
+\addlegendentry{3-gram}
+
+
+\addplot 
+table {
+	
+	100 1.61591
+	200 1.12211
+	300 1.5873
+	400 0.741163
+	500 1.26502
+	600 1.03687
+	700 0.721649
+	
+};
+\addlegendentry{4-gram}
+
+
+\addplot 
+table {
+	
+	100 2.36172
+	200 0.924092
+	300 1.53439
+	400 0.855188
+	500 1.13852
+	600 0.748848
+	700 0.515464
+	
+};
+\addlegendentry{5-gram}
+
+
+\addplot 
+table {
+	
+	100 2.54817
+	200 1.12211
+	300 1.74603
+	400 0.969213
+	500 1.26502
+	600 1.26728
+	700 0.824742
+	
+};
+\addlegendentry{6-gram}
+
+\end{axis}
+\end{tikzpicture}

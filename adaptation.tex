@@ -141,10 +141,38 @@ We also check the probabilities given by the KenLM. For both rewrite rules \cref
 
 In case of extending string ``\textipa{tSEk mEn \ae n}'' (Czech men an[d]), the beam search (BS) correctly applies both rules creating two beams. The beam with suffix ``\textipa{d}'' has higher probability.
 
-A problem emerges when the BS further extends the beams and comes to point ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9n}'' (Czech men and women aren'[t]). Again, the BS correctly applies both rules, producing beams ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9nd}'' and ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9nt}''. The latter is correct, but the former has higher probability as the 2-gram ``\textipa{n} $\rightarrow$ \textipa{n} $|$ \textipa{d} $\rightarrow$ \textipa{d}'' has higher probability.
+A problem emerges when the BS further extends the beams and comes to point ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9n}'' (Czech men and women aren'[t]). Again, the BS correctly applies both rules, producing beams ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9nd}'' and ``\textipa{tSEk mEn \ae nd wImIn \ae \*r9nt}''. The latter is correct, but the former has higher probability as the 2-gram ``\textipa{n} $\rightarrow$ \textipa{n} \textipa{d} $\rightarrow$ \textipa{d}'' has higher probability.
 
-One could try to solve this instance of the problem by using higher-order $n$-gram. However, this would cause the same kind of problems somewhere else. Another problem of using larger $n$-gram model would be many out-of-vocabulary $n$-grams. OOV $n$-grams would have extremely low probability (0 or $-\infty$ for log probability) which would score valid sequences as extremely improbable. This renders the ``na\"ive'' approach poor.
+\begin{figure}[h]
+	\includegraphics[width=\linewidth,height=5cm]{img/naive}
+	\caption{Naive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). WER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+	\label{fig:naive} 
+\end{figure}
+
+\begin{figure}[h]
+	\includegraphics[width=\linewidth,height=5cm]{img/naive_english}
+	\caption{Naive adaptation on English \texttt{read-newstest} outputted by the acoustic model. WER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+	\label{fig:naive_en} 
+\end{figure}
+
+One way, how to minimize the occurrence of this error is to higher the order of the $n$-gram model. In \cref{fig:naive}, we can observe a clear advantage of the higher-order models over the lower ones.
+
+The na\"ive approach fails on real data outputted by the acoustic model. We witness quite substantial deterioration of the performance compared to the non-adapted source in \cref{fig:naive_en}.
+
+\subsection[Revised Na\"ive Approach: Train \& Rewrite All Word-by-Word]{Revised Na\"ive Approach: Train \& Rewrite All \\Word-by-Word}
 
 
+\begin{figure}[h]
+	\includegraphics[width=\linewidth,height=7cm]{img/naive_revised}
+	\caption{}
+	\label{fig:naive_revised} 
+\end{figure}
 
+\begin{figure}[h]
+	\includegraphics[width=\linewidth,height=7cm]{img/naive_revised_english}
+	\caption{}
+	\label{fig:naive_revised_en} 
+\end{figure}
+
+sequence labeling
 

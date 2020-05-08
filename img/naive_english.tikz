@@ -1,0 +1,108 @@
+\begin{tikzpicture}
+\small
+\begin{axis}[
+    legend style={
+	at={(0.5,1.1)},
+	anchor=south,
+	legend columns=-1,
+	/tikz/every even column/.append style={column sep=0.5cm}
+},
+legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.01960784313725!black},
+xlabel={Sentences},
+xmin=75, xmax=725,
+xtick style={color=black},
+y grid style={white!69.01960784313725!black},
+ylabel={Word Error Rate},
+ymin=13, ymax=36,
+ytick style={color=black}
+]
+\addplot 
+table {
+100 23.9901
+200 16.5017
+300 18.0952
+400 15.2223
+500 18.7856
+600 20.0461
+700 13.8144
+};
+\addlegendentry{source}
+
+    \addplot 
+    table {
+    
+100 34.4313
+200 25.5446
+300 24.9206
+400 21.2657
+500 24.4149
+600 24.424
+700 19.1753
+
+    };
+    \addlegendentry{2-gram}
+    
+
+    \addplot 
+    table {
+    
+100 34.4313
+200 25.5446
+300 24.9206
+400 21.2657
+500 24.4149
+600 24.424
+700 19.1753
+
+    };
+    \addlegendentry{3-gram}
+    
+
+    \addplot 
+    table {
+    
+100 34.4313
+200 25.5446
+300 24.9206
+400 21.2657
+500 24.4149
+600 24.424
+700 19.1753
+
+    };
+    \addlegendentry{4-gram}
+    
+
+    \addplot 
+    table {
+    
+100 34.4313
+200 25.5446
+300 24.9206
+400 21.2657
+500 24.4149
+600 24.424
+700 19.1753
+
+    };
+    \addlegendentry{5-gram}
+    
+
+    \addplot 
+    table {
+    
+100 34.4313
+200 25.5446
+300 24.9206
+400 21.2657
+500 24.4149
+600 24.424
+700 19.1753
+
+    };
+    \addlegendentry{6-gram}
+\end{axis}
+\end{tikzpicture}

@@ -16,7 +16,7 @@ Based on the previous findings, we trained a baseline ASR translation model. We 
 
 We also compare the refactored two-step method with the traditional one. We compare the performance of both systems on our own \texttt{read-newstest}. For the comparison, we utilize automatic metric SacreBLEU, but we also manually asses the quality. In terms of SacreBLEU, the refactored approach outperforms the baseline. In the manual evaluation, the proposed approach outperforms the baseline in Czech to English, and worse than the baseline in the opposite direction. On the other hand, in both directions the proposed system has more correct and ``almost'' correct translations.
 
-Besides establishing baselines, we also experimented with enhancing the pipeline. We trained the ``translation'' system on corrupted data, to promote its ability to recover errors introduced in the acoustic model. We were able to reduce the WER on all test sets compared to the baseline.
+Besides establishing baselines, we also experimented with enhancing the pipeline robustness. We review the transfer from SLT and fine-tune the ``translation'' system on corrupted data, to promote its ability to recover errors introduced in the acoustic model. We were able to reduce the WER on all test sets compared to the baseline.
 
 Finally, we explored adaptation on the fly. We trained an adaptation model that is able to reduce extremely high WER (50 \% to 10 \%) on artificially corrupted phoneme transcripts. However, we were unable to obtain any enhancement on real transcripts. The probable cause of this is extreme variance in errors in the real data. We think, the best possible option, how to recover errors introduced in the acoustic model is to prepare a robust translation model. 
 
@@ -26,5 +26,6 @@ In summary, we are strongly convinced that the refactored two-step approach with
 	\item review and generalize the coarse-to-fine transfer to other languages and alphabets,
 	\item simplify the fine-tuning of ASR, automate the creation of ``corrupted'' data that could be also used during the training of SLT,
 	\item multi-task learning of ASR and SLT (with shared encoders/decoders),
+	\item ``onlinezation'' of the whole pipeline with emphasis on low latency by providing partial translation of sentences,
 	\item introduce abstract features to transport non-verbal cues from the acoustic to the translation model. This would provide similar experience as in the end-to-end system, with the convenience of the two-step setup.
 \end{itemize}

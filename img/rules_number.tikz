@@ -1,0 +1,52 @@
+\begin{tikzpicture}
+\small
+\begin{axis}[
+    legend style={
+	at={(0.5,1.1)},
+	anchor=south,
+	legend columns=-1,
+	/tikz/every even column/.append style={column sep=0.5cm}
+},
+legend style={fill opacity=0.9, draw opacity=1, text opacity=1, draw=white!90.0!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.01960784313725!black},
+xlabel={Sentences},
+xmin=75, xmax=725,
+xtick style={color=black},
+y grid style={white!69.01960784313725!black},
+ylabel={Number of rewrite rules (log)},
+ymin=60, ymax=1200,
+ytick style={color=black},
+ymode=log
+] 
+
+ \addplot 
+table {
+	
+	100 252
+	200 518
+	300 651
+	400 817
+	500 927
+	600 1050
+	700 1178
+	
+};
+\addlegendentry{Real phonetic transcripts}
+
+
+\addplot 
+table {
+100 62
+200 72
+300 95
+400 103
+500 107
+600 120
+700 125
+};
+\addlegendentry{Artificial errors data}
+
+\end{axis}
+\end{tikzpicture}

@@ -19,7 +19,7 @@ ylabel={Word Error Rate},
 ymin=13, ymax=36,
 ytick style={color=black}
 ]
-\addplot 
+\addplot [blue, very thick, mark=*]
 table {
 100 23.9901
 200 16.5017

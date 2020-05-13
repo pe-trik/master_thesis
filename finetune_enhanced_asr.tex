@@ -4,7 +4,7 @@ In \cref{chap:enhanced_asr}, we proposed the ``Enhanced ASR'' pipeline (see \cre
 
 In this chapter, we review the fine-tuning of the ASR translation model to errors introduced by the acoustic model.
 
-This chapter is organized as follows: in \cref{feasr:related} we review the related work. \cref{sec:asr_corrupted,sec:asr_corrupted_cs} describe process in which we obtain training data with ``ASR errors''. Finally, \cref{easr:easr} reviews setups for final part of proposer Enhanced ASR pipeline and trains it.
+This chapter is organized as follows: in \cref{feasr:related} we review the related work. \cref{sec:asr_corrupted,sec:asr_corrupted_cs} describe process in which we obtain training data with ``ASR errors''. Finally, \cref{feasr:feasr} reviews setups for final part of proposed Enhanced ASR pipeline and trains it.
 
 \section{Related Work}
 \label{feasr:related}
@@ -189,6 +189,7 @@ Distribution of PWER in training and dev sets is in histogram~\ref{fig:histogram
 
 
 \section{Fine-Tuning of Enhanced ASR}
+\label{feasr:feasr}
 In this section, we use the collected ``corrupted'' data to enhance the phoneme-to-grapheme translation models. We experiment with training and fine-tuning using this data. We also examine various transfer learning schemes.
 
 \subsection{Experiment Outline}
@@ -261,9 +262,9 @@ In the case of \emph{SLT Transfer}, we observe a clear advantage of the initiali
 \paragraph{Czech}
 The results in \cref{tab:werstrain_cs} suggest the same as for the English.
 
-Training using corrupted data enhance the ability of the model to recover from errors introduced by the acoustic model (both models surpass the \emph{Clean Baseline} by more than \XXX{TBD} \% WER). 
+Training using corrupted data enhance the ability of the model to recover from errors introduced by the acoustic model (both models surpass the \emph{Clean Baseline}). 
 
-Furthermore, it is clear that initializing the models from the SLT task helps in two ways. First, it significantly reduces the training time (by more than 20k global steps --- see \cref{fig:finetune_cs}). Second, it alleviates the final performance of the model.
+Furthermore, it is clear that initializing the models from the SLT task helps in two ways. First, it significantly reduces the training time (by more than 20k global steps --- see \cref{fig:finetune_cs}). Second, it alleviates the final performance of the model compared to the \emph{Clean Baseline} but also \emph{Correction Baseline}.
 
 
 \begin{table}[t]
@@ -311,7 +312,7 @@ In this chapter, we reviewed a performance-enhancing technique for the proposed 
 
 First, we gathered ``corrupted'' acoustic data. We trained an ensemble of acoustic models for each language (English and Czech). Consequently, we used these models to gather the corrupted data from speech corpora.
 
-Second, we utilized this data for the training/fine-tuning of the phoneme-to-grapheme translation models from the proposed ASR pipeline. We experimented with different setups. For example, we considered training on mixed ``clean'' and ``corrupted'' data or different transfer learning schemes.
+Second, we utilized this data for the training/fine-tuning of the phoneme-to-gra\-pheme translation models from the proposed ASR pipeline. We experimented with different setups. For example, we considered training on mixed ``clean'' and ``corrupted'' data or different transfer learning schemes.
 
 We observed that training-off the checkpoints from the spoken language translation task is the best option. Based on this observation, we suspect that a multi-task training scheme combining SLT and ASR tasks for a language tuple could be promising (i.e., a shared English encoder for English ASR and English-to-Czech SLT decoders, and vice versa).
 

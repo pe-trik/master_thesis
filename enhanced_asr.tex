@@ -318,7 +318,7 @@ We seek a model for translating transcripts written in phonemes into graphemes i
 
 In \cref{easr:tokenizer}, we studied appropriate tokenizer. We concluded the larger the BPE vocabulary, the better performance the model has. We obtained the best results with 32k BPE. We also discussed the source of BPE training data (note, not the Transformer model training data). We settled that there is no essential difference between clean, corrupted, and mixed setup in general. Keeping this in mind, we use clean phonemized CzEng data for the BPE vocabulary training in this experiment. 
 
-First, we are interested in model \XXX{(note, the Transformer model, not the BPE encoding ehre we decided to use clean data in all our experiments)} performance when trained on clean data. In this chapter, we use clean phonemized CzEng. In \cref{chap:fine_tune_enhanced} we further study fine-tuning of models for corrupted ASR data.
+First, we are interested in model \XXX{(note, the Transformer model, not the BPE encoding for which we decided to use clean data in all our experiments)} performance when trained on clean data. In this chapter, we use clean phonemized CzEng. In \cref{chap:fine_tune_enhanced} we further study fine-tuning of models for corrupted ASR data.
 
 As already commented, this task is unusual for Transformer. Therefore, we try different beam sizes during the inference. We believe it could help the model to find better transcriptions by considering less likely labels.
 

@@ -35,6 +35,21 @@ table {
 };
 \addlegendentry{Real phonetic transcripts}
 
+\iffalse
+ \addplot 
+table {
+	
+	100 253
+	200 547
+	300 685
+	400 842
+	500 935
+	600 1026
+	700 1134
+	
+};
+\addlegendentry{Real phonetic transcripts}
+\fi
 
 \addplot 
 table {

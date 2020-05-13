@@ -25,7 +25,7 @@ ytick style={color=black}
 
 
 
-\addplot [mark=none, blue]
+\addplot [mark=none, blue, thick]
 table {
 1.0 0
 1.0 1
@@ -135,7 +135,7 @@ table {
 
 
 
-\addplot [mark=none, red]
+\addplot [mark=none, red, thick]
     table {
     
 1.0 0

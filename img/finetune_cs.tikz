@@ -86,6 +86,6 @@ table {
 56000 7.05976
 58000 7.02657
 };
-\addlegendentry{CS SLT Transfer}
+\addlegendentry{CS Correction Baseline}
 \end{axis}
 \end{tikzpicture}

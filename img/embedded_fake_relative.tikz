@@ -15,7 +15,7 @@ xlabel={Sentences},
 xmin=75, xmax=725,
 xtick style={color=black},
 y grid style={white!69.01960784313725!black},
-ylabel={Relative WER},
+ylabel={Relative PWER},
 ymin=0, ymax=2,
 ytick style={color=black}
 ]

@@ -145,13 +145,13 @@ A problem emerges when the BS further extends the beams and comes to point ``\te
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_relative}
-    \caption{Na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). WER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption{Na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:naive} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_english_relative}
-    \caption{Na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. WER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption{Na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:naive_en} 
 \end{figure}
 
@@ -166,19 +166,19 @@ We revise the na\"ive approach by splitting the sentences to single words and do
 
 On the artificial test set, it seems to perform negligibly better then the previous na\"ive approach (see \cref{fig:naive_revised}).
 
-For the real acoustic data, the revised method does not bring the desired enhancement and again worsens the WER relative to the source WER. It seems to help at the beginning (steps 100 and 200) for 2-gram and 3-gram setups (see \cref{fig:naive_revised_en}). 
+For the real acoustic data, the revised method does not bring the desired enhancement and again worsens the PWER relative to the source PWER. It seems to help at the beginning (steps 100 and 200) for 2-gram and 3-gram setups (see \cref{fig:naive_revised_en}). 
 
 As we take a closer look at the evaluation, we observe two together-related problems: Because of the high variability of errors occurring in the real data, there are no ``clearly'' good rewrite rules that would appear frequently enough. Hence, there are many rules with equal probability based on small frequency. The second problem is that the beam search generates many candidates that are similarly possible due to their similar probability (described in the first problem). However, these beam candidates tend to be contrasting. The beam search is then unable to select the best possible candidate which would be better than others.
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_revised_relative}
-    \caption{Revised na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). WER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption{Revised na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:naive_revised} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_revised_english_relative}
-    \caption{Revised na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. WER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption{Revised na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:naive_revised_en} 
 \end{figure}
 
@@ -197,13 +197,13 @@ However, on the real data, the new approach does not help (see \cref{fig:embedde
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/embedded_fake_relative}
-    \caption{Embedded word beam search  adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). WER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption{Embedded word beam search  adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:embedded} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/embedded_en_relative}
-    \caption{Embedded word beam search adaptation on English \texttt{read-newstest} outputted by the acoustic model. WER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption{Embedded word beam search adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:embedded_en} 
 \end{figure}
 
@@ -211,11 +211,11 @@ However, on the real data, the new approach does not help (see \cref{fig:embedde
 \subsection{Analysis}
 In this section, we analyze the reason why the adaptation model fails to adapt to real acoustic data.
 
-First, we create a new artificial test set with very high WER by deliberately rewriting the few most commonly used phoneme characters. We guessed from our personal English experience, which phonemes can be mixed-up (e.g., ``\textipa{D}'' like in ``the [\textipa{D9}]'' to ``\textipa{t}'' or ``\textipa{d}''). We established 18 such rewriting rules. We apply these rewrite rules on each phoneme word independently and with a 60 \% probability to make the errors in the data less consistent. We generated data with WER 54 \%. Our best setup, the embedded word beam search, is able to reduce the error to approximately 10 \% WER (notably, a 40 \% points reductions).  
+First, we create a new artificial test set with very high PWER by deliberately rewriting the few most commonly used phoneme characters. We guessed from our personal English experience, which phonemes can be mixed-up (e.g., ``\textipa{D}'' like in ``the [\textipa{D9}]'' to ``\textipa{t}'' or ``\textipa{d}''). We established 18 such rewriting rules. We apply these rewrite rules on each phoneme word independently and with a 60 \% probability to make the errors in the data less consistent. We generated data with PWER 54 \%. Our best setup, the embedded word beam search, is able to reduce the error to approximately 10 \% PWER (notably, a 40 \% points reductions).  
 
-The main reasons for the failure on real phoneme transcripts may be the vast amount of rewrite rules that are too unique (i.e., have low frequency). In \cref{fig:rule_number}, we document the number of rules at each step during the adaptation on the English \texttt{read-newstest}. We see that the number of rules in the real phoneme transcripts differs at each step with the magnitude of 10.\footnote{Additionally, we disable the EM alignment algorithm and use the plain modified Levenstein. On the harder artificial data, we observe a substantial reduction of found rules (a half the number) and a further decrease of the WER (to approximately 4 \%). On the other hand, on the real data, this change produces even more rules, which leads to further performance loss.} Note, the WER of the real phoneme transcripts is 16 \%, and the artificial phoneme transcripts have 54 \%.
+The main reasons for the failure on real phoneme transcripts may be the vast amount of rewrite rules that are too unique (i.e., have low frequency). In \cref{fig:rule_number}, we document the number of rules at each step during the adaptation on the English \texttt{read-newstest}. We see that the number of rules in the real phoneme transcripts differs at each step with the magnitude of 10.\footnote{Additionally, we disable the EM alignment algorithm and use the plain modified Levenstein. On the harder artificial data, we observe a substantial reduction of found rules (a half the number) and a further decrease of the PWER (to approximately 4 \%). On the other hand, on the real data, this change produces even more rules, which leads to further performance loss.} Note, the PWER of the real phoneme transcripts is 16 \%, and the artificial phoneme transcripts have 54 \%.
 
-We also counted how many times each rule occurs in the training data.\footnote{We attempt to prune rules based on the rule frequency --- by a constant (5 and 10) and using percentile (50, 90, and 95). None of the configurations brings enhancement on the real data. In the case of artificial error test set, pruning of 50 \% least frequent rules helps further reduce the final WER.} In \cref{fig:rule_hist}, we show cumulative distribution of rule frequencies (we leave out the identity rewrite rules). We can see that the majority of rules found in real data occurs only once (71 \% of rules), 20 \% occur two times, 95 \% occur at most ten times. On the other hand, the rules with only one occurrence make 28 \% percent of all rules in artificial error data. 40 \% of all rules are found in the data more than ten times.
+We also counted how many times each rule occurs in the training data.\footnote{We attempt to prune rules based on the rule frequency --- by a constant (5 and 10) and using percentile (50, 90, and 95). None of the configurations brings enhancement on the real data. In the case of artificial error test set, pruning of 50 \% least frequent rules helps further reduce the final PWER.} In \cref{fig:rule_hist}, we show cumulative distribution of rule frequencies (we leave out the identity rewrite rules). We can see that the majority of rules found in real data occurs only once (71 \% of rules), 20 \% occur two times, 95 \% occur at most ten times. On the other hand, the rules with only one occurrence make 28 \% percent of all rules in artificial error data. 40 \% of all rules are found in the data more than ten times.
 
 Such a vast amount of infrequent rules deteriorates the performance as the search space is too big. The embedded beam search has too many candidates at each step, generating invalid word candidates. The top-level BS then fails to pick the best word as most candidate words are invalid.
 
@@ -223,7 +223,7 @@ We hypothesize that the high number of infrequent rules is caused by substantial
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=7cm]{img/rules_number}
-    \caption{Number of rewrite rules found in the acoustic data during the adaptation. We observe substantial difference between the real data and artificial errors data. Note, the real data have 16 \% and artificial 54 \% WER.}
+    \caption{Number of rewrite rules found in the acoustic data during the adaptation. We observe substantial difference between the real data and artificial errors data. Note, the real data have 16 \% and artificial 54 \% PWER.}
     \label{fig:rule_number} 
 \end{figure}
 
@@ -235,7 +235,7 @@ We hypothesize that the high number of infrequent rules is caused by substantial
 
 \section{Conclusion}
 \label{oeasr:conclusion}
-We proposed and tested an online speaker adaptation. We demonstrated that the approach works on phoneme transcripts with somewhat regular errors even when the word error rate is extremely high (we observed WER reduction of 50 \% points of WER). 
+We proposed and tested an online speaker adaptation. We demonstrated that the approach works on phoneme transcripts with somewhat regular errors even when the phoneme word error rate is extremely high (we observed PWER reduction of 50 \% points of PWER). 
 
 On the other hand, our approach fails on real data. We account for this to the extreme irregularity of errors in the real data. 
 

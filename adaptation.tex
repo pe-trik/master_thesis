@@ -3,15 +3,15 @@
 %\url{https://github.com/clab/fast_align}
 In this chapter, we experiment with online adaptation of the proposed enhanced ASR pipeline.
 
-We assume that a speaker makes many errors systematically, for example, due to his/her native language. We expect some of these errors can be identified and corrected in the ASR phoneme-to-grapheme translation model. We plan to identify these corrections and extract simple rewriting rules. These rewriting rules would be applied before feeding them into the ASR/SLT translation model in the pipeline.
+We assume that many ASR errors are systematic and highly dependent on the particular speaker, for example, due to his/her mother tongue. We expect that some of these errors can be identified and corrected in the ASR phoneme-to-grapheme translation model. We plan to identify these corrections and extract simple speaker-specific rules. %These rewriting rules would be applied before feeding them into the ASR/SLT translation model in the pipeline.
 
 This chapter is organized as follows: in \cref{oeasr:model} we propose online adaptation and incorporate it into the proposed ASR/SLT pipeline. In \cref{oeasr:experiments}, we experiment with the online adaptation. Finally, in \cref{oeasr:conclusion} we conclude the chapter.
 
 \section{Enhanced ASR/SLT Pipeline with Online Adaptation}
 \label{oeasr:model}
-We propose the enhanced ASR pipeline with online adaptation as follows: the acoustic model outputs the phoneme transcripts. The phoneme transcripts are adapted using the Online Adaptation model. The adapted output (still in phonemes) is fed into the phoneme-to-grapheme translation model. The translation model translates the phoneme input into graphemes using beam search. The model outputs the best translation candidate from the beam as a translation of the whole ASR pipeline. All beam translations are passed through the \texttt{phonemizer}, and the online adaptation model learns new rules from the transcripts.
+We propose the enhanced ASR pipeline with online adaptation as follows: the acoustic model outputs the phoneme transcripts. The phoneme transcripts are adapted using the Online Adaptation model. The adapted output (still in phonemes) is fed into the phoneme-to-grapheme translation model (note, under the term translation we mean both the monolingual --- phonemes to graphemes in the same language --- and translation from source language phonemes to target language graphemes). The translation model translates the phoneme input into graphemes using beam search. The model outputs the best translation candidate from the beam as a translation of the whole ASR pipeline. All beam translations are passed through the \texttt{phonemizer}, and the online adaptation model learns new rules from the transcripts.
 
-In the case of the SLT pipeline, two phoneme-to-grapheme translation models are needed: the ASR and the SLT. The ASR translation model would be used for obtaining ``training data'' for the online adaptation model.
+In the case of the SLT pipeline, two parallel phoneme-to-grapheme translation models are needed: the ASR and the SLT. The ASR translation model would be used for obtaining ``training data'' for the online adaptation model.
 
 The schema of the proposed enhanced ASR pipeline with online adaptation is in \cref{fig:online_easr}.
 
@@ -24,7 +24,7 @@ The schema of the proposed enhanced ASR pipeline with online adaptation is in \c
 
 
 \subsection{Online Adaptation Model}
-The apparent requirement of the online adaptation model is that it must be able to learn quickly. Hence, we rule out neural networks as they require a higher volume of training data. If not provided, the neural networks tend to over-fit the examples. 
+We seek a method that would be capable of quick, on-the-fly adaptation as a speaker talks. The apparent requirement of such online adaptation model is that it must be able to learn quickly. Hence, we rule out neural networks as they require a higher volume of training data. Short of such data, the neural networks tend to over-fit the examples. 
 
 Therefore, we decided on the rule-based model. We take our inspiration in the work we previously reviewed for phoneme-to-grapheme models (see \cref{easr:rel_asr}). More precisely, the work of \perscite{horndasch2006phoneme}. Their main objective is to find appropriate orthographic representations for phoneme strings. Our use case differs as we seek phoneme-to-phoneme mapping correcting errors instead of phoneme-to-grapheme mapping. Using an expectation-maximization algorithm \parcite{dempster1977maximum}, we seek the best ``correct-to-incorrect'' phoneme alignment (in their setup, they are looking for best phoneme-to-grapheme alignment). In the second step, we cluster neighboring symbols together to account for the insertions (i.e., to remove ``$\epsilon$ to phoneme'' rules). Finally, $n$-gram probabilities of symbol pairs are learned. During the inference, the input string is split into individual phoneme symbols. For each symbol are generated all possible symbol pairs. According to the beam width, the best sequences are taken. 
 
@@ -32,7 +32,7 @@ Therefore, we decided on the rule-based model. We take our inspiration in the wo
 As already described, we learn the phoneme rewrite rules from aligned ``incorrect-to-correct'' phoneme transcriptions. To align these transcriptions, we utilize the expectation-maximization algorithm as follows:
 
 \begin{enumerate}
-    \item Compute the initial \texttt{alignment} using the modified Levenstein distance algorithm (insertion, deletion, and substitution operations are considered, each with the same cost).
+    \item Compute the initial \texttt{alignment} using the Levenstein algorithm (insertion, deletion, and substitution operations are considered, each with the same cost).
     
     \item \emph{While} substitution frequencies change do:
     \begin{enumerate}
@@ -51,15 +51,15 @@ The last computed alignment defines the rewrite rules: ``rewrite the symbol from
     \end{tabular}
 \end{center}
 
- We do not allow rules ``$\epsilon \rightarrow \dots$'', because they do not have straightforward representation during the beam search decoding. Instead, we cluster the rules with $\epsilon$ symbol as head with neighbors using following algorithm:
+ We do not allow rules ``$\epsilon \rightarrow \dots$'', because they would allow infinite string growth  during the beam search decoding. Instead, we cluster the rules with $\epsilon$ symbol as head with neighbors using following algorithm:
    
-\begin{enumerate}
+\begin{description}
     \item For each \texttt{rule} in \texttt{alignment}:
     \begin{enumerate}
         \item If \texttt{rule} is \emph{empty}: join with the previous or next \texttt{rule}
         \item Else: add to \texttt{new\_rules}.
     \end{enumerate}
-\end{enumerate}
+\end{description}
 
 From the above insertion example, we would extract following rewrite rules:
 
@@ -72,19 +72,19 @@ From the above insertion example, we would extract following rewrite rules:
     \end{tabular}
 \end{center}
 
-Finally, we train an $n$-gram model. The function of the $n$-gram model is to learn interactions between the neighboring phoneme rewriting rules. We utilize the KenLM for this task. As the KenLM is word-oriented, we dump the rules as separate words in form ``source-target''. We substitute the space symbol with an underscore.
+Finally, we train an $n$-gram model. The purpose of the $n$-gram model is to learn interactions between the neighboring phoneme rewriting rules. We utilize the KenLM for this task. As the KenLM is word-oriented, we dump the rules as separate words in form ``source-target''. We substitute the space symbol with an underscore.
 
 \paragraph{Inference}
 We use the trained $n$-gram model during the inference --- rewriting input using the rules. For this, we utilize beam search:
 
-\begin{enumerate}
+\begin{description}
     \item For each symbol from the input:
         \begin{enumerate}
             \item generate candidates using rules with corresponding source symbol (by appending rule tail to all beams),
             \item score the candidates using the $n$-gram model,
             \item keep top $w$ candidates according to the beam width $w$. 
         \end{enumerate}
-\end{enumerate}
+\end{description}
 
 
 

@@ -3,13 +3,13 @@
 
 This chapter is devoted to automatic speech recognition (ASR). Throughout this chapter, we describe in detail our modifications to the process of training an ASR pipeline. One of the central challenges of this work is the scarcity of Czech training data. We propose a technique to overcome this problem. 
 
-This chapter is organized as follows: \cref{asr:crosslingual_intermediate} presents and compares two techniques for overcoming the shortage of Czech ASR data. \cref{asr:transfer_phonemes} describes transfer learning from graphemes to phonemes.  the training of acoustic models for the final ASR/SLT pipeline. 
+This chapter is organized as follows: \cref{asr:crosslingual_intermediate} presents and compares two techniques for overcoming the shortage of Czech ASR data. \cref{asr:transfer_phonemes} describes transfer learning from graphemes to phonemes and the training of acoustic models for the final ASR/SLT pipeline. 
 
 
 \section{Coarse-to-Fine Intermediate Step and Cross-Lin\-gual ASR Transfer}
 \label{asr:crosslingual_intermediate}
 
-In this section, we review techniques for overcoming training data shortage. Note, this section was submitted in the format of paper to the Interspeech conference and it is now under review.
+In this section, we review techniques for overcoming training data shortage. Note, this section was submitted in the format of a paper to the Interspeech conference and it is now under review.
 
 \subsection{Introduction}
 
@@ -82,34 +82,39 @@ A baseline, end-to-end Jasper model, trained on this corpus for 70 epochs, has a
 \begin{figure*}[t]
 	\centering
 	
-	\begin{tikzpicture}[thick, node distance=4cm, 
-	>=stealth,
-	bend angle=45,
-	auto]
-	\def\y{0.28284271247461900976033774484193961571393437507539};
-	\draw
-	node at (0,0)[block, name=en]{\shortstack{\Large EN\\ \small{checkpoint}}}
-	node [block, below right =\y cm of en] (scz) {\shortstack{simplified\\ \Large CS}}
-	node [block, right of=scz] (cz1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
-	node [block, right of=cz1] (cz) {\Large CS}
-	
-	node [block, above =0.2cm of cz1] (cz_e1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
-	node [block, above =0.2cm of cz] (cz_e) {\Large CS}
-	
-	node [block, below =0.2cm of cz1] (ccz1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
-	node [block, left of=ccz1] (cscz) {\shortstack{simplified\\ \Large CS}}
-	node [block, below =0.2cm of cz] (ccz) {\Large CS};
-	
-	\draw[->](en) |- node[below] {\small\shortstack{encoder\\decoder}} (scz);
-	\draw[->](scz) -> node {\small encoder} (cz1);
-	\draw[->](cz1) -> node {\small\shortstack{encoder\\decoder}} (cz);
-	
-	\draw[->](en)  -> node {\small encoder} (cz_e1);
-	\draw[->](cz_e1) -> node {\small\shortstack{encoder\\decoder}} (cz_e);
-	
-	\draw[->](cscz) -> node {\small encoder} (ccz1);
-	\draw[->](ccz1) -> node {\small\shortstack{encoder\\decoder}} (ccz);
-	\end{tikzpicture}
+    \begin{tikzpicture}[thick, node distance=4cm, 
+          >=stealth,
+          bend angle=45,
+          auto]
+          \def\y{0.28284271247461900976033774484193961571393437507539};
+          \def\revgap{5.5};
+        \draw
+            node at (0,0)[block, name=en]{\shortstack{\Large EN\\ \small{checkpoint}}}
+            node [block, below right =\y cm of en] (scz) {\shortstack{simplified\\ \Large CS}}
+            node [block, right of=scz] (cz1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
+            node [block, right of=cz1] (cz) {\Large CS}
+            
+            node [block, above =0.2cm of cz1] (cz_e1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
+            node [block, above =0.2cm of cz] (cz_e) {\Large CS}
+            
+            node [block, below =0.2cm of cz1] (ccz1) {\shortstack{\Large CS\\ \small{decoder adaptation}}}
+            node [block, left of=ccz1] (cscz) {\shortstack{simplified\\ \Large CS}}
+            node [block, below =0.2cm of cz] (ccz) {\shortstack{\Large CS\\ \small{ }}};
+            
+            \draw[->](en) |- node[below] {\small\shortstack{encoder\\decoder}} (scz);
+            \draw[->](scz) -> node {\small encoder} (cz1);
+            \draw[->](cz1) -> node {\small\shortstack{encoder\\decoder}} (cz);
+            
+            \draw[->](en)  -> node {\small encoder} (cz_e1);
+            \draw[->](cz_e1) -> node {\small\shortstack{encoder\\decoder}} (cz_e);
+            
+            \draw[->](cscz) -> node {\small encoder} (ccz1);
+            \draw[->](ccz1) -> node {\small\shortstack{encoder\\decoder}} (ccz);
+
+            \node [left = \revgap cm of cz_e1] {Basic Transfer:};
+            \node [left = \revgap cm of cz1] {Transfer+Voc. Simplification:};
+            \node [left = \revgap cm of ccz1] {Vocabulary Simplification Only:};
+    \end{tikzpicture}
 	
 	\caption{Examined setups of transfer learning. The labels on the arrows indicate which model parts are transferred, i.e., used to initialize the subsequent model. No parameter freezing is involved except for the encoder weights in the ``CS decoder adaptation'' phase.}
 	\label{fig:transfers}
@@ -171,7 +176,12 @@ In the last experiment, we disregard the English pre-trained model and use only 
 		sim. CS $\rightarrow$ CS & 20.56  &  24.59 &  16.57  \\
 		%\hline
 	\end{tabular}
-	\caption{Results in \% of word error rate on the Czech (CS) test set. Note, all results are obtained on the same test set with following difference: The column ``Simplified'' reflects WER on Czech without accents (both hypothesis and reference stripped, e.g., ``\v{c}\'arka'' as ``carka''). ``Adaptation phase'' and ``Full training'' already use the original, unmodified test set.}
+	\caption{Results in \% of word error rate on the Czech (CS) test set. ``Simplified''
+    column reflects WER after the training on simplified dataset (both training and test data
+    without accents). ``Adapt.'' column contains WER 
+    immediately after the decoder adaptation phase to the full Czech alphabet including accents.
+    Finally, ``Full'' column contains performance on the test set with accents 
+    after the full training.}
 	\label{tab:results}
 \end{table}
 
@@ -193,22 +203,74 @@ In the last experiment, we disregard the English pre-trained model and use only 
 \subsubsection{Transfer across Unrelated Languages}
 
 We observe that initialization %of network weights
-with an unrelated language helps to speed-up training. This is best apparent in ``English $\rightarrow$ Czech simplified'' where the unchanged vocabulary allows us to reuse all the weights. WER drops under 30\,\%  after only 2000 steps (1 hour of training). This can be particularly useful if the final task does not require the lowest possible WER, such as sound segmentation.
+with an unrelated language helps to speed-up training.
+%\XXX{Schovavam pracovni formulace nechavam jen novou:}
+%This is best apparent in
+%``English $\rightarrow$ Czech simplified'' \XXX{(see \cref{fig:training}, light
+%green dashed line)} where the unchanged vocabulary allows us to reuse all the
+%weights.
+%\XXX{Neni jasne, k cemu odkazujete. Je potreba rict, ze se divate na
+%Fig 2 (doufam) a ze tam je to kde? V jakem rozsahu osy X? PP: ano, Fig 2 zelena
+%prerusovana. OB: nojo, ale stejne neni jasne s cim to srovnavate. Napsal bych 
+%radeji neco jako:}
+This is best apparent by comparing the first 40k steps of the learning curves for ``English
+$\rightarrow$ Czech simplified'' and ``Czech (simplified) $\rightarrow$ Czech''
+in \cref{fig:training}, thin line. Here the target alphabet was simplified in
+both cases but the weights
+initialized from English allow much faster decrease of WER. The benefit is clear
+also for the full alphabet (baseline vs. ``English $\rightarrow$ Czech'') where
+the baseline has a consistently higher WER.
 
+% \XXX{Kdyz to nasledujici neni videt, tak se to musi napsat velmi nezne, neco
+% jako: Additionally, we observed... a hodne presne to popsat, o co slo. Co
+% treba:}
+The training off the English parent is actually so fast that WER for the
+simplified alphabet (thin dashed green line) drops under 30\,\% within the first 2000
+steps (1 hour of training).
+%WER drops under 30\,\% \XXX{(not visible in the figure)} after only
+%2000 steps (1 hour of training).
+This can be particularly useful if the final
+task does not require the lowest possible WER, such as sound segmentation.
 
-If the target alphabet is altered (``English $\rightarrow$ Czech''), we observe a speed-up at the beginning of the training. Our setting with QuartzNet and as well as these results are similar to \perscite{kunze-etal-2017-transfer} with a high $k = 18$. % abstracted to QuartzNet's convolutional layers $C_1$ to $C_4$ and blocks $B_i$ with high $k = 18$.} 
-However, this advantage diminishes with longer training, gaining only
-%becomes weaker as the training progresses. Towards the end, the advantage is roughly
-1 to 2\,\% points of WER over the baseline in the end.
-
-It seems, though, that in the experiments with different vocabularies, after the change to the full Czech vocabulary, the results are better for a randomly initialized network (WER 16.56 \%), rather than the one with transfer from English (WER 16.88 \%) (see \cref{tab:results}).
+%\XXX{Puvodni formulace schovavam a prepisuju:}
+% Basic transfer, when the target alphabet is altered prior the training
+% (``English $\rightarrow$ Czech''), boosts the convergence at the beginning of
+% the training. 
+% %Our setting with QuartzNet and as well as these results are similar to
+% %\cite{kunze-etal-2017-transfer} with a high $k = 18$. % abstracted to
+% %QuartzNet's convolutional layers $C_1$ to $C_4$ and blocks $B_i$ with high $k =
+% %18$.} 
+% However, this advantage diminishes with longer training, gaining only
+% %becomes weaker as the training progresses. Towards the end, the advantage is
+% %roughly
+% 1 to 2\,\% points of WER over the baseline in the end.
+% 
+% It seems, though, that in the experiments with vocabulary simplification, 
+% %after the change to the full Czech vocabulary, 
+% the results are better for a randomly
+% initialized network (WER 16.57\,\%), rather than the one with transfer from
+% English (WER 16.88\,\%) (see \cref{tab:results}).
+While Basic transfer (``English $\rightarrow$ Czech'') boosts the convergence
+throughout the training, its final performance is only 1 to 2\,\% points of WER
+better than the baseline, see the plot or compare 20.19 with 19.06 in
+\cref{tab:results}. The intermediate vocabulary simplification is more important
+and allow a further decrease of 2.2\,\% WER absolute (19.06 vs. 16.88) when transferring
+from English.
 
 \subsubsection{Transfer across Target Vocabularies}
 
-In the course of two experiments, we altered the target vocabulary: the training starts with simplified Czech, and after about 40,000 steps, we switch to the full target vocabulary. This sudden change can be seen as spikes in \cref{fig:training}. Note that WER curves prior to the peak use the simplified (the same test set, but with stripped diacritics) Czech reference, so they are not directly comparable to the rest.
+In the course of two experiment runs, we altered the target vocabulary: the
+training starts with simplified Czech, and after about 40,000 steps, we switch
+to the full target vocabulary. This sudden change can be seen as spikes in
+\cref{fig:training}. Note that WER curves prior to the peak use the simplified
+Czech reference (the same test set, but with stripped diacritics), so they are
+not directly comparable to the rest.
 
 The intermediate simplified vocabulary always brings a considerable improvement. In essence, the final WER is lower by 2.18 (16.88 vs. 19.06 in \cref{tab:results}) for the models transferred from English and by 3.62 (16.57 vs. 20.19) for Czech-only runs.
-One possible reason for this improvement is the ``easier'' intermediate task of simpler Czech. Note that the exact difficulty is hard to compare as the target alphabet is smaller, but more spelling ambiguities may arise. This task helps the network to find a better-generalizing region in the parameter space. Another possible reason that this sudden change and reset of the last few layers allows the model to reassess and escape a local optimum in which the ``English $\rightarrow$ Czech'' setup could be trapped.
+One possible reason for this improvement is the ``easier'' intermediate task of
+simpler Czech. Note that the exact difficulty is hard to compare as the target
+alphabet is smaller, but more spelling ambiguities may arise. This intermediate
+task thus seems to help the network to find a better-generalizing region in the parameter space. Another possible reason that this sudden change and reset of the last few layers allows the model to reassess and escape a local optimum in which the ``English $\rightarrow$ Czech'' setup could be trapped.
 
 
 \subsection{Conclusion and Future Work}
@@ -217,10 +279,12 @@ One possible reason for this improvement is the ``easier'' intermediate task of 
 We presented our experiments with transfer learning for automated speech recognition between unrelated languages.
 In all our experiments, we outperformed the baseline in terms of speed of convergence and accuracy.
 
-We gain a substantial speed-up when training Czech ASR while reusing weights from a pre-trained English ASR model. The final word error rate is better only marginally in the basic transfer learning setup.
+We gain a substantial speed-up when training Czech ASR while reusing weights
+from a pre-trained English ASR model. The final word error rate improves over
+the baseline only marginally in this basic transfer learning setup.
 
 We are able to achieve a substantial improvement in WER by introducing an intermediate step in the style of coarse-to-fine training, first training the models to produce Czech without accents, and then refining the model to the full Czech.
-Our final model for Czech is better by over 3.5 WER absolute over the baseline, reaching WER of 16.57\%. Further gains are expected from beam-search with language model or better iteration choice to avoid overfitting.
+This coarse-to-fine training is most successful within a single language: Our final model for Czech is better by over 3.5 WER absolute over the baseline, reaching WER of 16.57\%. %Further gains are expected from beam search with language model or better iteration choice to avoid overfitting.
 
 %As we documented in the \cref{sec:results}, transfer learning leads to a substantial reduction in training time. We achieved speed-up even in unrelated languages. We also demonstrated that the coarse-to-fine approach leads not only to training time reduction but also yields better accuracy.
 
@@ -228,9 +292,18 @@ We see further potential in the coarse-to-fine training. We would like to explor
 
 
 \subsection{Note on the Results}
-After reviewing the Large Corpus of Czech Parliament Plenary Hearings, we found out that the transcripts contained systematic errors (SIL tag for silence was accidentally left in at the beginnings and ends of some transcripts). This resulted in systematic mismatch of the system output and the reference transcript during testing. 
+After reviewing the Large Corpus of Czech Parliament Plenary Hearings
+\cite{dataset}, we found out that the transcripts contained systematic errors
+(the ``SIL'' tag for silence was accidentally left in at the beginnings and ends of some transcripts). This resulted in a systematic mismatch of the system output and the reference transcript during testing. 
 
-Unfortunately, we made this finding after discarding some of the models, so we were unable to re-run the test. We kept only the best model. After fixing the transcript errors in development and test set --- no model retraining --- the model obtained marvelous results: WER of 4.91 \% on the development and 6.42 \% on the test set using beam search with language model (see \cref{tab:results_rerun}). These results are thus ten \% points better than initially stated in \cref{tab:results}.
+Unfortunately, we made this finding too late to be able to redo all the
+experiments.
+%after discarding some of the models, so we were unable to re-run the test. We kept only the best model.
+\cref{tab:results_rerun} compares the WER scores of the best model on the
+original and fixed reference transcripts (without any model retraining). We also add scores with beam search
+and a 5-gram KenLM \parcite{Heafield-kenlm} language model, confirming the improvement we expected.
+The final score is thus 4.91 on the development and 6.42\,\% WER on the test
+set, ten points better than the scores reported in \cref{tab:results}.
 
 \begin{table}[t]
 	\centering
@@ -294,13 +367,13 @@ In this section, we review the training of the experiment, as described in \cref
 
 We use mixed-precision training, which means that the weights are stored in \texttt{float16} (making the model smaller), and weight updates are computed in \texttt{float32} precision (reducing the quality loss).
 
-When it comes to phoneme segmentation, one technical question arises. Both trained architectures output character labels, but some phonemes are multi-character (for example ``\textipa{a:}'', ``\textipa{dZ}'', ``\textipa{aI}'', ``\textipa{aI@}'' or ``\textipa{aI\textrhookschwa}'',). We already dealt with this problem in the previous section due to the Czech digraph ``ch''. We decided to disregard this character in the ASR to Czech graphemes as it can be easily rewritten using ``c'' and ``h''. Here the problem is more frequent. Many phonemes in both languages are multi-character (Czech has 13 and English 27). \XXX{Examples of words with different multi-character phonemes are in \cref{tab:phon_examples}. From the examples we see that some of the multi-character phonemes consist even of other single-character ones.} Hence, disregarding this issue might influence the model performance. Bearing this in mind, we conduct two additional experiments. The first experiment obeys the phoneme segmentation, and the second breaks all phonemes to single characters. As the English model has much greater hardware requirements, we train only Czech variants and assume the results will carry over to English.
+When it comes to phoneme segmentation, one technical question arises. Both trained architectures output character labels, but some phonemes are multi-character (for example ``\textipa{a:}'', ``\textipa{dZ}'', ``\textipa{aI}'', ``\textipa{aI@}'' or ``\textipa{aI\textrhookschwa}'',). We already dealt with this problem in the previous section due to the Czech digraph ``ch''. We decided to disregard this character in the ASR to Czech graphemes as it can be easily rewritten using ``c'' and ``h''. Here the problem is more frequent. Many phonemes in both languages are multi-character (Czech has 13 and English 27). Examples of words with different multi-character phonemes are in \cref{tab:phon_examples} on page~\pageref{tab:phon_examples}. From the examples, we see that some of the multi-character phonemes consist even of other single-character ones. Hence, disregarding this issue might influence the model performance. Bearing this in mind, we conduct two additional experiments. The first experiment obeys the phoneme segmentation, and the second breaks all phonemes to single characters. As the English model has much greater hardware requirements, we train only Czech variants and assume the results will carry over to English.
 
 We first attempt to follow the phoneme segmentation given by the \texttt{phonemizer}. \texttt{phonemizer} can output phonetic transcriptions including separators between pho\-ne\-mes and words. We use ``$\mid$'' as the phoneme separator (see \cref{tab:phon_examples}). 
 
 %In the second attempt, we decompose all multi-character phonemes. Additionally, we break single-character phonemes that consist of combining letters and we replace these special letters with a placeholder. For English we substitute ``\textipa{\textsuperscript{j}}'' with ``J'', combining tilde (like ``\textipa{\~O}'') with ``I'', and vertical line below (e.g., ``\textipa{\textsyllabic{n}}'') with ``L''. For Czech, we introduce placeholders for vertical line below (e.g., ``\textipa{\textsyllabic{l}}'') with ``L'', for up tack below (e.g., ``\textipa{\textraising{r}}'') with ``T'' and ring above (e.g., ``\textipa{\r{r}}'') with ``R''. So, for example Czech word ``p\v{r}\'ipadn\v{e}'' has phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'', which is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
 
-In the second attempt, we decompose all multi-character phonemes (e.g., ``\textipa{dZ}'' is decomposed to ``\textipa{d}'' and ``\textipa{Z}''). \XXX{Note, some of the single-character phonemes are encoded in \texttt{UTF-8} as multi-character using combining letter. To circumvent this, we additionally break single-character phonemes that consist of combining letters and we replace these special letters with a placeholder.} Note that the substitute letters I, L, T, R were chosen so that they do not occur in the respective language. So, for example the Czech word ``p\v{r}\'ipadn\v{e}'' with the phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'' is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
+In the second attempt, we decompose all multi-character phonemes (e.g., ``\textipa{dZ}'' is decomposed to ``\textipa{d}'' and ``\textipa{Z}''). Note, some of the single-character phonemes are encoded in \texttt{UTF-8} as multi-character using combining letters. To circumvent this, we additionally break single-character phonemes that consist of combining letters and we replace these special letters with a simple Latin letter substitute. The substitute letters I, L, T, R were chosen so that they do not occur in the respective language. So, for example the Czech word ``p\v{r}\'ipadn\v{e}'' with the phonetical transcription ``\textipa{p\r{\|'r}i:pad\textltailn e}'' is rewritten to ``\textipa{pr}TR\textipa{i:pad\textltailn e}''.
 
 \paragraph{Czech ASR}
 For training and testing, we use the ``phonemized'' corpus of the Czech Parliament Plenary Hearings. As the dataset is five times smaller than English corpora, we utilize the smaller QuartzNet.

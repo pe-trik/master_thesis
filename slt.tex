@@ -49,13 +49,13 @@ The progression of training is in \cref{fig:cs_en} for Czech to English and in \
 
 \begin{figure}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/cs_en}
-	\caption{Evaluations on newstest2015 during the training. Phonemized Czech side as source and (original, in graphemes) English side as target.}
+	\caption[Czech to English training]{Evaluations on newstest2015 during the training. Phonemized Czech side as source and (original, in graphemes) English side as target.}
 	\label{fig:cs_en}
 \end{figure}
 
 \begin{figure}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/en_cs}
-	\caption{Evaluations on newstest2015 during the training. Phonemized English side as source and (original, in graphemes) Czech side as target.}
+	\caption[English to Czech training]{Evaluations on newstest2015 during the training. Phonemized English side as source and (original, in graphemes) Czech side as target.}
 	\label{fig:en_cs}
 \end{figure}
 
@@ -98,7 +98,7 @@ Still, the performance of the models is rather inferior to the test sets in well
 		\multirow{2}{*}{English} & phonemes       & 18.61 \% PWER \\
 		& graphemes      & 18.60 \% WER 
 	\end{tabular}
-	\caption{Evaluation of acoustic models on our test set derived from \texttt{news\-test\-2018}.}
+	\caption[Acoustic models performance on \texttt{read-newstest}]{Evaluation of acoustic models on our test set derived from \texttt{news\-test\-2018}.}
 	\label{tab:acoustic_eval}
 \end{table}
 
@@ -155,7 +155,8 @@ We design the evaluation procedure as a blind experiment. We use \texttt{QuickJu
 		Only$\dagger$ proposed & 7       & 4              & 7         \\
 		Only$\dagger$ baseline & 2       & 5              & 11        \\ \hline
 		Both          & 1       & 6              & 17       
-	\end{tabular}	\caption{Distribution of ratings of manual annotation ofn the Czech to English SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
+	\end{tabular}	
+	\caption[Czech to English manual evaluation]{Distribution of ratings of manual annotation ofn the Czech to English SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
 	\label{tab:manual_cs_en}
 \end{table}
 
@@ -231,7 +232,7 @@ Interesting is also a more correct recognition on numbers. This is probably due 
 			
 			\multicolumn{1}{c|}{} &  baseline & Clean$\dagger$ Graph & & & 30.31 & \textbf{31.07} & 30.45 & 30.74 & \textbf{31.55} & 30.77
 		\end{tabular}
-		\caption{Evaluation of the proposed Czech to English model (phonemes to graphemes --- P2G) and the Czech to English baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped interpunction.}
+		\caption[Czech to English SLT evaluation]{Evaluation of the proposed Czech to English model (phonemes to graphemes --- P2G) and the Czech to English baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped interpunction.}
 		\label{tab:eval_slt}
 	\end{table}
 \end{landscape}
@@ -256,7 +257,8 @@ Similarly, as the Czech to English SLT, the proposed system (with phonemes as an
 		Only$\dagger$ proposed & 6       & 2              & 7         \\
 		Only$\dagger$ baseline & 6       & 1              & 8        \\ \hline
 		Both          & 4       & 11              & 6       
-	\end{tabular}	\caption{Distribution of manual annotation of the English to Czech SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
+	\end{tabular}	
+	\caption[English to Czech manual evaluation]{Distribution of manual annotation of the English to Czech SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
 	\label{tab:manual_en_cs}
 \end{table}
 
@@ -334,7 +336,7 @@ With the overall translation quality, the handling adequacy of proper nouns also
 			
 			\multicolumn{1}{c|}{} &  baseline & Clean$\dagger$ Graph & & & 21.85 & \textbf{22.47} & 22.21 & 19.74 & \textbf{20.09} & 20.07
 		\end{tabular}
-		\caption{Evaluation of the proposed English to Czech model (phonemes to graphemes --- P2G) and the English to Czech baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped interpunction.}
+		\caption[English to Czech SLT evaluation]{Evaluation of the proposed English to Czech model (phonemes to graphemes --- P2G) and the English to Czech baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped interpunction.}
 		\label{tab:eval_slt_en_cs}
 	\end{table}
 \end{landscape}

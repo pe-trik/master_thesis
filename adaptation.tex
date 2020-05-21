@@ -145,13 +145,13 @@ A problem emerges when the BS further extends the beams and comes to point ``\te
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_relative}
-    \caption{Na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Na\"ive adaptation on artificial data ]{Na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:naive} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_english_relative}
-    \caption{Na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Na\"ive adaptation on English]{Na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:naive_en} 
 \end{figure}
 
@@ -172,13 +172,13 @@ As we take a closer look at the evaluation, we observe two together-related prob
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_revised_relative}
-    \caption{Revised na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Revised na\"ive adaptation on artificial data]{Revised na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:naive_revised} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_revised_english_relative}
-    \caption{Revised na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Revised na\"ive adaptation on English]{Revised na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:naive_revised_en} 
 \end{figure}
 
@@ -197,13 +197,13 @@ However, on the real data, the new approach does not help (see \cref{fig:embedde
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/embedded_fake_relative}
-    \caption{Embedded word beam search  adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Embedded word beam search  adaptation on artificial data]{Embedded word beam search  adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:embedded} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/embedded_en_relative}
-    \caption{Embedded word beam search adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Embedded word beam search adaptation on English]{Embedded word beam search adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
     \label{fig:embedded_en} 
 \end{figure}
 
@@ -223,13 +223,13 @@ We hypothesize that the high number of infrequent rules is caused by substantial
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=7cm]{img/rules_number}
-    \caption{Number of rewrite rules found in the acoustic data during the adaptation. We observe substantial difference between the real data and artificial errors data. Note, the real data have 16 \% and artificial 54 \% PWER.}
+    \caption[Number of rewrite rules found in the acoustic data during the adaptation]{Number of rewrite rules found in the acoustic data during the adaptation. We observe substantial difference between the real data and artificial errors data. Note, the real data have 16 \% and artificial 54 \% PWER.}
     \label{fig:rule_number} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=7cm]{img/rule_hist}
-    \caption{Comparison of the rule frequency cumulative distribution on real phonetic transcripts and artificial error data in the last adaptation iteration on English \texttt{read-newstest} (rules from 700 sentences). Note, we leave out identity rewrite rules.}
+    \caption[Comparison of the rule frequency cumulative distribution]{Comparison of the rule frequency cumulative distribution on real phonetic transcripts and artificial error data in the last adaptation iteration on English \texttt{read-newstest} (rules from 700 sentences). Note, we leave out identity rewrite rules.}
     \label{fig:rule_hist} 
 \end{figure}
 

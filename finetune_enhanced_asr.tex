@@ -47,7 +47,7 @@ On average, after the first adaptation phase, the word error rate of the most mo
 
 \begin{figure}[t]
 	\includegraphics[width=\linewidth,height=8cm]{img/ensemble}
-	\caption{Evaluation on LibriSpeech \texttt{dev-clean} during the training of ten models (using greedy decoding). One epoch takes approximately 24400 steps.}
+	\caption[English ensemble training]{Evaluation on LibriSpeech \texttt{dev-clean} during the training of ten models (using greedy decoding). One epoch takes approximately 24400 steps.}
 	\label{fig:ensemble_training}
 \end{figure}
 
@@ -82,7 +82,7 @@ On average, after the first adaptation phase, the word error rate of the most mo
 			
 		\end{tabular}
 	}
-	\caption{Results in \% of word error rate (using greedy decoding) on LibriSpeech \texttt{dev-clean} for all trained models.}
+	\caption[Final English ensemble performance]{Results in \% of word error rate (using greedy decoding) on LibriSpeech \texttt{dev-clean} for all trained models.}
 	\label{tab:eng_folds}
 \end{table}
 
@@ -109,7 +109,7 @@ Distribution of PWER in training and development sets is in histogram~\ref{fig:h
 
 \begin{figure}[t]
 	\includegraphics[width=\linewidth,height=8cm]{img/histogram}
-	\caption{Distribution of PWER on the collected English ``corrupted'' data and the two development sets.}
+	\caption[PWER distribution of collected English data]{Distribution of PWER on the collected English ``corrupted'' data and the two development sets.}
 	\label{fig:histogram}
 \end{figure}
 
@@ -142,7 +142,7 @@ We observe a dramatic PWER decline at the beginning (until step 12k), followed b
 
 \begin{figure}[h]
 	\includegraphics[width=\linewidth,height=8cm]{img/ensemble_cs}
-	\caption{Evaluation of the development set during the training of the 5 models (using greedy decoding). One epoch is approximately 4750 steps.}
+	\caption[Czech ensemble training]{Evaluation of the development set during the training of the 5 models (using greedy decoding). One epoch is approximately 4750 steps.}
 	\label{fig:ensemble_training_cs}
 \end{figure}
 
@@ -166,7 +166,7 @@ We observe a dramatic PWER decline at the beginning (until step 12k), followed b
 		7.13 
 		
 	\end{tabular}
-	\caption{Results in \% of PWER (greedy decoding) on the development set for all trained models.}
+	\caption[Czech ensemble final performance]{Results in \% of PWER (greedy decoding) on the development set for all trained models.}
 	\label{tab:cs_folds}
 \end{table}
 
@@ -179,7 +179,7 @@ Distribution of PWER in training and dev sets is in histogram~\ref{fig:histogram
 
 \begin{figure}[t]
 	\includegraphics[width=\linewidth,height=8cm]{img/histogram_cs}
-	\caption{Distribution of PWER of the collected Czech ``corrupted'' data and the Czech Parliament Hearings test set. Note, we used the test set instead of the development set. PWER of the recordings in the development set does not correspond to the actual sentence-level distribution of PWER. This is because the development set contains 12  further unsegmented recordings each more than 10 minutes long.}
+	\caption[PWER distribution of collected Czech data]{Distribution of PWER of the collected Czech ``corrupted'' data and the Czech Parliament Hearings test set. Note, we used the test set instead of the development set. PWER of the recordings in the development set does not correspond to the actual sentence-level distribution of PWER. This is because the development set contains 12  further unsegmented recordings each more than 10 minutes long.}
 	\label{fig:histogram_cs}
 \end{figure}
 
@@ -234,13 +234,13 @@ Oversight on the training provides the LibriSpeech \texttt{dev-other} for Englis
 
 \begin{figure}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/finetune_en}
-	\caption{Training/fine-tuning of the English phoneme-to-grapheme ASR models. Performance on the LibriSpeech \texttt{dev-other}.}
+	\caption[English enhanced ASR fine-tuning]{Training/fine-tuning of the English phoneme-to-grapheme ASR models. Performance on the LibriSpeech \texttt{dev-other}.}
 	\label{fig:finetune_en}
 \end{figure}
 
 \begin{figure}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/finetune_cs}
-	\caption{Training/fine-tuning of the Czech phoneme-to-grapheme ASR models. Performance on Parliament Hearings \texttt{test}.}
+	\caption[Czech enhanced ASR fine-tuning]{Training/fine-tuning of the Czech phoneme-to-grapheme ASR models. Performance on Parliament Hearings \texttt{test}.}
 	\label{fig:finetune_cs}
 \end{figure}
 
@@ -285,7 +285,7 @@ Furthermore, it is clear that initializing the models from the SLT task helps in
 		SLT + BERT Transfer               & 12.93            & \textbf{4.13}             & \textbf{10.21}  & 19.00       \\      
 		%SLT + BERT Transfer + LM & 11.25 & \textbf{4.04}  & \textbf{9.69} \\
 	\end{tabular}   
-	\caption{Performance of the English ASR phoneme-to-grapheme translation models.}
+	\caption[English finetuned ASR performance evaluation]{Performance of the English ASR phoneme-to-grapheme translation models.}
 	\label{tab:werstrain}
 \end{table}
 
@@ -302,7 +302,7 @@ Furthermore, it is clear that initializing the models from the SLT task helps in
 		SLT Transfer     & \textbf{6.76}   & \textbf{29.74}  \\
 		%SLT Transfer + LM & 6.92              \\
 	\end{tabular}   
-	\caption{Performance of the Czech ASR phoneme-to-grapheme translation models on the Czech Parliament Hearings corpus test set.}
+	\caption[Czech finetuned ASR performance evaluation]{Performance of the Czech ASR phoneme-to-grapheme translation models on the Czech Parliament Hearings corpus test set.}
 	\label{tab:werstrain_cs}
 \end{table}
 

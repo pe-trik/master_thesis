@@ -25,6 +25,7 @@
 % \setlength\headheight{0mm}
 % \let\openright=\cleardoublepage
 
+\usepackage[hyphens]{url}
 %% Generate PDF/A-2u
 \usepackage[a-2u]{pdfx}
 
@@ -323,28 +324,28 @@ Keywords:
 %%% In mathematical theses, it could be better to move the list of abbreviations to the beginning of the thesis.
 \chapwithtoc{List of Abbreviations}
     \begin{tabular}{ll}
-    	ANN & Artificial Neural Network \\
-        ASR & Automatic Speech Recognition \\
+    	ANN & artificial neural network \\
+        ASR & automatic speech recognition \\
         AVG & average, mean\\
-        BLEU & \\
-        BPE & \\
-        BS &\\
+        BLEU & translation quality metric; bilingual evaluation understudy\\
+        BPE & byte pair encoding\\
+        BS & beam search\\
         CS & Czech \\
-        CTC &\\
-        DNN &\\
+        CTC & connectionist temporal classification\\
+        DNN & deep neural \\
         E2E & end-to-end \\
-        EN &\\
-        GMM & Gaussian Mixture Model \\
-        HMM & Hidden Markov Model \\
+        EN & English\\
+        GMM & gaussian mixture model \\
+        HMM & hidden Markov model \\
         K & kilo, thousand \\
-        LM &\\
+        LM & language model\\
         M & mega, million \\
-        MFCC&\\
-        MT, NMT & \\
+        MFCC & mel-frequency cepstral coefficients\\
+        MT, NMT & (neural) machine translation\\
         OOV & out-of-vocabulary \\
         P2G & phoneme-to-grapheme \\
-        PWER &\\
-        SLT & \\
+        PWER & phoneme word error rate\\
+        SLT & spoken language translation\\
         STD & standard deviation \\
         WER & word error rate \\
         
@@ -371,10 +372,11 @@ The following is included:
 
 \begin{enumerate}
     \item \texttt{thesis.pdf} --- this thesis in PDF format (as uploaded to the SIS),
-    \item \XXX{the submitted papers?}
-    \item \texttt{accoustc\_models/} --- scripts and outputs of the acoustic and ASR models,
-    \item \texttt{translation\_models/} --- the Transformer models, ASR transcripts and SLT translations,
-    \item \texttt{online\_adaptation/} --- the online adaptation algorithms, test sets and outputs.
+    \item iwslt2020.pdf --- paper accepted to IWSLT2020 \citep{iwslt20-polak}.
+    \item interspeech2020.pdf -- paper submitted to Interspeech 2020,
+    \item \texttt{acoustc\_models/} --- scripts and outputs of the acoustic and ASR models as discussed in \cref{chapter:asr},
+    \item \texttt{translation\_models/} --- the Transformer models, ASR transcripts (described in \cref{chap:enhanced_asr,chap:fine_tune_enhanced}) and SLT translations (discussed in \cref{chap:slt}),
+    \item \texttt{online\_adaptation/} --- the online adaptation algorithms (described in \cref{chap:adaptation}), test sets and outputs.
 \end{enumerate}
 
 \openright

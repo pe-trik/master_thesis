@@ -1,71 +1,72 @@
 \chapter{Spoken Language Translation}
 \label{chap:slt}
-In the preceding chapter, we introduced and trained an ``Enhanced ASR''. The pipeline of the Enhanced ASR system consists of an ``acoustic'' model and a ``translation'' model. In the case of the ASR, the translation model rewrites phonetic transcriptions to graphemes in the language of the input. 
+In the preceding chapter, we introduced and trained an enhanced ASR. The pipeline of the enhanced ASR system consists of an acoustic model and a P2G translation model. In the case of the ASR, the translation model rewrites phonetic transcriptions to graphemes in the language of the input. 
 
 In this chapter, we develop a spoken language translation pipeline for Czech and English language --- in both directions. We build the pipeline architecture upon previously proposed Enhanced ASR. From the Enhanced ASR, we take the acoustic model, which remains identical. The essential difference is the change of target language for the translation model. 
 
-We organize this chapter as follows: first, we analyze associated work on SLT in \cref{slt:related}. Next follows our motivation and experiment outline in \cref{slt:outline}. In \cref{slt:training} we describe training process and in \cref{slt:evaluation} we evaluate the trained systems. Finally, we conclude the experiment in \cref{slt:conclusion}.
+We organize this chapter as follows: first, we analyze relevant work on SLT in \cref{slt:related}. Next follows our motivation and experiment outline in \cref{slt:outline}. In \cref{slt:training} we describe the training process and in \cref{slt:evaluation} we evaluate the trained systems. Finally, we conclude the experiment in \cref{slt:conclusion}.
 
 \section{Related Work}
 \label{slt:related}
 
 With the advent of deep learning, we observe a clear trend towards end-to-end models in SLT.
 
-For instance, \perscite{weiss2017sequence} presents a attention-based model. They use the very architecture as ASR --- encoder, and decoder. Their end-to-end trained network outperforms ASR-MT cascade on Spanish-English speech translation task.
+For instance, \perscite{weiss2017sequence} presents an attention-based model. They use the very architecture of ASR --- encoder, and decoder. Their end-to-end trained network outperforms ASR-MT cascade on Spanish-English speech translation task.
 
-Our great inspiration in our work and particularly for our spoken language translation, is the study of \perscite{salesky-etal-2019-exploring}. They examine an alternative speech feature representation for the end-to-end speech translation. The authors propose to use compressed phoneme-like speech representation. Their method first generates phoneme labels for a speech utterance. Second, consecutive frames with the same label are averaged-out. To compute the phoneme labels, authors use a hybrid HMM-DNN system implemented in Kaldi \parcite{Kaldi}. For the translation, they use a sequence-to-sequence model based on LSTM. The authors observe an improvement of the translation quality up to 5 BLEU on low- and high-resource language pairs.
+Our great inspiration in our work and particularly for our spoken language translation, is the study of \perscite{salesky-etal-2019-exploring}. They examine an alternative speech feature representation for the end-to-end speech translation. The authors propose to use compressed phoneme-like speech representation. Their method first generates phoneme labels for a speech utterance. Second, consecutive frames with the same label are averaged-out. To compute the phoneme labels, authors use a hybrid HMM-DNN system implemented in Kaldi \parcite{Kaldi}. For the translation, they use a sequence-to-sequence model based on LSTM. The authors observe an improvement of the translation quality up to 5 BLEU on low- and high-resource language pairs. The main difference of our work from Salesky is that we use NN ASR and Transformer translation step.
 
 
 \section{Motivation and Experiment Outline}
 \label{slt:outline}
-We propose to split the SLT pipeline to the acoustic and SLT model (the architecture is identical with \cref{fig:asr_enhanced_pipeline}). As an intermediate representation, we choose phonemes. We are highly motivated by their success in the \perscite{salesky-etal-2019-exploring}. Also, as reviewed in earlier chapters on ASR (\cref{chapter:asr,chap:enhanced_asr}), phonemes are a competitive representation unit in speech processing.  
+We propose to split the SLT pipeline to the acoustic and SLT model (the architecture is identical with \cref{fig:asr_enhanced_pipeline}). As the intermediate representation, we choose phonemes. We are highly motivated by their success in the \perscite{salesky-etal-2019-exploring}. Also, as reviewed in earlier chapters on ASR (\cref{chapter:asr,chap:enhanced_asr}), phonemes are competitive representation units in speech processing.  
 
-In our spoken language translation pipeline, we take the acoustic model from the \cref{chapter:asr}. Specifically, we use the ASR to the phonemes. As a translation model, we utilize the Transformer architecture.
+In our spoken language translation pipeline, we take the acoustic model from \cref{chapter:asr}. Specifically, we use the ASR to phonemes. As a translation model, we utilize the Transformer architecture.
 
-We compare our proposed SLT system with a more conventional SLT pipeline --- an ASR-MT tandem.
+We compare our proposed SLT system to a more conventional SLT pipeline --- an ASR-MT tandem.
 
 \section{Training}
 \label{slt:training}
-Following the experiment outline as described in the preceding section, we train two translation models (Czech phonemes to English graphemes and English phonemes to Czech phonemes). Additionally, we also train baseline translation models (English and Czech, in both directions). 
+Following the experiment outline as described in the preceding section, we train two translation models (Czech phonemes to English graphemes and English phonemes to Czech graphemes). Additionally, we also train baseline grapheme-to-grapheme translation models (English and Czech, in both directions). 
 
-The training procedure remains almost identical to the training scheme in the Enhanced ASR (see \cref{easr:training}). As we concluded in the \cref{easr:conclusion}, the bigger Transformer is a better fit for the ASR task. Furthermore, the translation task to a different language is even more difficult problem. Accordingly, we work only with the Transformer ``big'' in this chapter.
+The training procedure remains almost identical to the training scheme in the Enhanced ASR (see \cref{easr:training}). As we concluded in the \cref{easr:conclusion}, the bigger Transformer is a better fit for the ASR task. Furthermore, the translation task to a different language is an even more difficult problem. Accordingly, we work only with the Transformer ``big'' in this chapter.
 
-For evaluation during the training of phoneme-to-grapheme models we use \texttt{news\-test\-2015}. We phonemize the source side of the data set using \texttt{phonemizer}.
+For the evaluation during the training of phoneme-to-grapheme models we use \texttt{news\-test\-2015}. We phonemize the source side of the data set using \texttt{phonemizer}.
 
-Again, as determined in \cref{easr:tok_conclusion}, we use separate vocabularies for source and target languages. Correspondingly, we use 32k vocabulary size. Source BPE is trained on a clean, phonemized CzEng dataset. Target is trained on clean original CzEng.
+Again, as determined in \cref{easr:tok_conclusion}, we use separate vocabularies for source and target languages. Correspondingly, we use 32k vocabulary size. Source BPE is trained on a clean, phonemized CzEng dataset. The target is trained on clean original CzEng.
 
-For training, we utilize following hyper-parameters for Transformer ``big'':
-\begin{itemize}
-	\item GPU(s): 10 GPUs with at least 11 GB VRAM
-	\item batch size: 2000
-	\item learning rate: 0.03
-	\item warm-up steps: 8000
-	\item max steps: 600000 with manual abortion
-\end{itemize}
+For training, we utilize the following hyper-parameters for Transformer ``big'':\\
 
-To attain better regularization, we involve the BPE drop-out technique proposed by \perscite{provilkov2019bpe}. We appoint the drop-out probability to 0.1, following the best setting from the original paper. The BPE drop-out is applied to both, the source and target of the translation.
+\begin{tabular}{ll}
+	 GPU(s): & 10 GPUs with at least 11 GB VRAM \\
+	 batch size:& 2000\\
+	 learning rate:& 0.03\\
+	 warm-up steps:& 8000\\
+	 max steps:& 600000 with manual abortion\\
+\end{tabular}\\
+
+To attain better regularization, we involve the BPE drop-out technique proposed by \perscite{provilkov2019bpe}. We set the drop-out probability to 0.1, following the best setting from the original paper. The BPE drop-out is applied to both, the source and target of the translation.
 
 The progression of training is in \cref{fig:cs_en} for Czech to English and in \cref{fig:en_cs} for English to Czech as evaluations on \texttt{newstest2015}.
 
 \begin{figure}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/cs_en}
-	\caption[Czech to English training]{Evaluations on newstest2015 during the training. Phonemized Czech side as source and (original, in graphemes) English side as target.}
+	\caption[Czech to English training]{Evaluations on newstest2015 during the training. Phonemized Czech side as the source and (original, in graphemes) English side as the target.}
 	\label{fig:cs_en}
 \end{figure}
 
 \begin{figure}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/en_cs}
-	\caption[English to Czech training]{Evaluations on newstest2015 during the training. Phonemized English side as source and (original, in graphemes) Czech side as target.}
+	\caption[English to Czech training]{Evaluations on newstest2015 during the training. Phonemized English side as the source and (original, in graphemes) Czech side as the target.}
 	\label{fig:en_cs}
 \end{figure}
 
 \section{Evaluation}
 \label{slt:evaluation}
-In this section, we evaluate the trained models as part of the proposed spoken language translation pipeline (see \cref{fig:asr_enhanced_pipeline}).
+In this section, we evaluate the trained models as part of the proposed spoken language translation pipeline (the pipeline scheme is identical to that of the enhanced ASR, see the scheme in \cref{fig:asr_enhanced_pipeline} on page \pageref{fig:asr_enhanced_pipeline}).
 
-We evaluate an SLT pipeline consisting of an ASR and an NMT model. More precisely, our proposed pipeline includes an acoustic model (i.e. a model transcribing speech to phonemes) and a translation model (i.e., an NMT from phonemes in source language to graphemes in the target language). 
+We evaluate the SLT pipeline consisting of an ASR and an NMT model. More precisely, our proposed pipeline includes an acoustic model (i.e. a model transcribing speech to phonemes) and a translation model (i.e., an NMT from phonemes in source language to graphemes in the target language). 
 
-Note, all models used in this comparison (baseline and proposed) are trained on the same datasets. The only contrast is the phonemization of transcripts for the proposed acoustic model and translation source for the proposed SLT translation model.
+Note that all models used in this comparison (baseline and proposed) are trained on the same datasets. The only contrast is the phonemization of transcripts for the proposed acoustic model and translation source for the proposed SLT translation model.
 
 Again, as in the previous chapter, we apply different beam sizes during the evaluation.
 
@@ -75,19 +76,17 @@ To the best of our knowledge, there is no publicly available SLT test set from C
 
 We base our test set on a subset of the \texttt{newstest2018}. The original \texttt{news\-test\-2018} contains more than 3000 sentences. The test set is a collection of article passages from various news. There are articles of Czech origin, but also of English one. For our purposes, we selected only the articles of the Czech origin. 
 
-The re-speaker was instructed to use our online tool \texttt{Voice Recorder}.\footnote{We developed this tool within the ELITR project (\url{elitr.eu}). Source code of the recorder is available at \url{https://github.com/ELITR/voice-recorder}} The interface displays one sentence at time. The user can read the sentence, record it and replay. If she or he is not satisfied with the recording, the re-speaker may record a new version. With this workflow, the sentences are already segmented.
+A re-speaker was instructed to use our online tool \texttt{Voice Recorder}.\footnote{We developed this tool within the ELITR project (\url{elitr.eu}). Source code of the recorder is available at \url{https://github.com/ELITR/voice-recorder}} The interface displays one sentence at time. The user can read the sentence, record it and replay. If she or he is not satisfied with the recording, they may record a new version. With this workflow, the resulting audio is produced as already segmented into individual sentences.
 
-We employed one re-speaker --- a Czech woman.
-
-Because of limited resources, we were able to record 747 sentences. This resulted in 1:18:35 English, and 1:11:38 of Czech audio.
+We employed one re-speaker --- a Czech woman. She recorded 747 sentences in English and 747 sentences in Czech. This resulted in 1:18:35 English, and 1:11:38 of Czech read speech audio.
 
 We evaluated the performance of our acoustic models on obtained test set. The results are in the \cref{tab:acoustic_eval}. 
 
-We were quite surprised by the poor performance of Czech acoustic models --- 34.33 \% Phoneme Word Error Rate (PWER) and 34.51 \% Word Error Rate (WER). We believe, this is due to the nature of the training data we used for the training of the models. The Corpus of Czech Parliament Plenary Hearings has a unique acoustic. Further, there is a high prevalence of man speakers. Ultimately, the size of the training corpus is rather small --- only 400 hours.
+We were quite surprised by the poor performance of Czech acoustic models --- 34.33 \% Phoneme Word Error Rate (PWER) and 34.51 \% Word Error Rate (WER). We believe this is due to the nature of the training data we used for the training of the models. The Corpus of Czech Parliament Plenary Hearings has a unique acoustic. Further, there is a high prevalence of man speakers. And finally, the size of the training corpus is rather small --- only 400 hours.
 
-On the other hand, the English models performed better --- 18.61 \% PWER and 18.60 \% WER. First, the models are trained on approximately 2000 hours of speech. Also, the Common Voice dataset that is used for traing of the models contains many non-native speakers.
+The English models performed better than the Czech ones --- 18.61 \% PWER and 18.60 \% WER. First, the models are trained on approximately 2000 hours of speech. Also, the Common Voice dataset that is used for traing of the models contains many non-native speakers.
 
-Still, the performance of the models is rather inferior to the test sets in well-knows datasets (such as LibriSpeech or Common Voice). We believe, this is partially due to the high frequency of Czech proper nouns and specificity of the texts origin (news articles). 
+Still, the performance of the models is rather inferior to the test sets in well-know datasets (such as LibriSpeech or Common Voice). We believe, this is partially due to the high frequency of Czech proper nouns and specificity of the texts origin (news articles). 
 
 \begin{table}[t]
 	\centering
@@ -103,18 +102,18 @@ Still, the performance of the models is rather inferior to the test sets in well
 \end{table}
 
 \subsection{Beam Size} 
-SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt_en_cs} are consistent with the established in the neural machine translation. We see that the models are, in general, confident at each step. Enlarging the beam size leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations.
+SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt_en_cs} are consistent with the established ones in the neural machine translation. We see that the models are, in general, confident at each step \XXX{and do not need to consider other alternatives}. Enlarging the beam size leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations.
 
-The only exception to this is the English to Czech proposed SLT. The beam size of 16 outperformed other beam sizes. However, the margin is relatively small --- 0.23 BLEU. The model is probably less confident when the source is corrupted by the acoustic model.
+The only exception to this is the English to Czech proposed SLT. The beam size of 16 outperformed other beam sizes. However, the margin is relatively small --- 0.23 BLEU. The model is probably less confident when the source is corrupted as a result of processing a real sound with the acoustic model.
 
 \subsection{Czech to English}
-For evaluation of the Czech to English SLT pipeline, we take the acoustic model from the \cref{asr:transfer_phonemes}. This model has Phoneme Word Error Rate 8.94 \% on the phonemized Corpus of Czech Parliament Plenary Hearings.
+For evaluation of the Czech to English SLT pipeline, we take the acoustic model from \cref{asr:transfer_phonemes}. This model has Phoneme Word Error Rate 8.94 \% on the phonemized Corpus of Czech Parliament Plenary Hearings.
 
 We compare our proposal with a more typical setup --- a standard ASR followed by an NMT. We employ the best performing ASR model from \cref{asr:crosslingual_intermediate}. This model has a Word Error Rate 7.64 \% on the Corpus of Czech Parliament Plenary Hearings.
 
 \cref{tab:eval_slt} contains SacreBLEU scores for Czech to English SLT. Translation samples are in \cref{tab:cs_en_names,tab:cs_en_sample}.
 
-Additionally to the SLT pipeline evaluation, we also evaluate performance of the models on ``translation'' task. We take the true transcripts (phoneme transcripts for the proposed model and grapheme transcripts for the baseline model) and use them as the source of the SLT translation systems.
+Additionally to the SLT pipeline evaluation, we also evaluate performance of the models on P2G translation task. We take the true transcripts (phoneme transcripts for the proposed model and grapheme transcripts for the baseline model) and use them as the source of the SLT translation systems.
 
 First, we evaluate the SLT task. We observe that the proposed phoneme-based system outperforms the baseline. The margin is rather small in terms of the SacreBLEU metric.
 
@@ -242,7 +241,7 @@ In order to evaluate the English to Czech translation model as part of the propo
 
 The baseline SLT pipeline uses as ASR model the Jasper model trained on LibriSpeech and Common Voice. We downloaded the model from the NVIDIA NGC.\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:multidata\%20set\_jasper10x5dr}}
 
-We also assess the translation models performance on the ``translation'' task (i.e., the translation sources are true transcripts, not burdened with errors introduced by the acoustic/ASR models).
+We also assess the translation models performance on the P2G translation task (i.e., the translation sources are true transcripts, not burdened with errors introduced by the acoustic/ASR models).
 
 \cref{tab:eval_slt_en_cs} contains SacreBLEU scores of the English to Czech translation models as part of a SLT pipeline and in the translation task. Translation samples are in \cref{tab:en_cs_names,tab:en_cs_sample}.
 

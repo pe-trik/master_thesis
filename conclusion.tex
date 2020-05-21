@@ -8,7 +8,7 @@ We focus on many details of the proposed approach. First, we examine methods of 
 
 Further, we build a phoneme acoustic model. To speed up the training, we use transfer from traditional ASR.
 
-An integral part of our ASR/SLT pipeline is the ``translation'' model. In ASR, this model translates phoneme sequences into grapheme transcripts in the same language. In SLT, the model does the direct translation from the source language phonemes into grapheme translation in the target language. 
+An integral part of our ASR/SLT pipeline is the P2G translation model. In ASR, this model translates phoneme sequences into grapheme transcripts in the same language. In SLT, the model does the direct translation from the source language phonemes into grapheme translation in the target language. 
 
 As our task --- the phoneme-to-grapheme translation --- is somewhat nontraditional, we experiment with different word segmentation. More precisely, we review the size of the byte pair encoding vocabulary and different sources of training data for the BPE. We found that the best option for a high-resource setting (ours) is the larger vocabulary (32k). The source of training data did not make much difference (we tested clean, corrupt, and mixed setups).
 
@@ -16,7 +16,7 @@ Based on our previous findings, we trained a baseline ASR translation model. We 
 
 We also compare the refactored two-step method with the traditional one. We compare the performance of both systems on our own \texttt{read-newstest}. For the comparison, we utilize automatic metric SacreBLEU, but we also manually asses the quality. In terms of SacreBLEU, the refactored approach outperforms the baseline. In the manual evaluation, the proposed approach outperforms the baseline in Czech to English and is slightly worse than the baseline in the opposite direction (in the number of correct translations). On the other hand, in both directions, the proposed system has more correct and ``almost'' correct translations.
 
-Besides establishing baselines, we also experimented with enhancing the pipeline robustness. We review the transfer from SLT and fine-tune the ``translation'' system on corrupted data, to promote its ability to recover errors introduced in the acoustic model. We were able to reduce the WER on all test sets compared to the baseline.
+Besides establishing baselines, we also experimented with enhancing the pipeline robustness. We review the transfer from SLT and fine-tune the P2G translation system on corrupted data, to promote its ability to recover errors introduced in the acoustic model. We were able to reduce the WER on all test sets compared to the baseline.
 
 Finally, we explored adaptation on the fly. We trained an adaptation model that is able to reduce extremely high WER (50 \% to 10 \%) on artificially corrupted phoneme transcripts. However, we were unable to obtain any enhancement on real transcripts. A probable cause of this is extreme variance in errors in the real data. We think the best possible option, how to recover errors introduced in the acoustic model, is to prepare a robust translation model. 
 

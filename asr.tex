@@ -413,10 +413,15 @@ We made a surprising observation: beam search decoding is always worse than gree
 Using \XXX{beam search without LM rescoring (TensorFlow)}, we got the best result 9.14 \% PWER, about 0.2 \% percent point higher than with the greedy search for multi-character ASR. For single-character ASR, the difference is even more significant: 9.09 \% for greedy and 9.53 \% PWER for beam search. 
 
 We also tried adding a language model to the second CTC decoder.\footnote{When setting LM weight to higher than 0, we found that this implementation does not support labels containing more that one character, which causes a problem to the several multi-character phonemes in the phonetic alphabet.} Using KenLM, we trained a 3-gram language model on phonemized Czech part of the CzEng. For both single- and multi-character phonemes, the language model helps. The result for the single-character setup is a bit better. 
+
 \paragraph{\XXX{Phoneme segmentation discrepancy in trainig data}}
 We suspect the difference stems from our trick (substituting multi-character phonemes with a new single character --- see \cref{asr:phon:training}) to overcome Baidu's CTC decoder limitation. Using this trick, we substitute multi-character phonemes with a unique symbol in transcripts (used for the acoustic model training) and language model training data.
 
 The language model training data (unlike the transcripts) does not contain phoneme boundaries (i.e., there is no phoneme separator token ``$\mid$'' present). Some multi-character phonemes consists of two other valid single-character (or even multi-character) ones (see \cref{tab:phon_examples}). Thus, during the substitution of multi-character phonemes, some neighboring phonemes might be considered as one phoneme and incorrectly substituted. Note, the ASR model is trained on data with known phoneme segmentation (given by the \texttt{phonemizer}). Hence, during the decoding, the acoustic model can sometimes attribute a higher probability to two phonemes instead of one, while the language model gives to these phonemes lower score (because of the training data mismatch of the language and ASR model). An illustration of this problem is in \cref{tab:phon_examples}. For example, the phonetic transcriptions of ``serious'' and ``various'' are \textipa{sI\*ri@s} and \textipa{vE\*ri@s}. They both share common suffix --- \textipa{\*ri@s}. But, when we consider the segmentation produced by the \texttt{phonemizer}, ``various'' has one phoneme \textipa{i@} and ``serious'' has two phonemes --- \textipa{i} and \textipa{@}.
+
+To test this assumption, we train a 3-gram language models (for single- and multi-character ASR) on ASR training data (notably a considerably smaller amount of data then CzEng) that include phoneme segmentation (e.g., ``\textipa{v}$\mid$\textipa{E}$\mid$\textipa{\*r}$\mid$\textipa{i@}$\mid$\textipa{s}''). Note, we do not re-phonemize CzEng, as phonemization is time and power-consuming process. Using these data that include segmentation, we correctly substitute multi-character phonemes. After applying the substitution of the multi-character phonemes, we remove the phoneme separators (as the CTC decoder's queries to the LM are without separators).
+
+The best results are 8.30 and 8.45 \% PWER for multi- and single-character ASR respectively. These results are consistent with the greedy and beam search without LM decoding. Therefore, we conclude that using native phoneme segmentation is slightly better. Hence, for English, we use multi-character phonemes.
 
 \begin{table}[]
 	\centering
@@ -428,11 +433,6 @@ The language model training data (unlike the transcripts) does not contain phone
 	\caption[Examples of multi-character phonemes]{Examples of multi-character phonemes consisting of other single- and multi-character phonemes. ``$\mid$'' is the segmentation mark. These segmentation marks are present in ASR training data, but not in the language model training data.}
 	\label{tab:phon_examples}
 \end{table}
-
-To test this assumption, we train a 3-gram language models (for single- and multi-character ASR) on ASR training data (notably a considerably smaller amount of data then CzEng) that include phoneme segmentation (e.g., ``\textipa{v}$\mid$\textipa{E}$\mid$\textipa{\*r}$\mid$\textbf{\textipa{i@}}$\mid$\textipa{s}''). Note, we do not re-phonemize CzEng, as phonemization is time and power-consuming process. Using these data that include segmentation, we correctly substitute multi-character phonemes. After applying the substitution of the multi-character phonemes, we remove the phoneme separators (as the CTC decoder's queries to the LM are without separators).
-
-The best results are 8.30 and 7.74 \% PWER for multi- and single-character ASR respectively. These results are consistent with the greedy and beam search without LM decoding. Therefore, we conclude that using native phoneme segmentation is slightly better. Hence, for English, we use multi-character phonemes.
-
 
 \begin{figure*}[t]
 	\includegraphics[width=\linewidth,height=7cm]{img/cs_phon}
@@ -448,7 +448,7 @@ The best results are 8.30 and 7.74 \% PWER for multi- and single-character ASR r
 		\multirow{2}{*}{dev}  & multi-char. phonemes  & 13.75 & 7.09   & -       & -               \\
 		& single-char. phonemes & 17.91 & 10.04  & -       & -               \\ \hline
 		\multirow{2}{*}{test} & multi-char. phonemes  & -     & 8.94   & 9.14    & 8.30            \\
-		& single-char. phonemes & -     & 9.09   & 9.53    & 7.84           
+		& single-char. phonemes & -     & 9.09   & 9.53    & 8.45           
 	\end{tabular}
 	\caption[Results of Czech acoustic models]{Results in \% of \emph{Phoneme} Word Error Rate (PWER). The language model is trained on CzEng. Note, PWER is not directly comparable to WER. The column ``Adaptation phase'' represents model performance after the adaptation of the decoder to new modeling units but before further training (i.e., the encoder is frozen and only decoder is trained).}
 	\label{tab:cs_phon_results}

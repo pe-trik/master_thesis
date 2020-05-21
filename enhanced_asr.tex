@@ -20,7 +20,7 @@
 		\draw[<-](trans) -> node {}  (cor);
 		
 		\end{tikzpicture}}
-	\caption[Enhanced ASR pipeline]{Enhanced ASR pipeline. The input sound is first transcribed to phonemes using Jasper/QuartzNet ``acoustic'' model. Phonemes are fed to the ``translation'' model. Translation model not only translates, but also fixes some errors in the ASR output and produces orthographic transcriptions.}
+	\caption[Enhanced ASR pipeline]{Enhanced ASR pipeline. The input sound is first transcribed to phonemes using Jasper/QuartzNet ``acoustic'' model. Phonemes are fed to the P2G translation model. Translation model not only translates, but also fixes some errors in the ASR output and produces orthographic transcriptions.}
 	\label{fig:asr_enhanced_pipeline_}
 \end{figure} 
 \fi
@@ -28,7 +28,7 @@
 \begin{figure}[t]
 	\centering
 	\includegraphics[width=.9\textwidth]{img/easr2}
-	\caption[Enhanced ASR pipeline]{Enhanced ASR pipeline. The input sound is first transcribed to phonemes using Jasper/QuartzNet ``acoustic'' model. Phonemes are fed to the ``translation'' model. Translation model not only translates, but also fixes some errors in the ASR output and produces orthographic transcriptions.}
+	\caption[Enhanced ASR pipeline]{Enhanced ASR pipeline. The input sound is first transcribed to phonemes using Jasper/QuartzNet ``acoustic'' model. Phonemes are fed to the P2G translation model. Translation model not only translates, but also fixes some errors in the ASR output and produces orthographic transcriptions.}
 	\label{fig:asr_enhanced_pipeline}
 \end{figure} 
 
@@ -36,8 +36,8 @@
 In this chapter, we describe and build an enhanced ASR model. We propose to split a conventional end-to-end ASR into to two successive models: 
 
 \begin{enumerate}
-	\item an ``acoustic'' model that outputs phonemes instead of graphemes,
-	\item a ``translation'' model that consumes the phonemes and translates them to graphemes. Note that the translation does not involve any other language, see \cref{chap:slt} for true translation.
+	\item an acoustic model that outputs phonemes instead of graphemes,
+	\item a phoneme-to-grapheme translation (P2G translation) model that consumes the phonemes and translates them to graphemes. Note that the translation does not involve any other language, see \cref{chap:slt} for true translation.
 \end{enumerate}
 
 An illustration of the proposed enhanced ASR pipeline is in \cref{fig:asr_enhanced_pipeline}.
@@ -274,25 +274,25 @@ First of all, we can observe a drastic reduction of WER for the Common Voice \te
 
 We take a closer look at the training data. The filtered version of Common Voice has 611990 recordings, but only 81334 unique transcripts. This means that the same text has been recorded multiple times by many speakers. Common Voice ``corrupted'' has 3262524 unique ASR-provided transcriptions (meaning that a sentence has a unique error) and 80710 different true transcripts.
 
-On the other hand, LibriSpeech has 281241 recordings and 281071 unique transcripts. Hence, there are almost none different recordings for the same text. ``Corrupted'' LibriSpeech has 3844983 unique erroneous ASR transcripts with 280850 different valid transcripts. Hence, on average, each Common Voice sentence has seven different recordings and 40 individual faulty ASR transcriptions. LibriSpeech, on the contrary, does not have more recordings per text and has about 13 ASR-corrupted transcripts per one original text. Hence, we are strongly convinced that the trained Transformer models are over-fitting the Common Voice dataset.
+On the other hand, LibriSpeech has 281241 recordings and 281071 unique transcripts. Hence, there are almost none different recordings for the same text. ``Corrupted'' LibriSpeech has 3844983 unique erroneous ASR transcripts with 280850 different valid transcripts. Hence, on average, each Common Voice sentence has seven different recordings and 40 individual corrupted ASR transcriptions. LibriSpeech, on the contrary, does not have more than one recordings per text and has about 13 ASR-corrupted transcripts per one original text. Hence, we are strongly convinced that the trained Transformer models are over-fitting the Common Voice dataset.
 
 \paragraph{BPE Size}
-Character-level encoding seems to be the worst or second-worst possible representation. For the Common Voice \texttt{test} set, it scores almost one percentage point of WER more compared to the best result (5.53 vs. 4.55). Also, all other vocabulary sizes performed almost half a percentage point better. For both LibriSpeech test sets, it performed a bit better than BPE 128. 
+Character-level encoding seems to be the worst or second-worst possible representation. For the Common Voice \texttt{test} set, it scores almost one percentage point of WER higher than the best result (5.53 vs. 4.55). For both LibriSpeech test sets, the character-level performed a bit better than BPE 128. 
 
 Generally, \cref{fig:vocab_sizes_common_graph,fig:vocab_sizes_test_clean,fig:vocab_sizes_test_other} suggest a clear trend: the larger the vocabulary, the lower word error rate. Among the different BPE sizes, we can recognize that the 32k vocabulary size has systematically the best results on all test sets.
 
-Finally, we consider the following: a model can better learn from larger vocabulary sizes. First, a model does not have to learn low-level orthography extensively. Rather than memorizing the order of characters (or other smaller units), it can focus on the whole sentence and how individual words interact. Second, a larger model can detect errors because of anomalies in input encoding. Larger vocabularies produce a~shorter representation. A corrupt word is more likely to be broken down to smaller pieces. When a model detects such a situation, it can, for example, identify the right target word based on the context, rather than the suspicious word. Such an anomaly will most likely not occur in text encoded with small BPE.
+Finally, we consider the following: a model can better learn from larger vocabulary sizes. First, a model does not have to learn low-level orthography extensively. Rather than memorizing the order of characters (or other smaller units), it can focus on the whole sentence and how individual words interact. Second, a larger model can detect errors because of anomalies in input encoding. Larger vocabularies produce a~shorter representation. A corrupt word is more likely to be broken down to smaller pieces. The sudden difference in unit timing could be a clear indicator for the model to consider a correction. When a model detects such a situation, it can, for example, identify the right target word based on the context, rather than the erroneous sequence of small units forming the word. Such a chance for indication will most likely not occur in text encoded with small BPE.
 
 \paragraph{Source of BPE Training Data}
-For the LibriSpeech test sets, we observe almost no differences. Only the ``corrupted'' configuration has slightly less performance. 
+For the LibriSpeech test sets, we observe almost no differences in choosing correct, corrupt or mixed training data for BPE. Only the ``corrupted'' configuration has slightly less performance. 
 
-For Common Voice, we can witness some variation in performance. The best seems to be the ``mixed'' configuration. Somewhat worse is the ``corrupted'' and the worst is the ``clean'' version. In this case, we think the ``mixed'' is best as it has frequent enough ``corrupted'' words. This enables a model to learn to translate these corrupted words to correct ones. Also, it knows enough other words, so it can adequately work with correct phonemes.
+For Common Voice, we can witness some variation in performance. The best seems to be the ``mixed'' configuration. Somewhat worse is the ``corrupted'' and the worst is the ``clean'' version. In this case, we think the ``mixed'' is best because it has frequent enough ``corrupted'' words. This enables the model to learn to translate these corrupted words to correct ones. Also, it knows enough other words, so it can adequately work with correct phonemes.
 
-Therefore, we conclude that the source of training data for BPE has almost no impact on the final result. One should consider sweeping various options for a more specific usecase (e.g., ASR for dictated speech in specific area).
+For our situation, we conclude that the source of training data for BPE has almost no impact on the final result. One should consider sweeping various options for a more specific usecase (e.g., ASR for dictated speech in a specific area).
 
 \subsection{Conclusion}
 \label{easr:tok_conclusion}
-We carried out an extensive study on the impact of BPE vocabulary size and BPE training data sources. Based on the empirical evidence, we assume it is better to use larger vocabularies. This is consistent with \perscite{gupta2019character}: in high-resource setting (as ours: we train on 7M sentence pairs) when trained on corrupted data, the larger vocabularies are better. 
+We carried out an extensive study on the impact of BPE vocabulary size and BPE training data sources. Based on empirical evidence, we assume it is better to use larger vocabularies. This is consistent with \perscite{gupta2019character}: in high-resource settings (as ours: we train on 7M sentence pairs) when trained on corrupted data, the larger vocabularies are better. 
 
 In general, we do not see much difference between clean, corrupt, and mixed setting. In specific usecase (e.g., dictated speech), the selection of the training data source can influence the performance. In this case, one should consider to sweep various settings.
 
@@ -308,47 +308,49 @@ Therefore, in further experiments and setups, we will use 32k BPE vocabulary tra
 
 \section{English and Czech Enhanced ASR}
 \label{easr:english}
-In this section, we describe the training of the translation model for the proposed enhanced ASR pipeline (see \cref{fig:asr_enhanced_pipeline}). We train both English and Czech ``translation'' models.
+In this section, we describe the training of the translation model for the proposed enhanced ASR pipeline (see \cref{fig:asr_enhanced_pipeline}). We train both English and Czech P2G translation models.
 
 \subsection{Experiment Outline}
 \label{easr:outline}
-We seek a model for translating transcripts written in phonemes into graphemes in the same language. As previously discussed, we decided to use Transformer architecture. Translating phonemes into graphemes is a somewhat nontraditional task for the Transformer model. Therefore, we experiment with both variants of the architecture --- ``base'' and ``big''. 
+We seek a model for translating transcripts written in phonemes into graphemes in the same language. As previously discussed, we decided to use the Transformer architecture. Translating phonemes into graphemes is a somewhat nontraditional task for the Transformer model. Therefore, we experiment with both variants of the architecture --- ``base'' and ``big''. 
 
-In \cref{easr:tokenizer}, we studied appropriate tokenizer. We concluded the larger the BPE vocabulary, the better performance the model has. We obtained the best results with 32k BPE. We also discussed the source of BPE training data (note, not the Transformer model training data). We settled that there is no essential difference between clean, corrupted, and mixed setup in general. Keeping this in mind, we use clean phonemized CzEng data for the BPE vocabulary training in this experiment. 
+In \cref{easr:tokenizer}, we studied the appropriate tokenizer. We concluded the larger the BPE vocabulary, the better performance the model has. We obtained the best results with 32k BPE. We also discussed the source of BPE training data (note, not the Transformer model training data). We settled that there is no essential difference between clean, corrupted, and mixed setup in general. Keeping this in mind, we use clean phonemized CzEng data for the BPE vocabulary training in this experiment. 
 
-First, we are interested in model \XXX{(note, the Transformer model, not the BPE encoding for which we decided to use clean data in all our experiments)} performance when trained on clean data. In this chapter, we use clean phonemized CzEng. In \cref{chap:fine_tune_enhanced} we further study fine-tuning of models for corrupted ASR data.
+First, we are interested in model (note, the Transformer model, not the BPE encoding for which we decided to use clean data in all our experiments) performance when trained on clean data. In this chapter, we use clean phonemized CzEng. In \cref{chap:fine_tune_enhanced} we further study fine-tuning of models for corrupted ASR data.
 
-As already commented, this task is unusual for Transformer. Therefore, we try different beam sizes during the inference. We believe it could help the model to find better transcriptions by considering less likely labels.
+As already mentioned, this task is unusual for Transformer. Therefore, we try different beam sizes during the inference. We believe it could help the model to find better transcriptions by considering less likely labels.
 
 \subsection{Training Configuration}
 \label{easr:training}
 We tried to follow training tips for Transformer by \perscite{popel2018training}. We found that these suggestions do not work well with the NeMo toolkit. We tried many hyper-parameter settings. We found the following to work best for purposes of this experiment:
 
-For Transformer ``base'':
-\begin{description}
-	\item[GPU(s):] one GPU with 11 GB VRAM suffices
-	\item[batch size:] 6000
-	\item[learning rate:] 0.04
-	\item[warmup steps:] 8000
-	\item[max steps:] 600000 with manual abortion
-\end{description}
+\noindent For Transformer ``base'':\\
 
-For Transformer ``big'':
-\begin{description}
-	\item[GPU(s):] 6 GPUs with 16 GB VRAM
-	\item[batch size:] 6000
-	\item[learning rate:] 0.02
-	\item[warmup steps:] 16000
-	\item[max steps:] 600000 with manual abortion
-\end{description}
+\begin{tabular}{ll}
+	GPU(s): & one GPU with 11 GB VRAM suffices\\
+	batch size:&  6000\\
+	learning rate:&  0.04\\
+	warm-up steps:&  8000\\
+	max steps:&  600000 with manual abortion\\
+\end{tabular}\\
+
+\noindent For Transformer ``big'':\\
+
+\begin{tabular}{ll}
+	GPU(s): & 6 GPUs with 16 GB VRAM\\
+	batch size:&  6000\\
+	learning rate:&  0.02\\
+	warm-up steps:&  16000\\
+	max steps:&  600000 with manual abortion\\
+\end{tabular}\\
 
 We apply the BPE dropout \parcite{provilkov2019bpe} as a further regularization technique. We use the dropout probability suggested by the authors --- 0.1.
 
-Overview of training captured by evaluation on phonemized \texttt{newstest2015} is in \cref{fig:en_en_phon,fig:cs_cs_phon}.
+An overview of training captured by evaluation on phonemized \texttt{newstest2015} is in \cref{fig:en_en_phon,fig:cs_cs_phon}.
 
 \begin{figure*}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/cs_cs_phon}
-	\caption[Czech ASR training captured on \texttt{newstest2015}]{Evaluation on \texttt{newstest2015} during the training of the Czech P2G translation model. Phonemized Czech CzEng side serves as source and original Czech side as target.}
+	\caption[Czech ASR training captured on \texttt{newstest2015}]{Evaluation on \texttt{newstest2015} during the training of the Czech P2G translation model. Phonemized Czech CzEng side serves as the source and original Czech side as the target.}
 	\label{fig:cs_cs_phon}
 \end{figure*}
 
@@ -356,14 +358,14 @@ Overview of training captured by evaluation on phonemized \texttt{newstest2015} 
 
 \begin{figure*}[h]
 	\includegraphics[width=\linewidth,height=7cm]{img/en_en_phon}
-	\caption[English ASR training captured on \texttt{newstest2015}]{Evaluation on \texttt{newstest2015} during the training of the English P2G translation model. Phonemized English CzEng side serves as source and original English side as target.}
+	\caption[English ASR training captured on \texttt{newstest2015}]{Evaluation on \texttt{newstest2015} during the training of the English P2G translation model. Phonemized English CzEng side serves as the source and original English side as the target.}
 	\label{fig:en_en_phon}
 \end{figure*}
 
 
 
 
-\begin{table}[h]
+\begin{table}[t]
 	\centering
 	\begin{tabular}{c|cc}
 		\bf Beam size & \bf WER ``base''& \bf WER ``big'' \\
@@ -380,7 +382,7 @@ Overview of training captured by evaluation on phonemized \texttt{newstest2015} 
 \end{table}
 
 
-\begin{table}[H]
+\begin{table}[t]
 	\centering
 	\begin{tabular}{lc|cc}
 		\bf Corpus & \bf Beam size & \bf WER ``base''& \bf WER ``big'' \\
@@ -409,22 +411,22 @@ Overview of training captured by evaluation on phonemized \texttt{newstest2015} 
 
 
 \subsection{Performance Evaluation}
-In this section we evaluate Czech and English phoneme-to-grapheme translation models trained on clean phonemized data. The performance of the respective models on test sets is in \cref{tab:phon_cs,tab:phon_en}.
+In this section we evaluate Czech and English phoneme-to-grapheme translation models trained on clean phonemized data. The inputs are however genuine ASR outputs with phoneme recognition errors. The performance of the respective models on test sets is in \cref{tab:phon_cs,tab:phon_en}.
 
 \paragraph{Beam Size} The gap between the individual beam sizes is negligible. It seems that the models are confident about the predictions at each step and do not need to consider other alternatives. Given the ``clean'' phonemized data, this is not something unexpected. Later, when the model will be exposed to ``corrupted'' data, there could be some change in the behavior.
 
-\paragraph{Transformer ``Base'' vs. ``Big''} From the results in both languages, we see that the bigger model outperforms the smaller. The margin is rather narrow --- at most, 0.5 \% WER. We assume that later when we introduce errors to training data, the performance gap between the variants gets higher.
+\paragraph{Transformer ``Base'' vs. ``Big''} From the results in both languages, we see that the bigger model outperforms the smaller. The margin is rather narrow --- at most 0.5 \% WER. We assume that later when we introduce errors to training data, the performance gap between the variants gets bigger.
 
 \paragraph{Czech Enhanced ASR}
-\cref{tab:phon_cs} compares performance in terms of word error rate on the Czech Parliament corpus test set. 
+\cref{tab:phon_cs} compares the performance in terms of word error rate on the Czech Parliament corpus test set. 
 
-When compared to the baseline (our best model from \cref{chapter:asr}), a plain ASR~model, we see significant performance degradation. Baseline scores 7.64, and the best result for the Czech Enhanced ASR is 9.56. 
+When compared to the baseline (our best model from \cref{chapter:asr}), a plain ASR~model, we see a significant performance degradation. The baseline scores 7.64, and the best result for the Czech Enhanced ASR is 9.56. 
 
-First, we manually inspect obtained transcriptions. We see the translation model is inconsistent with outputting numbers --- it appears that the model arbitrarily decides to write a number as a  sequence of digits or a sequence of words. Essentially, this is not an error. We see that the predicted number is always correct. But the WER metric is not able to distinguish it and counts it as an error.
+First, we manually inspect the obtained transcriptions. We see the translation model is inconsistent with outputting numbers --- it appears that the model arbitrarily decides to write a number as a  sequence of digits or a sequence of words. Essentially, this is not an error. We see that the predicted number is always correct. But the WER metric is not able to distinguish it and counts it as an error.
 
-Further, we observe the model to ``try hard'' to translate the input ``as is''. The model is trained to transcribe correct transcriptions blindly. The model applies this behavior also to the erroneous data, producing incorrect transcriptions.    
+Second, we observe the model to ``try hard'' to translate the input ``as uttered''. The model is trained to transcribe correct transcriptions blindly. The model applies this behavior also to the erroneous data, producing incorrect transcriptions. For example, original ``seznámit'', transcribed by the acoustic model as ``\textipa{ezna:mit}'', translates the Transformer big model as ``Eznámit''.    
 
-Second, we must consider the quality of phonetic transcriptions. These are obtained from \cref{asr:transfer_phonemes}. The evaluation metric for these models is the phoneme word error rate. The PWER and the WER are not directly comparable. The model we used to obtain phonetic transcriptions has PWER 8.94 \%. In general, we suppose the PWER to be a bit worse. Some orthographically separate words (like ``I am'', or prepositions) become one phoneme word. Making a mistake in such a phoneme word can lead to a greater error rate. But there can be other linguistic phenomena. If we, for a brief moment, considered WER and PWER comparable, we observe the slightly better performance of the grapheme model. We believe there is still room for training a better acoustic model. As observed in \cref{chapter:asr}, transfer learning is better than training from scratch but might lead to sub-optimal results when compared with the proposed coarse-to-fine technique. 
+Third, we must consider the quality of phonetic transcriptions. These are obtained from \cref{asr:transfer_phonemes}. The evaluation metric for these models is the phoneme word error rate. The PWER and the WER are not directly comparable. The model we used to obtain phonetic transcriptions has PWER 8.94 \%. In general, we suppose PWER to reach higher scores. Some orthographically separate words (like ``I am'', or prepositions) become one phoneme word. Making a mistake in such a phoneme word can lead to a higher score in the error rate metric. But there can be other linguistic phenomena. If we, for a brief moment, considered WER and PWER comparable, we observe a slightly better performance of the grapheme model. We believe there is still room for training a better acoustic model. As observed in \cref{chapter:asr}, a plain transfer learning is better than training from scratch but might lead to sub-optimal results when compared with the proposed coarse-to-fine technique. 
 
 \paragraph{English Enhanced ASR}
 \cref{tab:phon_en} compares performance in terms of word error rate on three test sets --- Common Voice test, LibriSpeech \texttt{test-clean}, and \texttt{test-other}. Again, same as in Czech, we apply three different beam sizes (1, 4, and 16).
@@ -437,8 +439,8 @@ Similarly to the Czech, the model disregards orthography and tries to match grap
 \label{easr:conclusion}
 We proposed and trained an enhanced ASR system. We experimented with the two Transformer variants --- ``base'' and ``big'' --- and we also applied different beam sizes during the inference. 
 
-We found, the bigger models to perform better than the smaller ones. Further experiments on ASR and SLT will be therefore using the bigger architecture.
+We found the bigger models to perform better than the smaller ones. Further experiments on ASR and SLT will be therefore using the bigger architecture.
 
-Using different beam sizes did not lead to much different results. Nevertheless, there is still prospect of some difference when trained on corrupted data.
+Using different beam sizes did not lead to much different results. Nevertheless, there is still a prospect of some difference when trained on corrupted data.
 
-The trained models did yet not outperform the baseline. But their performance, when naively trained on ``clean'' data, is only slightly worse. We are strongly convinced the model will surpass the baseline by introducing errors to the training. Another fact to consider is that the acoustic data were collected using greedy decoding. In the final pipeline, a beam search with language model re-scoring will be used. 
+The trained models did not yet outperform the baseline. But their performance, when naively trained on ``clean'' data, is only slightly worse. We are strongly convinced the model will surpass the baseline by introducing errors to the training. %Another fact to consider is that the acoustic data were collected using greedy decoding. In the final pipeline, a beam search with language model re-scoring will be used. 

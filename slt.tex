@@ -102,7 +102,7 @@ Still, the performance of the models is rather inferior to the test sets in well
 \end{table}
 
 \subsection{Beam Size} 
-SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt_en_cs} are consistent with the ones commonly used in the neural machine translation. We see that the models are, in general, confident at each step and do not need to consider other alternatives. Enlarging the beam size beyond a small number leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations, so the optimum beam size in our experiments turned out to be 4.
+SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt} are consistent with the ones commonly used in the neural machine translation. We see that the models are, in general, confident at each step and do not need to consider other alternatives. Enlarging the beam size beyond a small number leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations, so the optimum beam size in our experiments turned out to be 4.
 
 The only exception to this is the English to Czech proposed SLT. The beam size of 16 outperformed other beam sizes. However, the margin is relatively small --- 0.23 BLEU. The model is probably less confident when the source is corrupted as a result of processing a real sound with the acoustic model.
 
@@ -148,6 +148,62 @@ We design the evaluation procedure as a blind experiment. We use \texttt{QuickJu
 \begin{landscape}
 	\begin{table}[]
 		\centering
+		\begin{tabular}{lc|cccc|ccc|ccc}
+			&
+			\multicolumn{1}{l|}{} &
+			\multirow{3}{*}{\textbf{Model}} &
+			\multirow{3}{*}{\textbf{Source}} &
+			\multirow{3}{*}{\textbf{Source error}} &
+			\multirow{3}{*}{\textbf{Target}} &
+			\multicolumn{3}{c|}{\textbf{Cased, interpuct.}} &
+			\multicolumn{3}{c}{\textbf{Uncased, no interpunct.}} \\
+
+			&\multicolumn{1}{l|}{}  &       &       &           &          & \multicolumn{3}{c|}{Beam Size} & \multicolumn{3}{c}{Beam Size} \\
+
+			&\multicolumn{1}{l|}{}  &       &       &           &          & 1        & 4        & 16       & 1        & 4        & 16       \\ \cline{2-12}
+
+			\multirow{4}{*}{\textbf{Czech $\rightarrow$ English}}&\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{SLT}\\ (ASR source)\end{tabular}}} &
+			P2G &
+			ASR Phon &
+			PWER 34.33 \% &
+			\multirow{2}{*}{En Graph} & 19.47 & \textbf{20.07} & 19.75 & 19.56 & \textbf{19.96} & 19.43 \tabspace{16pt}\\
+
+			&\multicolumn{1}{c|}{} &  baseline & ASR Graph & WER 34.51 \% &   & 18.39 & 19.69 & 19.01 & 18.5 & 19.74 & 18.99    \\[0.2\normalbaselineskip] \cline{2-12}
+
+			&\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{Translation}\\ (clean source)\end{tabular}}} &
+			P2G &
+			Clean Phon &
+			\multirow{2}{*}{0 \%} &
+			\multirow{2}{*}{En Graph} & 30.14 & 30.82 & 30.35 & 30.44 & 30.82 & 30.56 \tabspace{16pt}\\
+			
+			&\multicolumn{1}{c|}{} &  baseline & Clean Graph & & & 30.31 & \textbf{31.07} & 30.45 & 30.74 & \textbf{31.55} & 30.77 \\
+
+			\midrule
+
+			\multirow{4}{*}{\textbf{English $\rightarrow$ Czech}} & \multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{SLT}\\ (ASR source)\end{tabular}}} &
+			P2G &
+			ASR Phon &
+			PWER 18.61 \% & \multirow{2}{*}{Cs Graph} & 16.64 & 17.12 & \textbf{17.35} & 14.28 & 14.76 & \textbf{14.9}\tabspace{16pt}\\
+			
+			&\multicolumn{1}{c|}{} &  baseline & ASR Graph & WER 18.80 \% &   & 16.51 & 16.83 & 16.68 & 14.29 & 14.53 & 14.42    \\[0.2\normalbaselineskip] \cline{2-12}
+
+			&\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{Translation}\\ (clean source)\end{tabular}}} &
+			P2G &
+			Clean Phon &
+			\multirow{2}{*}{0 \%} &
+			\multirow{2}{*}{Cs Graph} & 21.75 & 22.32 & 22.26 & 19.6 & 20.01 & 20.06 \tabspace{16pt}\\
+			
+			&\multicolumn{1}{c|}{} &  baseline & Clean Graph & & & 21.85 & \textbf{22.47} & 22.21 & 19.74 & \textbf{20.09} & 20.07
+		\end{tabular}
+		\caption[SLT evaluation]{Evaluation of the proposed models (phonemes to graphemes --- P2G) and the baseline ones (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.}
+		\label{tab:eval_slt}
+	\end{table}
+\end{landscape}
+
+\iffalse
+\begin{landscape}
+	\begin{table}[]
+		\centering
 		\begin{tabular}{c|cccc|ccc|ccc}
 			\multicolumn{1}{l|}{} &
 			\multirow{3}{*}{\textbf{Model}} &
@@ -176,6 +232,7 @@ We design the evaluation procedure as a blind experiment. We use \texttt{QuickJu
 		\label{tab:eval_slt}
 	\end{table}
 \end{landscape}
+\fi
 
 \begin{table}[H]
 	\centering
@@ -244,7 +301,7 @@ The baseline SLT pipeline uses as ASR model the Jasper model trained on LibriSpe
 
 We also assess the translation models performance on the P2G translation task (i.e., the translation sources are true transcripts, not burdened with errors introduced by the acoustic/ASR models).
 
-\cref{tab:eval_slt_en_cs} contains SacreBLEU scores of the English to Czech translation models as part of a SLT pipeline and in the translation task. Translation samples are in \cref{tab:en_cs_names,tab:en_cs_sample}.
+\cref{tab:eval_slt} contains SacreBLEU scores of the English to Czech translation models as part of a SLT pipeline and in the translation task. Translation samples are in \cref{tab:en_cs_names,tab:en_cs_sample}.
 
 Similarly, as the Czech to English SLT, the proposed system (with phonemes as an intermediate step) outperforms the baseline. Again, the difference is rather small --- 0.52 BLEU. 
 
@@ -273,6 +330,7 @@ We discovered that the baseline tends to mark unknown words as proper nous (e.g.
 
 With the overall translation quality, the handling adequacy of proper nouns also rises (see the \cref{tab:en_cs_names}). It is worth noting that the re-speaker was a native Czech. The Czech proper nouns are hence correctly pronounced in Czech. Therefore, we find it quite interesting, that both system were able to translate the name satisfactorily.
 
+\iffalse
 \begin{landscape}
 	\begin{table}[]
 		\centering
@@ -304,6 +362,7 @@ With the overall translation quality, the handling adequacy of proper nouns also
 		\label{tab:eval_slt_en_cs}
 	\end{table}
 \end{landscape}
+\fi
 
 \begin{table}[]
 	\centering

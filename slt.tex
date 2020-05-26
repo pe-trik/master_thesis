@@ -102,24 +102,24 @@ Still, the performance of the models is rather inferior to the test sets in well
 \end{table}
 
 \subsection{Beam Size} 
-SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt_en_cs} are consistent with the established ones in the neural machine translation. We see that the models are, in general, confident at each step \XXX{and do not need to consider other alternatives}. Enlarging the beam size leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations.
+SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt_en_cs} are consistent with the ones commonly used in the neural machine translation. We see that the models are, in general, confident at each step and do not need to consider other alternatives. Enlarging the beam size beyond a small number leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations, so the optimum beam size in our experiments turned out to be 4.
 
 The only exception to this is the English to Czech proposed SLT. The beam size of 16 outperformed other beam sizes. However, the margin is relatively small --- 0.23 BLEU. The model is probably less confident when the source is corrupted as a result of processing a real sound with the acoustic model.
 
 \subsection{Czech to English}
 For evaluation of the Czech to English SLT pipeline, we take the acoustic model from \cref{asr:transfer_phonemes}. This model has Phoneme Word Error Rate 8.94 \% on the phonemized Corpus of Czech Parliament Plenary Hearings.
 
-We compare our proposal with a more typical setup --- a standard ASR followed by an NMT. We employ the best performing ASR model from \cref{asr:crosslingual_intermediate}. This model has a Word Error Rate 7.64 \% on the Corpus of Czech Parliament Plenary Hearings.
+We compare our proposal with a more typical setup --- a standard ASR followed by an NMT. We employ the best performing ASR model from \cref{asr:crosslingual_intermediate}. This model has a word error rate of 7.64 \% on the Corpus of Czech Parliament Plenary Hearings.
 
 \cref{tab:eval_slt} contains SacreBLEU scores for Czech to English SLT. Translation samples are in \cref{tab:cs_en_names,tab:cs_en_sample}.
 
-Additionally to the SLT pipeline evaluation, we also evaluate performance of the models on P2G translation task. We take the true transcripts (phoneme transcripts for the proposed model and grapheme transcripts for the baseline model) and use them as the source of the SLT translation systems.
+Additionally to the SLT pipeline evaluation, we also evaluate performance of the models on P2G translation task alone. We take the true transcripts (phoneme transcripts for the proposed model and grapheme transcripts for the baseline model) and use them as the source of the SLT translation systems.
 
 First, we evaluate the SLT task. We observe that the proposed phoneme-based system outperforms the baseline. The margin is rather small in terms of the SacreBLEU metric.
 
 In the translation task (with correct transcripts as sources), the baseline closely outperforms the proposed system. This is probably due to the easier detection and consecutive translation of proper nouns in graphemes.
 
-We see that the errors introduced by the acoustic/ASR model considerably derogate the translation quality --- 11 points of SacreBLEU. A probable cause of such drastic SacreBLEU score reduction is high (phoneme) word error rate of the acoustic and ASR models (more than 30 \%). This is quite surprising, as the re-speaker is Czech native.
+We see that the errors introduced by the acoustic/ASR model considerably demage the translation quality --- 11 points of SacreBLEU. A probable cause of such a drastic SacreBLEU score reduction is the high (phoneme) word error rate of the acoustic and ASR models (more than 30 \%). This is quite surprising, as the re-speaker is a Czech native.
 
 \paragraph{Manual Evaluation}
 We also manually assess the translation quality obtained in the SLT evaluation.
@@ -128,9 +128,9 @@ We design the evaluation procedure as a blind experiment. We use \texttt{QuickJu
 
 \begin{itemize}
 	\item we evaluate only a random sub-sample of the whole test set,
-	\item we shuffle the order of segments (tuples consisting of the source, ground truth and hypotheses) in test set using \texttt{--shuffle} option,
+	\item we shuffle the order of segments (tuples consisting of the source, ground truth and hypotheses) in the test set,
 	\item order of hypotheses in a segment is randomly switched (to prevent favoring one particular system across the test set),
-	\item we evaluate the first 50 samples (note, the original order in the test set was previously destroyed), 
+	\item we evaluate the first 50 samples, 
 	\item we annotate hypotheses as follows:
 	\begin{itemize}
 		\item ``\texttt{**}'' for correct translation,
@@ -138,71 +138,12 @@ We design the evaluation procedure as a blind experiment. We use \texttt{QuickJu
 		\item nothing for incorrect translation,
 	\end{itemize}
 	\item we consider these criteria (in the given order):
-	\begin{itemize}
+	\begin{enumerate}
 		\item content,
 		\item validity, or at least, phonological similarity of proper nouns,
 		\item grammar.
-	\end{itemize}
+	\end{enumerate}
 \end{itemize}
-
-\begin{table}[t]
-	\centering
-	\begin{tabular}{l|ccc}
-		& Correct & Almost correct & Incorrect \\ \hline
-		Proposed      & 12      & 14             & 24        \\
-		Baseline      & 7       & 15             & 28        \\ \hline
-		Only$\dagger$ proposed & 7       & 4              & 7         \\
-		Only$\dagger$ baseline & 2       & 5              & 11        \\ \hline
-		Both          & 1       & 6              & 17       
-	\end{tabular}	
-	\caption[Czech to English manual evaluation]{Distribution of ratings of manual annotation ofn the Czech to English SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
-	\label{tab:manual_cs_en}
-\end{table}
-
-Distribution of manual annotations of the Czech to English SLT is in the \cref{tab:manual_cs_en}. 
-
-As suggested by the SacreBLEU score, the proposed system outperforms the baseline in manual annotation. The proposed SLT system produces a correct translation in more cases than the baseline (12 correct, 14 almost correct vs. 7 correct and 15 almost correct). However, we must acknowledge that the overall performance of both systems is rather poor --- in 24 cases (out of 50) the proposed and in the 28 cases the baseline failed to provide acceptable translations.
-
-We discover a few notable differences while reviewing the translations. First, we find a better handling of proper nouns by the proposed system as very important. The translation are rarely without errors, but they are correctly recognized as proper nouns. Further, they tend to have a close pronunciation as the original.
-
-Also, if the system fails to recognize a word, it is commonly made a proper noun (e.g., ``Herec byl tehdy o 12 let starší...'' translates as ``Hannes was twelve years older...''). This is a bit distracting, but we see a possibility that in a broader context, the word can be understood by a user.
-
-Interesting is also a more correct recognition on numbers. This is probably due to side-effect of the phonemization. The CzEng corpus is not consistent in using numbers. On the other hand, \texttt{phonemizer} rewrites all numbers written using numeric character to words.
-
-\begin{table}[]
-	\centering
-	\small
-	\begin{tabular}{l|llll}
-		\textbf{Original} & Tomáš Rosický & František Savov  & Karim Rashid     & Karel Štědrý       \\ \hline
-		\textbf{Proposed} & Thomas Rozicki     & Francis Sava & Cary Rashid      & Karl the Generous  \\
-		\textbf{Baseline} & Tomas Rizky    & Frantise Saho    & Cary Rash & Kanel the Generous
-	\end{tabular}
-	\caption{Samples of names from Czech to English SLT.}
-	\label{tab:cs_en_names}
-\end{table}
-
-\begin{table}[]
-	\centering
-	\begin{tabular}{ll}
-		\multicolumn{1}{l|}{\textbf{Source}}   & Obviněný podle všeho nad svým činem lítost neprojevoval.      \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & The accused apparently showed no regret for his actions. \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & The accused seemed to show little remorse for his or her lack of pity.      \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} & The accusation seemed to show no regret for his actions.    \\
-		\textbf{}                              &                                                           \\
-		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{Zakázku poprvé vysoutěžila v roce 2013, kdy ministerstvo průmyslu\\ a obchodu vedl Martim Kuba ODS.}      \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{The competition was first launched in 2013 when the Department of\\ Industry and Trade was led by Martim Kuba of the ODS party.}      \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{The contract was first won in 2013 when Martin Cuba OTS was in\\ charge of the Ministry of Industry and Trade.}                 \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} & \makecell[l]{She first competed for the contract in 2,13, when the Department of\\ Industry and Trade led Martin Cuba from...}      \\
-		\textbf{}                              &                                                           \\
-		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{Dvojice mladých Rusů Ilja Žirnov a Kira Čerkasovová byla\\ pohřešována od prosince 2005.}      \\
-		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{The two young Russians, Ilja Zhirnov and Kira Cherkasov, had been\\ missing since December 2005.} \\
-		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{A pair of small Russians, Ilya Zirnov Akira Cherkasova, were missing\\ since December 2005.}      \\
-		\multicolumn{1}{l|}{\textbf{Baseline}} &\makecell[l]{Ilya Zernov, Akiracergasov, has been missing since December.}   
-	\end{tabular}
-	\caption{Sentence samples from Czech to English SLT.}
-	\label{tab:cs_en_sample}
-\end{table}
-
 
 \begin{landscape}
 	\begin{table}[]
@@ -231,10 +172,70 @@ Interesting is also a more correct recognition on numbers. This is probably due 
 			
 			\multicolumn{1}{c|}{} &  baseline & Clean$\dagger$ Graph & & & 30.31 & \textbf{31.07} & 30.45 & 30.74 & \textbf{31.55} & 30.77
 		\end{tabular}
-		\caption[Czech to English SLT evaluation]{Evaluation of the proposed Czech to English model (phonemes to graphemes --- P2G) and the Czech to English baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped interpunction.}
+		\caption[Czech to English SLT evaluation]{Evaluation of the proposed Czech to English model (phonemes to graphemes --- P2G) and the Czech to English baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped punctuation.}
 		\label{tab:eval_slt}
 	\end{table}
 \end{landscape}
+
+\begin{table}[H]
+	\centering
+	\small
+	\begin{tabular}{l|llll}
+		\textbf{Original} & Tomáš Rosický & František Savov  & Karim Rashid     & Karel Štědrý       \\ \hline
+		\textbf{Proposed} & Thomas Rozicki     & Francis Sava & Cary Rashid      & Karl the Generous  \\
+		\textbf{Baseline} & Tomas Rizky    & Frantise Saho    & Cary Rash & Kanel the Generous
+	\end{tabular}
+	\caption{Samples of names from Czech to English SLT.}
+	\label{tab:cs_en_names}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{ll}
+		\multicolumn{1}{l|}{\textbf{Source}}   & Obviněný podle všeho nad svým činem lítost neprojevoval.      \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & The accused apparently showed no regret for his actions. \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & The accused seemed to show little remorse for his or her lack of pity.      \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} & The accusation seemed to show no regret for his actions.    \\
+		\textbf{}                              &                                                           \\
+		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{Zakázku poprvé vysoutěžila v roce 2013, kdy ministerstvo průmyslu\\ a obchodu vedl Martim Kuba ODS.}      \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{The competition was first launched in 2013 when the Department of\\ Industry and Trade was led by Martim Kuba of the ODS party.}      \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{The contract was first won in 2013 when Martin Cuba OTS was in\\ charge of the Ministry of Industry and Trade.}                 \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} & \makecell[l]{She first competed for the contract in 2,13, when the Department of\\ Industry and Trade led Martin Cuba from...}      \\
+		\textbf{}                              &                                                           \\
+		\multicolumn{1}{l|}{\textbf{Source}}   & \makecell[l]{Dvojice mladých Rusů Ilja Žirnov a Kira Čerkasovová byla\\ pohřešována od prosince 2005.}      \\
+		\multicolumn{1}{l|}{\textbf{Target}}   & \makecell[l]{The two young Russians, Ilja Zhirnov and Kira Cherkasov, had been\\ missing since December 2005.} \\
+		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{A pair of small Russians, Ilya Zirnov Akira Cherkasova, were missing\\ since December 2005.}      \\
+		\multicolumn{1}{l|}{\textbf{Baseline}} &\makecell[l]{Ilya Zernov, Akiracergasov, has been missing since December.}   
+	\end{tabular}
+	\caption[Output samples from Czech to English SLT]{Output samples from Czech to English SLT. Note the typo Marti\textit{m} in the source and reference of the second sentence. This common Czech name was correctly recognized by both shown systems. Additionally, the target is incorrectly translated and should be: ``It (presumably a company) won the tender for the first time in 2013... ''.}
+	\label{tab:cs_en_sample}
+\end{table}
+
+
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{l|ccc}
+		& Correct & Almost correct & Incorrect \\ \hline
+		Proposed      & 12      & 14             & 24        \\
+		Baseline      & 7       & 15             & 28        \\ \hline
+		Only$\dagger$ proposed & 7       & 4              & 7         \\
+		Only$\dagger$ baseline & 2       & 5              & 11        \\ \hline
+		Both          & 1       & 6              & 17       
+	\end{tabular}	
+	\caption[Czech to English manual evaluation]{Results of ratings of manual annotation ofn the Czech to English SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
+	\label{tab:manual_cs_en}
+\end{table}
+
+The distribution of manual annotations of the Czech to English SLT is in \cref{tab:manual_cs_en}. 
+
+As suggested by the SacreBLEU score, the proposed system outperforms the baseline in manual annotation. The proposed SLT system produces a correct translation in more cases than the baseline (12 correct, 14 almost correct compared to 7 correct and 15 almost correct). However, we must acknowledge that the overall performance of both systems is rather poor --- in 24 cases (out of 50) the proposed system and in the 28 cases the baseline one failed to provide acceptable translations.
+
+We discovered a few notable differences while reviewing the translations. First, we find a somewhat better handling of proper nouns by the proposed system as very important. The translation are rarely without errors, but they are correctly recognized as proper nouns. Further, they tend to have a pronunciation closer to the original than those of the baseline system.
+
+Also, if the system fails to recognize a word, it is commonly rendered as a proper noun (e.g., ``Herec byl tehdy o 12 let starší...'', ``The actor was 12 years older then...'' translates as ``Hannes was twelve years older...''). This is a bit distracting, but we see a possibility that in a broader context, the word can be understood by the user.
+
+Slightlz better recognition of numbers is also interesting. This is probably due to a side-effect of the phonemization. The CzEng corpus is not consistent in using numbers. The \texttt{phonemizer} rewrites all numbers written using numeric characters to words.
 
 \subsection{English to Czech}
 In order to evaluate the English to Czech translation model as part of the proposed SLT pipeline, we take the English acoustic model from \cref{asr:transfer_phonemes}. The model has a phoneme word error rate 4.18 \% on LibriSpeech \texttt{test-clean} and 11.48 \% on the \texttt{test-other}.
@@ -257,7 +258,7 @@ Similarly, as the Czech to English SLT, the proposed system (with phonemes as an
 		Only$\dagger$ baseline & 6       & 1              & 8        \\ \hline
 		Both          & 4       & 11              & 6       
 	\end{tabular}	
-	\caption[English to Czech manual evaluation]{Distribution of manual annotation of the English to Czech SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
+	\caption[English to Czech manual evaluation]{Results of manual annotation of the English to Czech SLT. We reviewed 50 randomly selected samples.\\$\dagger$ Only means, that in case of (almost) correct translations the other system produced incorrect translation and vice versa.}
 	\label{tab:manual_en_cs}
 \end{table}
 
@@ -272,6 +273,37 @@ We discovered that the baseline tends to mark unknown words as proper nous (e.g.
 
 With the overall translation quality, the handling adequacy of proper nouns also rises (see the \cref{tab:en_cs_names}). It is worth noting that the re-speaker was a native Czech. The Czech proper nouns are hence correctly pronounced in Czech. Therefore, we find it quite interesting, that both system were able to translate the name satisfactorily.
 
+\begin{landscape}
+	\begin{table}[]
+		\centering
+		\begin{tabular}{c|cccc|ccc|ccc}
+			\multicolumn{1}{l|}{} &
+			\multirow{3}{*}{\textbf{Model}} &
+			\multirow{3}{*}{\textbf{Souce}} &
+			\multirow{3}{*}{\textbf{Souce error}} &
+			\multirow{3}{*}{\textbf{Target}} &
+			\multicolumn{3}{c|}{\textbf{Cased, interpuct.}} &
+			\multicolumn{3}{c}{\textbf{Uncased, no interpunct.}} \\
+			\multicolumn{1}{l|}{}  &       &       &           &          & \multicolumn{3}{c|}{Beam Size} & \multicolumn{3}{c}{Beam Size} \\
+			\multicolumn{1}{l|}{}  &       &       &           &          & 1        & 4        & 16       & 1        & 4        & 16       \\ \hline
+			\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{SLT}\\ (ASR source)\end{tabular}}} &
+			P2G &
+			ASR Phon &
+			PWER 18.61 \% &
+			\multirow{2}{*}{Cs Graph} & 16.64 & 17.12 & \textbf{17.35} & 14.28 & 14.76 & \textbf{14.9}\tabspace{16pt}\\
+			\multicolumn{1}{c|}{} &  baseline & ASR Graph & WER 18.80 \% &   & 16.51 & 16.83 & 16.68 & 14.29 & 14.53 & 14.42    \\[0.2\normalbaselineskip] \hline
+			\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{Translation}\\ (clean source)\end{tabular}}} &
+			P2G &
+			Clean Phon &
+			\multirow{2}{*}{0 \%} &
+			\multirow{2}{*}{Cs Graph} & 21.75 & 22.32 & 22.26 & 19.6 & 20.01 & 20.06 \tabspace{16pt}\\
+			
+			\multicolumn{1}{c|}{} &  baseline & Clean$\dagger$ Graph & & & 21.85 & \textbf{22.47} & 22.21 & 19.74 & \textbf{20.09} & 20.07
+		\end{tabular}
+		\caption[English to Czech SLT evaluation]{Evaluation of the proposed English to Czech model (phonemes to graphemes --- P2G) and the English to Czech baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped punctuation.}
+		\label{tab:eval_slt_en_cs}
+	\end{table}
+\end{landscape}
 
 \begin{table}[]
 	\centering
@@ -303,42 +335,9 @@ With the overall translation quality, the handling adequacy of proper nouns also
 		\multicolumn{1}{l|}{\textbf{Proposed}} & \makecell[l]{Hydratace se projevuje jako naprostá ztráta sebeúčinku.    }  \\
 		\multicolumn{1}{l|}{\textbf{Baseline}} & \makecell[l]{Dehydratace se projevuje jako úplná ztráta soběstačnosti.   }
 	\end{tabular}
-	\caption{Sentence samples from English to Czech SLT.}
+	\caption{Output samples from English to Czech SLT.}
 	\label{tab:en_cs_sample}
 \end{table}
-
-
-\begin{landscape}
-	\begin{table}[]
-		\centering
-		\begin{tabular}{c|cccc|ccc|ccc}
-			\multicolumn{1}{l|}{} &
-			\multirow{3}{*}{\textbf{Model}} &
-			\multirow{3}{*}{\textbf{Souce}} &
-			\multirow{3}{*}{\textbf{Souce error}} &
-			\multirow{3}{*}{\textbf{Target}} &
-			\multicolumn{3}{c|}{\textbf{Cased, interpuct.}} &
-			\multicolumn{3}{c}{\textbf{Uncased, no interpunct.}} \\
-			\multicolumn{1}{l|}{}  &       &       &           &          & \multicolumn{3}{c|}{Beam Size} & \multicolumn{3}{c}{Beam Size} \\
-			\multicolumn{1}{l|}{}  &       &       &           &          & 1        & 4        & 16       & 1        & 4        & 16       \\ \hline
-			\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{SLT}\\ (ASR source)\end{tabular}}} &
-			P2G &
-			ASR Phon &
-			PWER 18.61 \% &
-			\multirow{2}{*}{Cs Graph} & 16.64 & 17.12 & \textbf{17.35} & 14.28 & 14.76 & \textbf{14.9}\tabspace{16pt}\\
-			\multicolumn{1}{c|}{} &  baseline & ASR Graph & WER 18.80 \% &   & 16.51 & 16.83 & 16.68 & 14.29 & 14.53 & 14.42    \\[0.2\normalbaselineskip] \hline
-			\multicolumn{1}{c|}{\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}\textbf{Translation}\\ (clean source)\end{tabular}}} &
-			P2G &
-			Clean Phon &
-			\multirow{2}{*}{0 \%} &
-			\multirow{2}{*}{Cs Graph} & 21.75 & 22.32 & 22.26 & 19.6 & 20.01 & 20.06 \tabspace{16pt}\\
-			
-			\multicolumn{1}{c|}{} &  baseline & Clean$\dagger$ Graph & & & 21.85 & \textbf{22.47} & 22.21 & 19.74 & \textbf{20.09} & 20.07
-		\end{tabular}
-		\caption[English to Czech SLT evaluation]{Evaluation of the proposed English to Czech model (phonemes to graphemes --- P2G) and the English to Czech baseline (graphemes to graphemes). We evaluate performance on SLT and Translation task. SLT task obtained source from ASR transcripts. Translation task is done on clean (original) source.\\$\dagger$ ASR-like Graph is original lowercase source with stripped interpunction.}
-		\label{tab:eval_slt_en_cs}
-	\end{table}
-\end{landscape}
 
 \section{Conclusion}
 \label{slt:conclusion}

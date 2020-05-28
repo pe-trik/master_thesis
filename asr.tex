@@ -286,7 +286,7 @@ the baseline only marginally in this basic transfer learning setup.
 We are able to achieve a substantial improvement in WER by introducing an intermediate step in the style of coarse-to-fine training, first training the models to produce Czech without accents, and then refining the model to the full Czech.
 This coarse-to-fine training is most successful within a single language: Our final model for Czech is better by over 3.5 WER absolute over the baseline, reaching WER of 16.57\%. %Further gains are expected from beam search with language model or better iteration choice to avoid overfitting.
 
-%As we documented in the \cref{sec:results}, transfer learning leads to a substantial reduction in training time. We achieved speed-up even in unrelated languages. We also demonstrated that the coarse-to-fine approach leads not only to training time reduction but also yields better accuracy.
+%As we documented in \cref{sec:results}, transfer learning leads to a substantial reduction in training time. We achieved speed-up even in unrelated languages. We also demonstrated that the coarse-to-fine approach leads not only to training time reduction but also yields better accuracy.
 
 We see further potential in the coarse-to-fine training. We would like to explore this area more thoroughly, e.g., by introducing multiple simplification stages or testing the technique on more languages.
 

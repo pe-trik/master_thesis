@@ -5,13 +5,13 @@ In this chapter, we experiment with online adaptation of the proposed enhanced A
 
 We assume that many ASR errors are systematic and highly dependent on the particular speaker, for example, due to his/her mother tongue. We expect that some of these errors can be identified and corrected in the ASR phoneme-to-grapheme translation model. We plan to identify these corrections and extract simple speaker-specific rules. %These rewriting rules would be applied before feeding them into the ASR/SLT translation model in the pipeline.
 
-This chapter is organized as follows: in \cref{oeasr:model} we propose online adaptation and incorporate it into the proposed ASR/SLT pipeline. In \cref{oeasr:experiments}, we experiment with the online adaptation. Finally, in \cref{oeasr:conclusion} we conclude the chapter.
+This chapter is organized as follows: in \cref{oeasr:model} we propose online adaptation and incorporate it into the proposed ASR/SLT pipeline. In \cref{oeasr:experiments}, we experiment with the online adaptation. In \cref{oeasr:conclusion} we finally conclude the chapter.
 
 \section{Enhanced ASR/SLT Pipeline with Online Adaptation}
 \label{oeasr:model}
-We propose the enhanced ASR pipeline with online adaptation as follows: the acoustic model outputs the phoneme transcripts. The phoneme transcripts are adapted using the Online Adaptation model. The adapted output (still in phonemes) is fed into the phoneme-to-grapheme translation model (note, under the term translation we mean both the monolingual --- phonemes to graphemes in the same language --- and translation from source language phonemes to target language graphemes). The translation model translates the phoneme input into graphemes using beam search. The model outputs the best translation candidate from the beam as a translation of the whole ASR pipeline. All beam translations are passed through the \texttt{phonemizer}, and the online adaptation model learns new rules from the transcripts.
+We propose the enhanced ASR pipeline with online adaptation as follows: the acoustic model outputs the phoneme transcripts. The phoneme transcripts are adapted using the Online Adaptation model. The adapted output (still in phonemes) is fed into the phoneme-to-grapheme translation model. The translation model translates the phoneme input into graphemes using beam search. The model outputs the best translation candidate from the beam as a translation of the whole ASR pipeline. All beam translations are passed through the \texttt{phonemizer}, and the online adaptation model learns new rules from the transcripts.
 
-In the case of the SLT pipeline, two parallel phoneme-to-grapheme translation models are needed: the ASR and the SLT. The ASR translation model would be used for obtaining ``training data'' for the online adaptation model.
+So far we have discussed the goal of online adaptation for the purpose of ASR. The same ideas could be applied also for SLT. In this case, we add the translation model (with different source and target language) to the pipeline, but we do not conduct this experiment.
 
 The schema of the proposed enhanced ASR pipeline with online adaptation is in \cref{fig:online_easr}.
 
@@ -24,9 +24,9 @@ The schema of the proposed enhanced ASR pipeline with online adaptation is in \c
 
 
 \subsection{Online Adaptation Model}
-We seek a method that would be capable of quick, on-the-fly adaptation as a speaker talks. The apparent requirement of such online adaptation model is that it must be able to learn quickly. Hence, we rule out neural networks as they require a higher volume of training data. Short of such data, the neural networks tend to over-fit the examples. 
+We seek a method that would be capable of quick, on-the-fly adaptation as the speaker talks. The apparent requirement of such an online adaptation model is that it must be able to learn quickly. Hence, we rule out neural networks as they require a higher volume of training data. Short of such data, the neural networks tend to over-fit the examples. 
 
-Therefore, we decided on the rule-based model. We take our inspiration in the work we previously reviewed for phoneme-to-grapheme models (see \cref{easr:rel_asr}). More precisely, the work of \perscite{horndasch2006phoneme}. Their main objective is to find appropriate orthographic representations for phoneme strings. Our use case differs as we seek phoneme-to-phoneme mapping correcting errors instead of phoneme-to-grapheme mapping. Using an expectation-maximization algorithm \parcite{dempster1977maximum}, we seek the best ``correct-to-incorrect'' phoneme alignment (in their setup, they are looking for best phoneme-to-grapheme alignment). In the second step, we cluster neighboring symbols together to account for the insertions (i.e., to remove ``$\epsilon$ to phoneme'' rules). Finally, $n$-gram probabilities of symbol pairs are learned. During the inference, the input string is split into individual phoneme symbols. For each symbol are generated all possible symbol pairs. According to the beam width, the best sequences are taken. 
+Therefore, we decided on the rule-based model. We take our inspiration in the work we previously reviewed for phoneme-to-grapheme models (see \cref{easr:rel_asr}), more precisely the work of \perscite{horndasch2006phoneme}. Their main objective is to find appropriate orthographic representations for phoneme strings. Our use case differs as we seek phoneme-to-phoneme mapping correcting errors instead of phoneme-to-grapheme mapping. Using an expectation-maximization algorithm \parcite{dempster1977maximum}, we seek the best ``correct-to-incorrect'' phoneme alignment (in their setup, they are looking for best phoneme-to-grapheme alignment). In the second step, we cluster neighboring symbols together to account for the insertions (i.e., to remove ``$\epsilon$ to phoneme'' rules). Finally, $n$-gram probabilities of symbol pairs are learned. During the inference, the input string is split into individual phoneme symbols. For each symbol, all possible symbol pairs are generated. According to the beam width, the best sequences are taken. 
 
 \paragraph{Model Training}
 As already described, we learn the phoneme rewrite rules from aligned ``incorrect-to-correct'' phoneme transcriptions. To align these transcriptions, we utilize the expectation-maximization algorithm as follows:
@@ -42,7 +42,7 @@ As already described, we learn the phoneme rewrite rules from aligned ``incorrec
     \end{enumerate}
 \end{enumerate}
 
-The last computed alignment defines the rewrite rules: ``rewrite the symbol from the source string (the ``incorrect'' one) to the symbol on the corresponding position in the target string (the ``correct'' one)''. The insertions in the alignment are represented with special $\epsilon$ character in the source string (insertion, \textipa{Ins3:S@n}):
+The last computed alignment defines the rewrite rules: ``rewrite the symbol from the source string (the ``incorrect'' one) to the symbol on the corresponding position in the target string (the ``correct'' one)''. The insertions in the alignment are represented with special $\epsilon$ character in the source string. . For instance, consider the correction completing the unfinished pronunciation of the word ``insertion''  (\textipa{Ins3:S@n}):
 
 \begin{center}
     \begin{tabular}{c}
@@ -51,7 +51,7 @@ The last computed alignment defines the rewrite rules: ``rewrite the symbol from
     \end{tabular}
 \end{center}
 
- We do not allow rules ``$\epsilon \rightarrow \dots$'', because they would allow infinite string growth  during the beam search decoding. Instead, we cluster the rules with $\epsilon$ symbol as head with neighbors using following algorithm:
+ We do not allow rules ``$\epsilon \rightarrow \dots$'' because they would allow infinite string growth  during the beam search decoding. Instead, we cluster the rules with $\epsilon$ symbol as head with neighbors using following algorithm:
    
 \begin{description}
     \item For each \texttt{rule} in \texttt{alignment}:
@@ -61,7 +61,7 @@ The last computed alignment defines the rewrite rules: ``rewrite the symbol from
     \end{enumerate}
 \end{description}
 
-From the above insertion example, we would extract following rewrite rules:
+From the above ``insertion'' example, we would extract following rewrite rules:
 
 \begin{center}
     \begin{tabular}{c|c|c|c}
@@ -92,25 +92,25 @@ We use the trained $n$-gram model during the inference --- rewriting input using
 \label{oeasr:experiments}
 In this section, we experiment with different variations of the proposed online adaptation algorithm.
 
-For testing of the adaptation model, we use the parallel Czech - English ASR/SLT test set \texttt{read-newstest} (see \cref{read-newstest} on page \pageref{read-newstest}). To develop the adaptation model independently on the phoneme-to-grapheme model, we use instead of corrected transcripts that would be given by the P2G model the golden transcripts. Additionally, we create ``fake'' acoustic output with artificial errors to better analyze the behavior of the model.
+For testing of the adaptation model, we use the parallel Czech-English ASR/SLT test set \texttt{read-newstest} (see \cref{read-newstest} on page \pageref{read-newstest}). To develop the adaptation model independently of the phoneme-to-grapheme model, we use instead of corrected transcripts that would be given by the P2G model the golden transcripts. As a contrastive experiment, we test our adaptation model on artificial input, with errors generated programmatically.
 
 We simulate ``online'' adaptation by iterating over the test set with the step of 100 sentences, i.e., in each iteration, the training set for the adaptation model grows by 100 sentences, and the model corrects the next 100 sentences.
 
 \subsection{Na\"ive Approach: Train \& Rewrite All}
-First, we experiment with a rather ``na\"ive'' approach --- we use all sequences for the training of the adaptation model, and we rewrite all phoneme transcripts flowing through the model (i.e., disregarding correctness of the substrings/words). This means, that we create \emph{identity} rewrite rules even for correct words (e.g., ``\textipa{@} $\rightarrow$ \textipa{@}'') and the $n$-gram model learns on all this rules. 
+First, we experiment with a rather ``na\"ive'' approach --- we use all sequences for the training of the adaptation model, and we rewrite all phoneme transcripts flowing through the model (i.e., disregarding correctness of the substrings/words). This means that in addtition to rules which correct errors, we create many \emph{identity} rewrite rules based on correct words (e.g., ``\textipa{@} $\rightarrow$ \textipa{@}'') and the $n$-gram model learns from all these rules. 
 
-Our motivation to test this approach is that we assume that the speaker makes errors systematically (e.g., instead of [\textipa{nt}] pronounces [\textipa{nd}] in every word).
+Our motivation to test this approach is that we assume that the speaker makes errors systematically (e.g., instead of [\textipa{nt}] pronounces [\textipa{nd}] in almost every word).
 
 \paragraph{Test on artificial data}
-In order to have better control, we first test this na\"ive method on artificial data. We take the golden phoneme transcripts of the English \texttt{read-news\-test} and introduce errors to it. We decided to start with one systematic error of the speaker: to pronounce [\textipa{nt}] as [\textipa{nd}] (e.g., ``ant'' is correctly pronounced [\textipa{\ae nt}] and would be substituted with [\textipa{\ae nd}]). 
+In order to have a better control, we first test this na\"ive method on artificial data. We take the golden phoneme transcripts of the English \texttt{read-news\-test} and introduce errors to them. We decided to start with one systematic error of the speaker: to pronounce [\textipa{nt}] as [\textipa{nd}] (e.g., ``ant'' is correctly pronounced [\textipa{\ae nt}] and would be substituted with [\textipa{\ae nd}]). 
 
 We set the order of the $n$-gram model to 2 (the smallest allowed order) and simulate the adaptation. 
 
-During the first step (first 100 sentences are used for training, following 100 sentences for correction) we dump the obtained rules: We get identity rules for each phoneme except for ``\textipa{t}'' for which we have two rules (``\textipa{t} $\rightarrow$ \textipa{t}'' and ``\textipa{t} $\rightarrow$ \textipa{d}''). This is as expected. 
+During the first step (the first 100 sentences are used for training, the following 100 sentences for correction), we dump the obtained rules: We get identity rules for each phoneme except for ``\textipa{t}'' for which we have two rules (``\textipa{t} $\rightarrow$ \textipa{t}'' and ``\textipa{t} $\rightarrow$ \textipa{d}''). This is as expected. 
 
 Now we want the $n$-gram model to ``learn'' that this rule is applied only for phoneme pair [\textipa{nd}] and in the right words.
 
-We take a closer look at the $n$-gram training data. We calculate following 2-gram probabilities:   
+We take a closer look at the $n$-gram training data. We calculate the following 2-gram probabilities (where $c(...)$ is a function of the $n$-gram count):   
 
 \begin{equation}\label{rule1}
     P( \textnormal{\textipa{d} $\rightarrow$ \textipa{d}} | \textnormal{\textipa{n} $\rightarrow$ \textipa{n}}) =
@@ -137,7 +137,7 @@ P( \textnormal{\textipa{d} $\rightarrow$ \textipa{t}} | \textnormal{\textipa{n} 
 \end{equation}
 %-49.90927171707153 -54.84227800369263
 
-We also check the probabilities given by the KenLM. For both rewrite rules \cref{rule1,rule2}, the KenLM outputs equal probabilities, which is incorrect. We assume this may be due to lower precision that is needed when working with large amounts of data, which is not our case. To overcome this, we implement our own $n$-gram model and continue in the analysis.
+We also check the probabilities given by the KenLM. For both rewrite rules \cref{rule1,rule2}, the KenLM outputs equal probabilities, which is incorrect. We assume this may be due to lower precision that is needed when working with large amounts of data, which is not our case. To overcome this, we implement our own $n$-gram model and continue with the analysis.
 
 In the case of extending string ``\textipa{tSEk mEn \ae n}'' (Czech men an[d]), the beam search (BS) correctly applies both rules creating two beams. The beam with suffix ``\textipa{d}'' has a higher probability.
 
@@ -145,79 +145,79 @@ A problem emerges when the BS further extends the beams and comes to point ``\te
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_relative}
-    \caption[Na\"ive adaptation on artificial data ]{Na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Na\"ive adaptation on artificial data ]{Na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). Each point represents a relative PWER of the adapted output compared to the source PWER (as produced by acoustic model). Adaptation of 100 subsequent sentences is based on the rules obtained from all previous sentences.}
     \label{fig:naive} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_english_relative}
-    \caption[Na\"ive adaptation on English]{Na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Na\"ive adaptation on English]{Na\"ive adaptation on English \texttt{read-newstest} as produced by the acoustic model. Each point represents a relative PWER of the adapted output compared to the source PWER (as produced by acoustic model). Adaptation of 100 subsequent sentences is based on the rules obtained from all previous sentences.}
     \label{fig:naive_en} 
 \end{figure}
 
-One way, how to minimize the occurrence of this error is to higher the order of the $n$-gram model. In \cref{fig:naive}, we can observe a clear advantage of the higher-order models over the lower ones.
+One way, how to minimize the occurrence of this error is to use a higher the order of the $n$-gram model. In \cref{fig:naive}, we can observe a clear advantage of the higher-order models over the lower ones.
 
-The na\"ive approach fails on real data outputted by the acoustic model. We witness the quite substantial deterioration of the performance compared to the non-adapted source in \cref{fig:naive_en}. 
+The na\"ive approach fails on real data as produced by the acoustic model. We witness the quite substantial deterioration of the performance compared to the non-adapted source in \cref{fig:naive_en}. 
 
-We try to adjust the beam sizes (not in the figure). The bigger the beam, the worse the performance is. The real data contains too irregular errors that seem to be unique each time they occur.
+We try to adjust the beam sizes (not in the figure) but to no avail. The bigger the beam, the worse the performance is. The real data contains too irregular errors that seem to be unique each time they occur.
 
 \subsection[Revised Na\"ive Approach: Train \& Rewrite All Word-by-Word]{Revised Na\"ive Approach: Train \& Rewrite All \\Word-by-Word}
-We revise the na\"ive approach by splitting the sentences to single words and doing the training and inference word-by-word. Additionally, we use only words differentiating from true transcripts for the learning of the rewriting rules. 
+We revise the na\"ive approach by splitting the sentences to individual words and doing the training and inference word-by-word. Additionally, we use only words differing from true transcripts for the learning of the rewriting rules. 
 
 On the artificial test set, it seems to perform negligibly better then the previous na\"ive approach (see \cref{fig:naive_revised}).
 
-For the real acoustic data, the revised method does not bring the desired enhancement and again worsens the PWER relative to the source PWER. It seems to help at the beginning (steps 100 and 200) for 2-gram and 3-gram setups (see \cref{fig:naive_revised_en}). 
+For the real acoustic data, the revised method unfortunately still does not bring the desired enhancement and again worsens the PWER relative to the source PWER. It seems to help at the beginning (steps 100 and 200) for 2-gram and 3-gram setups (see \cref{fig:naive_revised_en}). 
 
-As we take a closer look at the evaluation, we observe two together-related problems: Because of the high variability of errors occurring in the real data, there are no ``clearly'' good rewrite rules that would appear frequently enough. Hence, there are many rules with equal probability based on small frequency. The second problem is that the beam search generates many candidates that are similarly possible due to their similar probability (described in the first problem). However, these beam candidates tend to be contrasting. The beam search is then unable to select the best possible candidate which would be better than others.
+As we take a closer look at the evaluation, we observe two correlated problems: Because of the high variability of errors occurring in the real data, there are no ``clearly'' good rewrite rules that would appear frequently enough. Hence, there are many rules with equal probability based on small frequency. The second problem is that the beam search generates many candidates that are too similar in their scores (as a result of the similar rule probabilities described in the first problem). However, these beam candidates tend to be contrasting. The beam search is then unable to select the best possible candidate which would be better than others.
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_revised_relative}
-    \caption[Revised na\"ive adaptation on artificial data]{Revised na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Revised na\"ive adaptation on artificial data]{Revised na\"ive adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). Each point represents a relative PWER of the adapted output compared to the source PWER (as produced by acoustic model). Adaptation of 100 subsequent sentences is based on the rules obtained from all previous sentences.}
     \label{fig:naive_revised} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/naive_revised_english_relative}
-    \caption[Revised na\"ive adaptation on English]{Revised na\"ive adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Revised na\"ive adaptation on English]{Revised na\"ive adaptation on English \texttt{read-newstest} as produced by the acoustic model. Each point represents a relative PWER of the adapted output compared to the source PWER (as produced by acoustic model). Adaptation of 100 subsequent sentences is based on the rules obtained from all previous sentences.}
     \label{fig:naive_revised_en} 
 \end{figure}
 
 This observation leads us to reconsider the configuration of the beam search.
 
 \subsection{Embedded Word Beam Search}
-The problem of the previously revised approach is that it is unable to select the best-fitting candidate in the context of the sentence. To help the beam search, we propose to use two embedded beam searches operating on different levels. A sentence-level beam search selects appropriate words according to the context and an embedded word-level beam search selecting the best phoneme-rewriting rules.
+The problem of the previously revised approach is that it is unable to select the best-fitting candidate in the context of the sentence. To help the beam search, we propose to use two embedded beam searches operating on different levels. A sentence-level beam search selects appropriate words according to the context and an embedded word-level beam search selects the best phoneme-rewriting rules.
 
-The embedded beam search applies rewrite rules to one word from the input at the time. This BS matches the BS from the previous na\"ive approach. However, instead of outputting the most probable beam, it proposes all final beams to the top-level BS.
+The embedded beam search applies rewrite rules to one word from the input at a time. This BS is exactly the BS from the previous na\"ive approach. However, instead of outputting the most probable beam, it proposes all final beams to the top-level BS.
 
-The top-level beam search uses the candidate words (additionally, we add the original phoneme word from input to the candidates) from the embedded BS to extends its beams. The quality (probability) of a beam is considered using a non-adapting $n$-gram language model. This could be trained on a large amount of data or, alternatively, for tasks where is the topic or vocabulary known beforehand, one could utilize domain adapted language model. 
+The top-level beam search uses the candidate words (plus the original phoneme word without applying any rules) from the embedded BS to extend its beams. The quality (probability) of the outer beam is considered using a non-adapting $n$-gram language model trained on words. This could be trained on a large amount of data or, alternatively, for tasks where is the topic or vocabulary known beforehand, one could utilize a domain-adapted language model. 
 
-We first evaluate the artificial data. \cref{fig:embedded} demonstrates the power of this approach. The adaptation learns to fix the error immediately based on the first 100 sentences and applies the rules with almost no errors.
+We first evaluate the new approach using the artificial data. \cref{fig:embedded} demonstrates its power. The adaptation learns to fix the error immediately based on the first 100 sentences and applies the rules with almost no errors.
 
 However, on the real data, the new approach does not help (see \cref{fig:embedded_en}). 
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/embedded_fake_relative}
-    \caption[Embedded word beam search  adaptation on artificial data]{Embedded word beam search  adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Embedded word beam search  adaptation on artificial data]{Embedded word beam search  adaptation on artificial data ([\textipa{nt}] replaced with [\textipa{nd}]). Each point represents a relative PWER of the adapted output compared to the source PWER (as produced by acoustic model). Adaptation of 100 subsequent sentences is based on the rules obtained from all previous sentences.}
     \label{fig:embedded} 
 \end{figure}
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=5cm]{img/embedded_en_relative}
-    \caption[Embedded word beam search adaptation on English]{Embedded word beam search adaptation on English \texttt{read-newstest} outputted by the acoustic model. PWER of 100 subsequent sentences rewritten using rules obtained from all previous sentences.}
+    \caption[Embedded word beam search adaptation on English]{Embedded word beam search adaptation on English \texttt{read-newstest} as produced by the acoustic model. Each point represents a relative PWER of the adapted output compared to the source PWER (as produced by acoustic model). Adaptation of 100 subsequent sentences is based on the rules obtained from all previous sentences.}
     \label{fig:embedded_en} 
 \end{figure}
 
 
 \subsection{Analysis}
-In this section, we analyze the reason why the adaptation model fails to adapt to real acoustic data.
+In this section, we analyze the reason why the adaptation model fails to adapt when given real acoustic data.
 
-First, we create a new artificial test set with very high PWER by deliberately rewriting the few most commonly used phoneme characters. We guessed from our personal English experience, which phonemes can be mixed-up (e.g., ``\textipa{D}'' like in ``the [\textipa{D9}]'' to ``\textipa{t}'' or ``\textipa{d}''). We established 18 such rewriting rules. We apply these rewrite rules on each phoneme word independently and with a 60 \% probability to make the errors in the data less consistent. We generated data with PWER 54 \%. Our best setup, the embedded word beam search, is able to reduce the error to approximately 10 \% PWER (notably, a 40 \% points reductions).  
+First, we create a new artificial test set with a very high PWER by deliberately rewriting the few most commonly used phoneme characters. We guessed from our personal English experience which phonemes can be mixed-up (e.g., ``\textipa{D}'' like in ``the [\textipa{D9}]'' to ``\textipa{t}'' or ``\textipa{d}''). We established 18 such rewriting rules. We apply these rewrite rules on each phoneme word independently and with a 60 \% probability to make the errors in the data less consistent. We generated data with PWER 54 \%. Our best setup, the embedded word beam search, is able to reduce the error to approximately 10 \% PWER (notably, a 40 \% points reduction).  
 
-The main reasons for the failure on real phoneme transcripts may be the vast amount of rewrite rules that are too unique (i.e., have low frequency). In \cref{fig:rule_number}, we document the number of rules at each step during the adaptation on the English \texttt{read-newstest}. We see that the number of rules in the real phoneme transcripts differs at each step with the magnitude of 10.\footnote{Additionally, we disable the EM alignment algorithm and use the plain modified Levenstein. On the harder artificial data, we observe a substantial reduction of found rules (a half the number) and a further decrease of the PWER (to approximately 4 \%). On the other hand, on the real data, this change produces even more rules, which leads to further performance loss.} Note, the PWER of the real phoneme transcripts is 16 \%, and the artificial phoneme transcripts have 54 \%.
+The main reason for the failure on real phoneme transcripts may be the vast amount of rewrite rules that are too unique (i.e., have low frequency). In \cref{fig:rule_number}, we document the number of rules at each step during the adaptation on the English \texttt{read-newstest}. We see that the number of rules in the real phoneme transcripts differs at each step with the magnitude of 10.\footnote{Additionally, we disable the EM alignment algorithm and use the plain modified Levenstein. On the harder artificial data, we observe a substantial reduction of found rules (a half the number) and a further decrease of the PWER (to approximately 4 \%). On the other hand, on the real data, this change produces even more rules, which leads to further performance loss.} Note, the PWER of the real phoneme transcripts is 16 \% and the artificial phoneme transcripts have 54 \%. In other words the margin for possible improvement is much smaller on the real data and, at the same time, observations of errors are much less frequent.
 
 We also counted how many times each rule occurs in the training data.\footnote{We attempt to prune rules based on the rule frequency --- by a constant (5 and 10) and using percentile (50, 90, and 95). None of the configurations brings enhancement on the real data. In the case of artificial error test set, pruning of 50 \% least frequent rules helps further reduce the final PWER.} In \cref{fig:rule_hist}, we show cumulative distribution of rule frequencies (we leave out the identity rewrite rules). We can see that the majority of rules found in real data occurs only once (71 \% of rules), 20 \% occur two times, 95 \% occur at most ten times. On the other hand, the rules with only one occurrence make 28 \% percent of all rules in artificial error data. 40 \% of all rules are found in the data more than ten times.
 
-Such a vast amount of infrequent rules deteriorates the performance as the search space is too big. The embedded beam search has too many candidates at each step, generating invalid word candidates. The top-level BS then fails to pick the best word as most candidate words are invalid.
+Such a vast amount of infrequent rules deteriorates the performance as the search space is too big and the estimated probabilities too flat. The embedded beam search has too many candidates at each step, generating invalid word candidates. The top-level BS then fails to pick the best word as most candidate words are invalid.
 
 We hypothesize that the high number of infrequent rules is caused by substantial variability in speech. Furthermore, we suspect that the neural-network-based acoustic model tends to over-fit to words or sub-words, i.e., the model prefers outputting (in training data) more frequent sub-words rather than best describing the observed speech. 
 
@@ -229,7 +229,7 @@ We hypothesize that the high number of infrequent rules is caused by substantial
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth,height=7cm]{img/rule_hist}
-    \caption[Comparison of the rule frequency cumulative distribution]{Comparison of the rule frequency cumulative distribution on real phonetic transcripts and artificial error data in the last adaptation iteration on English \texttt{read-newstest} (rules from 700 sentences). Note, we leave out identity rewrite rules.}
+    \caption[Comparison of the rule frequency cumulative distribution]{Comparison of the rule frequency cumulative distribution on real phonetic transcripts and artificial error data in the last adaptation iteration on English \texttt{read-newstest} (rules from 700 sentences). Note that we leave out identity rewrite rules.}
     \label{fig:rule_hist} 
 \end{figure}
 

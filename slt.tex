@@ -28,7 +28,7 @@ We compare our proposed SLT system to a more conventional SLT pipeline --- an AS
 \label{slt:training}
 Following the experiment outline as described in the preceding section, we train two translation models (Czech phonemes to English graphemes and English phonemes to Czech graphemes). Additionally, we also train baseline grapheme-to-grapheme translation models (English and Czech, in both directions). 
 
-The training procedure remains almost identical to the training scheme in the Enhanced ASR (see \cref{easr:training}). As we concluded in the \cref{easr:conclusion}, the bigger Transformer is a better fit for the ASR task. Furthermore, the translation task to a different language is an even more difficult problem. Accordingly, we work only with the Transformer ``big'' in this chapter.
+The training procedure remains almost identical to the training scheme in the Enhanced ASR (see \cref{easr:training}). As we concluded in \cref{easr:conclusion}, the bigger Transformer is a better fit for the ASR task. Furthermore, the translation task to a different language is an even more difficult problem. Accordingly, we work only with the Transformer ``big'' in this chapter.
 
 For the evaluation during the training of phoneme-to-grapheme models we use \texttt{news\-test\-2015}. We phonemize the source side of the data set using \texttt{phonemizer}.
 
@@ -80,7 +80,7 @@ A re-speaker was instructed to use our online tool \texttt{Voice Recorder}.\foot
 
 We employed one re-speaker --- a Czech woman. She recorded 747 sentences in English and 747 sentences in Czech. This resulted in 1:18:35 English, and 1:11:38 of Czech read speech audio.
 
-We evaluated the performance of our acoustic models on obtained test set. The results are in the \cref{tab:acoustic_eval}. 
+We evaluated the performance of our acoustic models on obtained test set. The results are in \cref{tab:acoustic_eval}. 
 
 We were quite surprised by the poor performance of Czech acoustic models --- 34.33 \% Phoneme Word Error Rate (PWER) and 34.51 \% Word Error Rate (WER). We believe this is due to the nature of the training data we used for the training of the models. The Corpus of Czech Parliament Plenary Hearings has a unique acoustic. Further, there is a high prevalence of man speakers. And finally, the size of the training corpus is rather small --- only 400 hours.
 
@@ -102,7 +102,7 @@ Still, the performance of the models is rather inferior to the test sets in well
 \end{table}
 
 \subsection{Beam Size} 
-SacreBLEU scores in the \cref{tab:eval_slt,tab:eval_slt} are consistent with the ones commonly used in the neural machine translation. We see that the models are, in general, confident at each step and do not need to consider other alternatives. Enlarging the beam size beyond a small number leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations, so the optimum beam size in our experiments turned out to be 4.
+SacreBLEU scores in \cref{tab:eval_slt,tab:eval_slt} are consistent with the ones commonly used in the neural machine translation. We see that the models are, in general, confident at each step and do not need to consider other alternatives. Enlarging the beam size beyond a small number leads to performance deterioration. Having a beam size of one (effectively a greedy decoding) also leads to sub-optimal translations, so the optimum beam size in our experiments turned out to be 4.
 
 The only exception to this is the English to Czech proposed SLT. The beam size of 16 outperformed other beam sizes. However, the margin is relatively small --- 0.23 BLEU. The model is probably less confident when the source is corrupted as a result of processing a real sound with the acoustic model.
 
@@ -297,13 +297,13 @@ Slightlz better recognition of numbers is also interesting. This is probably due
 \subsection{English to Czech}
 In order to evaluate the English to Czech translation model as part of the proposed SLT pipeline, we take the English acoustic model from \cref{asr:transfer_phonemes}. The model has a phoneme word error rate 4.18 \% on LibriSpeech \texttt{test-clean} and 11.48 \% on the \texttt{test-other}.
 
-The baseline SLT pipeline uses as ASR model the Jasper model trained on LibriSpeech and Common Voice. We downloaded the model from the NVIDIA NGC.\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:multidata\%20set\_jasper10x5dr}}
+The baseline SLT pipeline uses the Jasper model trained on LibriSpeech and Common Voice as ASR model. We downloaded the model from the NVIDIA NGC.\footnote{\url{https://ngc.nvidia.com/catalog/models/nvidia:multidata\%20set\_jasper10x5dr}}
 
 We also assess the translation models performance on the P2G translation task (i.e., the translation sources are true transcripts, not burdened with errors introduced by the acoustic/ASR models).
 
 \cref{tab:eval_slt} contains SacreBLEU scores of the English to Czech translation models as part of a SLT pipeline and in the translation task. Translation samples are in \cref{tab:en_cs_names,tab:en_cs_sample}.
 
-Similarly, as the Czech to English SLT, the proposed system (with phonemes as an intermediate step) outperforms the baseline. Again, the difference is rather small --- 0.52 BLEU. 
+Similarly, as the Czech to English SLT, the proposed system with phonemes as an intermediate step outperforms the baseline. Again, the difference is rather small --- 0.52 BLEU. 
 
 \begin{table}[t]
 	\centering
@@ -320,15 +320,15 @@ Similarly, as the Czech to English SLT, the proposed system (with phonemes as an
 \end{table}
 
 
-We manually review the quality of the both SLT systems. The distribution of manual annotations of the Czech to English SLT is in the \cref{tab:manual_en_cs}. 
+We manually review the quality of the both SLT systems. The distribution of manual annotations of the Czech to English SLT is in \cref{tab:manual_en_cs}. 
 
-Compared to the opposite direction (Czech to English), the overall subjective translation quality improved significantly. We found only 13 and 14 translations respectively incorrect. Although the direction to Czech language is more challenging in general \XXX{do I need to support this?}, we explain this reduction of incorrect translations as the result of a better acoustic and ASR model.
+Compared to the opposite direction (Czech to English), the overall subjective translation quality improved significantly. We found only 13 and 14 translations, respectively, incorrect. Although the direction to Czech language is more challenging in general (e.g., because the larger vocabulary of word forms) we explain this reduction of incorrect translations as the result of a better acoustic and ASR model.
 
-In the random sub-sample that we evaluated, we found the translations of the baseline to be slightly better. Still, the difference is relatively small. The baseline produced more ``correct'' translations, while the proposed produced less ``incorrect'' (``correct'' + ``almost correct'') translations. 
+In the random sub-sample that we evaluated, we found the translations of the baseline to be slightly better compared to the proposed system. Still, the difference is relatively small. The baseline produced more ``correct'' translations, while the proposed system produced less ``incorrect'' (``correct'' + ``almost correct'') translations. 
 
-We discovered that the baseline tends to mark unknown words as proper nous (e.g.: ``This species lives...'' translates as ``Tento Pecies žije...'', or ``...the murderer's parents...'' as ``rodičů Murdereora''). We marked such translation as ``almost correct'', as we think that such words can be understood in the context. Similarly, the proposed system does so, but more frequently around proper nous (e.g., ``...in the new Prima series Kapitán Exner'' as ``...v nové Primma Series Capitan Expert'').
+We discovered that the baseline tends to translate unknown words as proper nous (e.g.: ``This species lives...'' translates as ``Tento Pecies žije...'', or ``...the murderer's parents...'' as ``rodičů Murdereora''). We marked such translation as ``almost correct'', as we think that such words can be understood in the context if the user has some limited knowledge of the source language. Similarly, the proposed system does so, but more frequently around proper nous (e.g., ``...in the new Prima series Kapitán Exner'' as ``...v nové Primma Series Capitan Expert'').
 
-With the overall translation quality, the handling adequacy of proper nouns also rises (see the \cref{tab:en_cs_names}). It is worth noting that the re-speaker was a native Czech. The Czech proper nouns are hence correctly pronounced in Czech. Therefore, we find it quite interesting, that both system were able to translate the name satisfactorily.
+With the overall translation quality, the handling adequacy of proper nouns also rises (see \cref{tab:en_cs_names}). It is worth noting that the re-speaker was a native Czech. The Czech proper nouns are hence correctly pronounced in Czech. Therefore, we find it quite interesting, that both system were able to translate names understandably, despite the obvious spelling errors.
 
 \iffalse
 \begin{landscape}
@@ -400,8 +400,8 @@ With the overall translation quality, the handling adequacy of proper nouns also
 
 \section{Conclusion}
 \label{slt:conclusion}
-We proposed an SLT pipeline with phonemes as intermediate representation. We successfully trained the models for English and Czech (in both directions). Further, we compared these models with baselines (traditional ASR to graphemes followed by an NMT model). In both direction, the proposed SLT pipeline achieves slightly higher SacreBLEU score. 
+We proposed an SLT pipeline with phonemes as intermediate representation. We successfully trained the models for English and Czech (in both directions). Further, we compared these models with baselines (traditional ASR to graphemes followed by an NMT model). In both direction, the proposed SLT pipeline achieves slightly higher SacreBLEU scores. 
 
-We also assessed the translation quality subjectively using a random experiment. In this case, the baseline system performed better in the direction from English to Czech, and in the Czech to English direction performed the proposed SLT system better. 
+We also assessed the translation quality subjectively on a small random subset of sentences. In this case, the baseline system performed better in the direction from English to Czech. In the Czech to English direction, the proposed SLT system performed better. 
 
-We believe that the proposed system has a potential in the future. Therefore, we would like to review the adaptation of the system to the errors produced by the acoustic model. Also, other techniques known from neural machine translation can be applied (e.g., backtranslation). We are convinced, the proposed systems are capable of even better translation quality. 
+We believe that the proposed system has a potential in the future. Therefore, we would like to review the adaptation of the system to the errors produced by the acoustic model. Also, other techniques known from neural machine translation can be applied (e.g., backtranslation). We are convinced that the proposed systems are capable of even better translation quality. 
